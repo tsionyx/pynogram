@@ -23,19 +23,46 @@ class CellState(object):
 
 
 class Renderer(object):
-    def __init__(self, board_width=None, board_height=None):
+    def __init__(self, board=None):
+        self.board = board
+
         self.cells = None
-        self.board_width = None
-        self.board_height = None
-        if board_width and board_height:
-            self.init_cells(board_width, board_height)
+        self.board_width, self.board_height = None, None
+
+        self.init()
+
+    def init(self, board=None):
+        board = board or self.board
+        if board:
+            log.info('Init with board %s', board)
+            self.board = board
+            self.board_width, self.board_height = board.full_size
+        return board
 
     def render(self):
         return NotImplemented
 
-    def init_cells(self, board_width, board_height):
-        self.board_width = board_width
-        self.board_height = board_height
+    def draw_thumbnail_area(self):
+        return self
+
+    def draw_clues(self, horizontal=None):
+        if horizontal is None:
+            self.draw_clues(True)
+            self.draw_clues(False)
+        elif horizontal is True:
+            self.draw_horizontal_clues()
+        else:
+            self.draw_vertical_clues()
+        return self
+
+    def draw_grid(self):
+        return self
+
+    def draw_horizontal_clues(self):
+        return self
+
+    def draw_vertical_clues(self):
+        return self
 
 
 class BaseBoard(object):
@@ -44,10 +71,10 @@ class BaseBoard(object):
         self.columns = self._normalize(columns)
 
         self.renderer = renderer
-        if isinstance(renderer, type):
-            self.renderer = renderer(*self.full_size)
-        else:
-            self.renderer.init_cells(*self.full_size)
+        if isinstance(self.renderer, type):
+            self.renderer = self.renderer(self)
+        elif isinstance(self.renderer, Renderer):
+            self.renderer.init(self)
 
         self.cells = [[CellState.UNSURE] * self.width for _ in range(self.height)]
         self.validate_headers(self.rows, self.width)
@@ -93,58 +120,76 @@ class BaseBoard(object):
     @property
     def full_size(self):
         return (
-            self._headers_width + self.width,
-            self._headers_height + self.height)
-
-    def render(self):
-        return self.renderer.render()
+            self.headers_width + self.width,
+            self.headers_height + self.height)
 
     def draw(self):
-        self.draw_thumbnail_area() \
+        self.renderer.draw_thumbnail_area() \
             .draw_clues() \
             .draw_grid() \
             .render()
 
-    def draw_thumbnail_area(self):
-        return self
-
-    def draw_clues(self, horizontal=None):
-        if horizontal is None:
-            self.draw_clues(True)
-            self.draw_clues(False)
-        elif horizontal is True:
-            self.draw_horizontal_clues()
-        else:
-            self.draw_vertical_clues()
-        return self
-
-    def draw_grid(self):
-        return self
-
-    def draw_horizontal_clues(self):
-        return NotImplemented
-
-    def draw_vertical_clues(self):
-        return NotImplemented
-
     @property
-    def _headers_height(self):
+    def headers_height(self):
         return max(map(len, self.columns))
 
     @property
-    def _headers_width(self):
+    def headers_width(self):
         return max(map(len, self.rows))
 
 
 class StreamRenderer(Renderer):
-    def __init__(self, board_width=None, board_height=None, stream=sys.stdout):
-        super(StreamRenderer, self).__init__(board_width, board_height)
+    def __init__(self, board=None, stream=sys.stdout):
+        super(StreamRenderer, self).__init__(board)
         self.stream = stream
 
-    def init_cells(self, board_width, board_height):
-        super(StreamRenderer, self).init_cells(board_width, board_height)
-        self.cells = [[self.cell_icon(CellState.NOT_SET)] * self.board_width
-                      for _ in range(self.board_height)]
+    def init(self, board=None):
+        if super(StreamRenderer, self).init(board):
+            log.info('init cells: %sx%s', self.board_width, self.board_height)
+            self.cells = [[self.cell_icon(CellState.NOT_SET)] * self.board_width
+                          for _ in range(self.board_height)]
+
+    def render(self):
+        for row in self.cells:
+            print(' '.join(self.cell_icon(cell) for cell in row), file=self.stream)
+
+    def draw_thumbnail_area(self):
+        for i in range(self.board.headers_height):
+            for j in range(self.board.headers_width):
+                self.cells[i][j] = CellState.THUMBNAIL
+        return super(StreamRenderer, self).draw_thumbnail_area()
+
+    def draw_horizontal_clues(self):
+        for i, row in enumerate(self.board.rows):
+            rend_i = i + self.board.headers_height
+            # row = list(row)
+            if not row:
+                row = [0]
+            rend_row = pad_list(row, self.board.headers_width, CellState.NOT_SET)
+            self.cells[rend_i][:self.board.headers_width] = rend_row
+
+        return super(StreamRenderer, self).draw_horizontal_clues()
+
+    def draw_vertical_clues(self):
+        for j, col in enumerate(self.board.columns):
+            rend_j = j + self.board.headers_width
+            if not col:
+                col = [0]
+            rend_row = pad_list(col, self.board.headers_height, CellState.NOT_SET)
+            # self.renderer.cells[:self._headers_width][rend_j] = map(text_type, rend_row)
+            for rend_i, cell in enumerate(rend_row):
+                self.cells[rend_i][rend_j] = cell
+
+        return super(StreamRenderer, self).draw_vertical_clues()
+
+    def draw_grid(self):
+        for i, row in enumerate(self.board.cells):
+            rend_i = i + self.board.headers_height
+            for j, cell in enumerate(row):
+                rend_j = j + self.board.headers_width
+                self.cells[rend_i][rend_j] = cell
+
+        return super(StreamRenderer, self).draw_grid()
 
     ICONS = {
         CellState.NOT_SET: ' ',
@@ -162,10 +207,6 @@ class StreamRenderer(Renderer):
             if isinstance(state, integer_types):
                 return text_type(state)
             raise
-
-    def render(self):
-        for row in self.cells:
-            print(' '.join(self.cell_icon(cell) for cell in row), file=self.stream)
 
 
 def pad_list(l, n, x, left=True):
@@ -189,44 +230,13 @@ class ConsoleBoard(BaseBoard):
         super(ConsoleBoard, self).__init__(
             rows, columns, renderer=renderer)
 
-    def draw_thumbnail_area(self):
-        for i in range(self._headers_height):
-            for j in range(self._headers_width):
-                self.renderer.cells[i][j] = CellState.THUMBNAIL
-        return super(ConsoleBoard, self).draw_thumbnail_area()
 
-    def draw_horizontal_clues(self):
-        for i, row in enumerate(self.rows):
-            rend_i = i + self._headers_height
-            # row = list(row)
-            if not row:
-                row = [0]
-            rend_row = pad_list(row, self._headers_width, CellState.NOT_SET)
-            self.renderer.cells[rend_i][:self._headers_width] = rend_row
-
-        return super(ConsoleBoard, self).draw_horizontal_clues()
-
-    def draw_vertical_clues(self):
-        for j, col in enumerate(self.columns):
-            rend_j = j + self._headers_width
-            if not col:
-                col = [0]
-            rend_row = pad_list(col, self._headers_height, CellState.NOT_SET)
-            # self.renderer.cells[:self._headers_width][rend_j] = map(text_type, rend_row)
-            for rend_i, cell in enumerate(rend_row):
-                self.renderer.cells[rend_i][rend_j] = cell
-
-        return super(ConsoleBoard, self).draw_vertical_clues()
-
-    def draw_grid(self):
-        for i, row in enumerate(self.cells):
-            rend_i = i + self._headers_height
-            for j, cell in enumerate(row):
-                rend_j = j + self._headers_width
-                self.renderer.cells[rend_i][rend_j] = cell
-
-        return super(ConsoleBoard, self).draw_grid()
-
-
-class TkBoard(BaseBoard):
+class GameBoard(BaseBoard):
     pass
+    # def init_screen(self):
+    #     # http://programarcadegames.com/index.php?chapter=introduction_to_graphics
+    #     import pygame
+    #     pygame.init()
+    #     size = (700, 500)
+    #     pygame.display.set_mode(size)
+    #     pygame.display.set_caption("Professor Craven's Cool Game")
