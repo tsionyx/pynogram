@@ -1,1 +1,13 @@
 six >= 1.10.0
+
+
+# it's possible to run tests with simply `setup.py test`
+# without cluttering your current virtualenv
+# but sometimes it may be convenient to run them another way:
+
+# manual invocation
+tox
+coverage
+
+# via PyCharm's 'Run Configuration'
+nose

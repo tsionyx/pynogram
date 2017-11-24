@@ -84,7 +84,35 @@ function check_syntax() {
 }
 
 
-# main here
+function check_unicode() {
+    # all git-tracked *.py files (if exists any)
+    # should have `from __future__ import unicode_literals`
+    # except for empty files (the ones whose 'wc -l'==0)
+    not_declared_unicode=$(
+        for f in $(git ls-files '*.py'); do
+            if [[ ! -s ${f} ]] || grep -Lq unicode_literals ${f}; then
+                continue
+            fi
+            echo ${f}
+        done
+    )
+
+    if [[ "$not_declared_unicode" ]]; then
+        echo 'Not declared `from __future__ import unicode_literals`:'
+        for i in ${not_declared_unicode}; do
+            echo ${i};
+        done
+        false
+    fi
+
+    # all git-tracked *.py files (if exists any) should not have
+    # a 'u' prefix before string literal
+    ! git ls-files '*.py' | xargs grep -PI "[^a-zA-Z\x7F-\xFF]u['\\\"]"
+
+    ! git ls-files | xargs grep -PIr --color '[^\x00-\x7F]'
+}
+
+# =================== HERE IS THE 'MAIN' FUNCTION BEGINS =================== #
 
 case "$1" in
     '')
@@ -92,10 +120,14 @@ case "$1" in
     --pre-commit)
         update_hook "${1:2}"
         ;;
-
     --pre-push)
         update_hook "${1:2}"
         ;;
+
+    --unicode)
+        check_unicode
+        ;;
+
     *)
         echo "Invalid arg: $1" >&2
         exit 1
@@ -104,7 +136,7 @@ esac
 # Add your favorite extensions here
 # get all the extensions you have with
 # $ git ls-files | sed 's|.*\.||' | sort -u
-KNOWN_EXTENSIONS='py|ipynb|php|sql|sh|js|html|htm|css|json|xml|iml|csv|md|txt|conf|cfg|ini|gitignore'
+KNOWN_EXTENSIONS='py|ipynb|php|sql|sh|js|html|htm|css|json|xml|yml|yaml|iml|csv|md|txt|conf|cfg|ini|gitignore'
 
 # check if any git-tracked files has been changed
 hash_file=$(tempfile) || exit 1

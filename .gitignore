@@ -16,6 +16,14 @@
 # tests artifacts
 .noseids
 .tox/
+.cache
+
+# coverage artifacts
+.coverage
+htmlcov/
 
 # build artifacts
 *.egg-info/
+*.eggs/
+build/
+dist/

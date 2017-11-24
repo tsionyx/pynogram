@@ -4,8 +4,9 @@
 from __future__ import unicode_literals, print_function
 
 import os
+import sys
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Command
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 VERSION = (0, 0, 1)
@@ -24,11 +25,30 @@ def read(file_name, base_dir=None):
     return open(os.path.join(base_dir, file_name)).read()
 
 
+class ToxTest(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    @classmethod
+    def finalize_options(cls):
+        if 'test' in sys.argv:
+            sys.argv.remove('test')
+
+    # noinspection PyPackageRequirements
+    @classmethod
+    def run(cls):
+        import tox
+        tox.cmdline()
+
+
 setup(
     name=NAME,
     version='.'.join(map(str, VERSION)),
     packages=find_packages(),
     install_requires=['six'],
+    tests_require=['tox'],
 
     # PyPI metadata
     author="Tsionyx",
@@ -44,4 +64,9 @@ setup(
         "Topic :: Game",
         "License :: OSI Approved :: MIT License",
     ],
+    # TODO: force tests_require to install on test
+    # try to inherit ToxTest from setuptools.command.test
+    cmdclass={
+        'test': ToxTest
+    }
 )
