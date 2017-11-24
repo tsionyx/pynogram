@@ -16,8 +16,10 @@ else:
 
 class CellState(object):
     NOT_SET = None
-    BOX = True
-    SPACE = False
+    THUMBNAIL = 'T'
+    UNSURE = 'U'
+    BOX = 'B'
+    SPACE = 'S'
 
 
 class Renderer(object):
@@ -47,7 +49,7 @@ class BaseBoard(object):
         else:
             self.renderer.init_cells(*self.full_size)
 
-        self.cells = [[CellState.NOT_SET] * self.width for _ in range(self.height)]
+        self.cells = [[CellState.UNSURE] * self.width for _ in range(self.height)]
         self.validate_headers(self.rows, self.width)
         self.validate_headers(self.columns, self.height)
 
@@ -141,11 +143,29 @@ class StreamRenderer(Renderer):
 
     def init_cells(self, board_width, board_height):
         super(StreamRenderer, self).init_cells(board_width, board_height)
-        self.cells = [[' '] * self.board_width for _ in range(self.board_height)]
+        self.cells = [[self.cell_icon(CellState.NOT_SET)] * self.board_width
+                      for _ in range(self.board_height)]
+
+    ICONS = {
+        CellState.NOT_SET: ' ',
+        CellState.THUMBNAIL: 't',
+        CellState.UNSURE: '_',
+        CellState.BOX: 'X',
+        CellState.SPACE: '.',
+    }
+
+    @classmethod
+    def cell_icon(cls, state):
+        try:
+            return cls.ICONS[state]
+        except KeyError:
+            if isinstance(state, integer_types):
+                return text_type(state)
+            raise
 
     def render(self):
         for row in self.cells:
-            print(' '.join(row), file=self.stream)
+            print(' '.join(self.cell_icon(cell) for cell in row), file=self.stream)
 
 
 def pad_list(l, n, x, left=True):
@@ -172,7 +192,7 @@ class ConsoleBoard(BaseBoard):
     def draw_thumbnail_area(self):
         for i in range(self._headers_height):
             for j in range(self._headers_width):
-                self.renderer.cells[i][j] = 't'
+                self.renderer.cells[i][j] = CellState.THUMBNAIL
         return super(ConsoleBoard, self).draw_thumbnail_area()
 
     def draw_horizontal_clues(self):
@@ -181,8 +201,8 @@ class ConsoleBoard(BaseBoard):
             # row = list(row)
             if not row:
                 row = [0]
-            rend_row = pad_list(row, self._headers_width, ' ')
-            self.renderer.cells[rend_i][:self._headers_width] = map(text_type, rend_row)
+            rend_row = pad_list(row, self._headers_width, CellState.NOT_SET)
+            self.renderer.cells[rend_i][:self._headers_width] = rend_row
 
         return super(ConsoleBoard, self).draw_horizontal_clues()
 
@@ -191,25 +211,19 @@ class ConsoleBoard(BaseBoard):
             rend_j = j + self._headers_width
             if not col:
                 col = [0]
-            rend_row = pad_list(col, self._headers_height, ' ')
+            rend_row = pad_list(col, self._headers_height, CellState.NOT_SET)
             # self.renderer.cells[:self._headers_width][rend_j] = map(text_type, rend_row)
-            for rend_i, cell in enumerate(map(text_type, rend_row)):
+            for rend_i, cell in enumerate(rend_row):
                 self.renderer.cells[rend_i][rend_j] = cell
 
         return super(ConsoleBoard, self).draw_vertical_clues()
-
-    CELL_ICON = {
-        CellState.NOT_SET: '_',
-        CellState.BOX: 'X',
-        CellState.SPACE: '.',
-    }
 
     def draw_grid(self):
         for i, row in enumerate(self.cells):
             rend_i = i + self._headers_height
             for j, cell in enumerate(row):
                 rend_j = j + self._headers_width
-                self.renderer.cells[rend_i][rend_j] = self.CELL_ICON[cell]
+                self.renderer.cells[rend_i][rend_j] = cell
 
         return super(ConsoleBoard, self).draw_grid()
 
