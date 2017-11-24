@@ -1,0 +1,21 @@
+*.pyc
+
+# vim temporary
+*.swp
+
+*.log
+
+# PyCharm
+.idea/misc.xml
+.idea/workspace.xml
+.idea/scopes/
+
+# virtualenv
+.env/
+
+# tests artifacts
+.noseids
+.tox/
+
+# build artifacts
+*.egg-info/
