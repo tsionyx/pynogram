@@ -4,22 +4,20 @@
 from __future__ import unicode_literals, print_function
 
 from pyngrm.board import ConsoleBoard, StreamRenderer, CellState
-from pyngrm.utils import use_test_instance, merge_dicts
-from tests.test_board import ConsoleBoardTest
+from pyngrm.utils import merge_dicts
+from tests.test_board import tested_board
 
 
 class GraphicalRenderer(StreamRenderer):
     ICONS = merge_dicts(StreamRenderer.ICONS, {
         CellState.UNSURE: ' ',
-        CellState.THUMBNAIL: '\u25C8',
-        CellState.BOX: '\u25A3',
-        CellState.SPACE: '\u25A1',
+        CellState.THUMBNAIL: '\u2B50',
+        CellState.BOX: '\u2B1B',
+        CellState.SPACE: '\u2022',
     })
 
 
 if __name__ == '__main__':
-    test = use_test_instance(ConsoleBoardTest)
-    b = test.board
-    b2 = ConsoleBoard(test.board.rows, test.board.columns, renderer=GraphicalRenderer)
-    b2.cells[2] = [CellState.SPACE] + [CellState.BOX] * 6 + [CellState.SPACE]
-    b2.draw()
+    b = tested_board(ConsoleBoard, renderer=GraphicalRenderer)
+    b.cells[2] = [CellState.SPACE] + [CellState.BOX] * 6 + [CellState.SPACE]
+    b.draw()

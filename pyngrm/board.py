@@ -8,10 +8,13 @@ import sys
 
 from six import string_types, integer_types, text_type
 
-if __name__ == '__main__':
-    log = logging.getLogger(os.path.basename(__file__))
-else:
-    log = logging.getLogger(__name__)
+from pyngrm.utils import pad_list
+
+_log_name = __name__
+if _log_name == '__main__':  # pragma: no cover
+    _log_name = os.path.basename(__file__)
+
+log = logging.getLogger(_log_name)
 
 
 class CellState(object):
@@ -34,13 +37,14 @@ class Renderer(object):
     def init(self, board=None):
         board = board or self.board
         if board:
-            log.info('Init with board %s', board)
+            log.info("Init '%s' renderer with board '%s'",
+                     self.__class__.__name__, board)
             self.board = board
             self.board_width, self.board_height = board.full_size
         return board
 
     def render(self):
-        return NotImplemented
+        raise NotImplementedError()
 
     def draw_thumbnail_area(self):
         return self
@@ -75,10 +79,11 @@ class BaseBoard(object):
             self.renderer = self.renderer(self)
         elif isinstance(self.renderer, Renderer):
             self.renderer.init(self)
+        else:
+            raise TypeError('Bad renderer: %s' % renderer)
 
         self.cells = [[CellState.UNSURE] * self.width for _ in range(self.height)]
-        self.validate_headers(self.rows, self.width)
-        self.validate_headers(self.columns, self.height)
+        self.validate()
 
     @classmethod
     def _normalize(cls, rows):
@@ -92,6 +97,8 @@ class BaseBoard(object):
                 r = (r,)
             elif isinstance(r, string_types):
                 r = tuple(map(int, r.split(' ')))
+            else:
+                raise ValueError('Bad row: %s' % r)
             res.append(r)
         return tuple(res)
 
@@ -103,6 +110,16 @@ class BaseBoard(object):
     def height(self):
         return len(self.rows)
 
+    def validate(self):
+        self.validate_headers(self.rows, self.width)
+        self.validate_headers(self.columns, self.height)
+
+        boxes_in_rows = sum(sum(block) for block in self.rows)
+        boxes_in_columns = sum(sum(block) for block in self.columns)
+        if boxes_in_rows != boxes_in_columns:
+            raise ValueError('Number of boxes differs: {} (rows) and {} (columns)'.format(
+                boxes_in_rows, boxes_in_columns))
+
     @classmethod
     def validate_headers(cls, rows, max_size):
         for row in rows:
@@ -111,10 +128,10 @@ class BaseBoard(object):
                 # also need at least one space between every two blocks
                 need_cells += len(row) - 1
 
-            log.debug("Row: %s; Need: %s; Available: %s.",
+            log.debug('Row: %s; Need: %s; Available: %s.',
                       row, need_cells, max_size)
             if need_cells > max_size:
-                raise ValueError("Cannot allocate row {} in {} cells".format(
+                raise ValueError('Cannot allocate row {} in just {} cells'.format(
                     list(row), max_size))
 
     @property
@@ -136,6 +153,9 @@ class BaseBoard(object):
     @property
     def headers_width(self):
         return max(map(len, self.rows))
+
+    def __repr__(self):
+        return '{}({}x{})'.format(self.__class__.__name__, self.height, self.width)
 
 
 class StreamRenderer(Renderer):
@@ -176,7 +196,7 @@ class StreamRenderer(Renderer):
             if not col:
                 col = [0]
             rend_row = pad_list(col, self.board.headers_height, CellState.NOT_SET)
-            # self.renderer.cells[:self._headers_width][rend_j] = map(text_type, rend_row)
+            # self.cells[:self.board._headers_width][rend_j] = map(text_type, rend_row)
             for rend_i, cell in enumerate(rend_row):
                 self.cells[rend_i][rend_j] = cell
 
@@ -209,22 +229,6 @@ class StreamRenderer(Renderer):
             raise
 
 
-def pad_list(l, n, x, left=True):
-    """
-    >>> pad_list([1, 2, 3], 2, 5)
-    [1, 2, 3]
-    >>> pad_list([1, 2, 3], 5, 5)
-    [5, 5, 1, 2, 3]
-    >>> pad_list([1, 2, 3], 5, 5, left=False)
-    [1, 2, 3, 5, 5]
-    """
-    if len(l) >= n:
-        return l
-
-    padding = [x] * (n - len(l))
-    return padding + list(l) if left else list(l) + padding
-
-
 class ConsoleBoard(BaseBoard):
     def __init__(self, rows, columns, renderer=StreamRenderer):
         super(ConsoleBoard, self).__init__(
@@ -239,4 +243,4 @@ class GameBoard(BaseBoard):
     #     pygame.init()
     #     size = (700, 500)
     #     pygame.display.set_mode(size)
-    #     pygame.display.set_caption("Professor Craven's Cool Game")
+    #     pygame.display.set_caption('The Great Game')

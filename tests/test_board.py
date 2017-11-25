@@ -2,39 +2,38 @@
 
 from __future__ import unicode_literals, print_function
 
-import unittest
 from io import StringIO
+from unittest import TestCase
 
-from pyngrm.board import CellState, ConsoleBoard, StreamRenderer
+from pyngrm.board import BaseBoard, CellState, ConsoleBoard, StreamRenderer
 
 
-class ConsoleBoardTest(unittest.TestCase):
+def tested_board(board_cls=BaseBoard, **kwargs):
+    """
+    Simple example with 'P' letter
+
+    https://en.wikipedia.org/wiki/Nonogram#Example
+    """
+    c = [[], 9, [9], [2, 2], (2, 2), 4, '4', '']
+    r = [
+        None,
+        4,
+        6,
+        '2 2',
+        [2, 2],
+        6,
+        4,
+        2,
+        [2],
+        2,
+        0,
+    ]
+    return board_cls(r, c, **kwargs)
+
+
+class BoardTest(TestCase):
     def setUp(self):
-        """
-        Simple example with 'P' letter
-
-        https://en.wikipedia.org/wiki/Nonogram#Example
-        """
-        c = [[], 9, [9], [2, 2], (2, 2), 4, '4', '']
-        r = [
-            None,
-            4,
-            6,
-            '2 2',
-            [2, 2],
-            6,
-            4,
-            2,
-            [2],
-            2,
-            0,
-        ]
-
-        # devnull = open(os.devnull, 'w')
-        self.stream = StringIO()
-
-        self.board = ConsoleBoard(
-            r, c, renderer=StreamRenderer(stream=self.stream))
+        self.board = tested_board()
 
     def test_rows(self):
         self.assertTupleEqual(
@@ -64,6 +63,40 @@ class ConsoleBoardTest(unittest.TestCase):
                 (4,),
                 (),
             ]))
+
+    def test_bad_renderer(self):
+        with self.assertRaises(TypeError) as cm:
+            tested_board(renderer=True)
+
+        self.assertEqual(str(cm.exception), 'Bad renderer: True')
+
+    def test_bad_row_value(self):
+        with self.assertRaises(ValueError) as cm:
+            BaseBoard(rows=[1, 2], columns=[2.0, 1])
+
+        self.assertEqual(str(cm.exception), 'Bad row: 2.0')
+
+    def test_columns_and_rows_does_not_match(self):
+        with self.assertRaises(ValueError) as cm:
+            BaseBoard(rows=[1, 2], columns=[1, 1])
+
+        self.assertEqual(str(cm.exception),
+                         'Number of boxes differs: 3 (rows) and 2 (columns)')
+
+    def test_row_does_not_fit(self):
+        with self.assertRaises(ValueError) as cm:
+            BaseBoard(rows=[1, [1, 1]], columns=[1, 1])
+
+        self.assertEqual(str(cm.exception),
+                         'Cannot allocate row [1, 1] in just 2 cells')
+
+
+class ConsoleBoardTest(TestCase):
+    def setUp(self):
+        # devnull = open(os.devnull, 'w')
+        self.stream = StringIO()
+        self.board = tested_board(ConsoleBoard,
+                                  renderer=StreamRenderer(stream=self.stream))
 
     def test_draw_empty(self):
         self.board.draw()
@@ -105,3 +138,10 @@ class ConsoleBoardTest(unittest.TestCase):
                 '  2 _ _ _ _ _ _ _ _',
                 '  0 _ _ _ _ _ _ _ _',
             ]))
+
+    def test_bad_cell_value(self):
+        self.board.cells[2][0] = str('space')
+        with self.assertRaises(KeyError) as cm:
+            self.board.draw()
+
+        self.assertEqual(str(cm.exception), "'space'")
