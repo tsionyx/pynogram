@@ -10,4 +10,5 @@ tox
 coverage
 
 # via PyCharm's 'Run Configuration'
-nose
+#nose
+pytest
