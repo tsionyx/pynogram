@@ -3,7 +3,8 @@
 
 from __future__ import unicode_literals, print_function
 
-from pyngrm.board import ConsoleBoard, StreamRenderer, CellState
+from pyngrm.board import ConsoleBoard
+from pyngrm.renderer import StreamRenderer, CellState
 from pyngrm.utils import merge_dicts
 from tests.test_board import tested_board
 

@@ -6,7 +6,11 @@ from io import StringIO
 
 import pytest
 
-from pyngrm.board import BaseBoard, CellState, ConsoleBoard, StreamRenderer
+from pyngrm.board import BaseBoard, ConsoleBoard
+from pyngrm.renderer import (
+    CellState,
+    StreamRenderer,
+)
 
 
 @pytest.fixture
