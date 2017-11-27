@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function
 
 import pytest
 
-from pyngrm.utils import merge_dicts, pad_list
+from pyngrm.utils import merge_dicts, pad_list, interleave
 
 
 class TestMergeDicts(object):
@@ -50,3 +50,29 @@ class TestPadList(object):
 
     def test_right(self, to_pad):
         assert pad_list(to_pad, 5, 5, left=False) == [1, 2, 3, 5, 5]
+
+
+class TestInterleave(object):
+    def test_simple(self):
+        assert interleave(
+            [0, 2, 4], [1, 3, 5]) == list(range(6))
+
+    def test_first_greater(self):
+        assert interleave(
+            [0, 2, 4, 6], [1, 3, 5]) == list(range(7))
+
+    def test_second_greater(self):
+        with pytest.raises(ValueError):
+            assert interleave(
+                [0, 2, 4], [1, 3, 5, 7]) == list(range(7))
+
+    def test_first_greater_by_two(self):
+        with pytest.raises(ValueError) as ei:
+            interleave([0, 2, 4, 6], [1, 3])
+        assert str(ei.value) == "The lists' sizes are too different: (4, 2)"
+
+    def test_second_empty(self):
+        assert interleave([1], []) == [1]
+
+    def test_two_empties(self):
+        assert interleave([], []) == []
