@@ -4,7 +4,7 @@
 from __future__ import unicode_literals, print_function
 
 from pyngrm.board import ConsoleBoard
-from pyngrm.renderer import StreamRenderer, CellState
+from pyngrm.renderer import StreamRenderer, CellState, AsciiRenderer
 from pyngrm.utils import merge_dicts
 from tests.test_board import tested_board
 
@@ -19,6 +19,6 @@ class GraphicalRenderer(StreamRenderer):
 
 
 if __name__ == '__main__':
-    b = tested_board(ConsoleBoard, renderer=GraphicalRenderer)
+    b = tested_board(ConsoleBoard, renderer=AsciiRenderer)
     b.cells[2] = [CellState.SPACE] + [CellState.BOX] * 6 + [CellState.SPACE]
     b.draw()
