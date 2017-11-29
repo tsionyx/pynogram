@@ -46,12 +46,12 @@ class Renderer(object):
             return True
 
     @property
-    def side_width(self):
-        return self.board.headers_width
-
-    @property
     def header_height(self):
         return self.board.headers_height
+
+    @property
+    def side_width(self):
+        return self.board.headers_width
 
     def render(self):
         raise NotImplementedError()

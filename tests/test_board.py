@@ -21,21 +21,21 @@ def tested_board(board_cls=BaseBoard, **kwargs):
 
     https://en.wikipedia.org/wiki/Nonogram#Example
     """
-    c = [[], 9, [9], [2, 2], (2, 2), 4, '4', '']
-    r = [
-        None,
-        4,
-        6,
-        '2 2',
-        [2, 2],
-        6,
-        4,
-        2,
-        [2],
-        2,
-        0,
-    ]
-    return board_cls(r, c, **kwargs)
+    return board_cls(
+        [[], 9, [9], [2, 2], (2, 2), 4, '4', ''],
+        [
+            None,
+            4,
+            6,
+            '2 2',
+            [2, 2],
+            6,
+            4,
+            2,
+            [2],
+            2,
+            0,
+        ], **kwargs)
 
 
 class TestBoard(object):
@@ -78,20 +78,20 @@ class TestBoard(object):
 
     def test_bad_row_value(self):
         with pytest.raises(ValueError) as ei:
-            BaseBoard(rows=[1, 2], columns=[2.0, 1])
+            BaseBoard(columns=[2.0, 1], rows=[1, 2])
 
         assert str(ei.value), 'Bad row: 2.0'
 
     def test_columns_and_rows_does_not_match(self):
         with pytest.raises(ValueError) as ei:
-            BaseBoard(rows=[1, 2], columns=[1, 1])
+            BaseBoard(columns=[1, 1], rows=[1, 2])
 
         assert str(ei.value), \
             'Number of boxes differs: 3 (rows) and 2 (columns)'
 
     def test_row_does_not_fit(self):
         with pytest.raises(ValueError) as ei:
-            BaseBoard(rows=[1, [1, 1]], columns=[1, 1])
+            BaseBoard(columns=[1, 1], rows=[1, [1, 1]])
 
         assert str(ei.value), \
             'Cannot allocate row [1, 1] in just 2 cells'
@@ -243,7 +243,7 @@ class TestAscciiBoard(TestConsoleBoard):
     def one_row_table(cls, width, stream):
         cols = [1] * width
         rows = [width]
-        return ConsoleBoard(rows, cols, renderer=AsciiRenderer(stream=stream))
+        return ConsoleBoard(cols, rows, renderer=AsciiRenderer(stream=stream))
 
     def test_draw_two_digits(self, stream):
         b = self.one_row_table(13, stream)

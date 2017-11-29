@@ -91,7 +91,7 @@ if __name__ == '__main__':
         '1 1',
     ]
 
-    _board = ConsoleBoard(rows, columns, renderer=AsciiRenderer)
+    _board = ConsoleBoard(columns, rows, renderer=AsciiRenderer)
     _r = _board.renderer
     _r.ICONS[CellState.BOX] = '\u2B1B',
     _r.ICONS[CellState.SPACE] = ' '  # '\u2022',

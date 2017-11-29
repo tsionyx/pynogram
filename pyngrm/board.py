@@ -21,9 +21,9 @@ log = logging.getLogger(_log_name)
 
 
 class BaseBoard(object):
-    def __init__(self, rows, columns, renderer=Renderer):
-        self.rows = self._normalize(rows)
+    def __init__(self, columns, rows, renderer=Renderer):
         self.columns = self._normalize(columns)
+        self.rows = self._normalize(rows)
 
         self.renderer = renderer
         if isinstance(self.renderer, type):
@@ -54,16 +54,16 @@ class BaseBoard(object):
         return tuple(res)
 
     @property
-    def width(self):
-        return len(self.columns)
-
-    @property
     def height(self):
         return len(self.rows)
 
+    @property
+    def width(self):
+        return len(self.columns)
+
     def validate(self):
-        self.validate_headers(self.rows, self.width)
         self.validate_headers(self.columns, self.height)
+        self.validate_headers(self.rows, self.width)
 
         boxes_in_rows = sum(sum(block) for block in self.rows)
         boxes_in_columns = sum(sum(block) for block in self.columns)
@@ -92,7 +92,7 @@ class BaseBoard(object):
             self.headers_height + self.height)
 
     def draw(self):
-        self.renderer\
+        self.renderer \
             .draw_header() \
             .draw_side() \
             .draw_grid() \
@@ -111,9 +111,9 @@ class BaseBoard(object):
 
 
 class ConsoleBoard(BaseBoard):
-    def __init__(self, rows, columns, renderer=StreamRenderer):
+    def __init__(self, columns, rows, renderer=StreamRenderer):
         super(ConsoleBoard, self).__init__(
-            rows, columns, renderer=renderer)
+            columns, rows, renderer=renderer)
 
 
 class GameBoard(BaseBoard):
