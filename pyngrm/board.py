@@ -117,11 +117,5 @@ class ConsoleBoard(BaseBoard):
 
 
 class GameBoard(BaseBoard):
+    # TODO: http://programarcadegames.com/index.php?chapter=introduction_to_graphics
     pass
-    # def init_screen(self):
-    #     # http://programarcadegames.com/index.php?chapter=introduction_to_graphics
-    #     import pygame
-    #     pygame.init()
-    #     size = (700, 500)
-    #     pygame.display.set_mode(size)
-    #     pygame.display.set_caption('The Great Game')

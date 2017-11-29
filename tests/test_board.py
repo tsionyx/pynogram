@@ -166,7 +166,7 @@ def clear_stream(s):
     return s
 
 
-class TestAscciiBoard(TestConsoleBoard):
+class TestAsciiBoard(TestConsoleBoard):
     @pytest.fixture
     def board(self, stream):
         return tested_board(ConsoleBoard,
@@ -298,6 +298,7 @@ class TestAscciiBoard(TestConsoleBoard):
         b.draw()
 
         table = stream.getvalue().rstrip()
+        # noinspection SpellCheckingInspection
         assert table == '\n'.join([
             '>*****xxxx*****x*****>',
             '!  #  !!!!  1  !  1  !',
@@ -309,10 +310,13 @@ class TestAscciiBoard(TestConsoleBoard):
     def test_grid_row(self, stream):
         b = self.one_row_table(1, stream)
         r = b.renderer
-        assert r._grid_row(border=True, header=False) == '+---++---+'
-        assert r._grid_row(border=False, header=False) == '|---++---|'
-        assert r._grid_row(border=False, header=True) == '|===++===|'
+        # noinspection PyProtectedMember
+        f = r._grid_row
+
+        assert f(border=True, header=False) == '+---++---+'
+        assert f(border=False, header=False) == '|---++---|'
+        assert f(border=False, header=True) == '|===++===|'
         with pytest.raises(ValueError) as ei:
-            r._grid_row(border=True, header=True)
+            f(border=True, header=True)
 
         assert str(ei.value) == 'Cannot print a row that separates headers as a border row'

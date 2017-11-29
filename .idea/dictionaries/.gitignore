@@ -1,0 +1,11 @@
+# Before adding/checking/removing words in the dictionaries
+# please make sure that the cached dictionary
+# ~/.PyCharm*/config/options/cachedDictionary.xml
+# is removed or empty since it can suppress the warnings
+#
+# https://intellij-support.jetbrains.com/hc/en-us/community/posts/206758289/comments/207258305
+
+*
+!.gitignore
+!project.xml
+!default.xml

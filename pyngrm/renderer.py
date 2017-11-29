@@ -205,7 +205,7 @@ class AsciiRenderer(StreamRenderer):
             raise ValueError('Cannot fit the value {} into cell width {}'.format(
                 ico, max_width))
 
-        # pre-formatted to insert paddings later
+        # pre-formatted to pad later
         res = '{}%s{}' % ico
 
         pad = ' ' * int(padded / 2)
