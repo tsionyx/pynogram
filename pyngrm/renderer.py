@@ -18,11 +18,13 @@ log = logging.getLogger(_log_name)
 
 
 class CellState(object):
-    NOT_SET = None
+    UNSURE = None
+    BOX = True
+    SPACE = False
+
+    # only matters for renderer
+    NOT_SET = 'E'
     THUMBNAIL = 'T'
-    UNSURE = 'U'
-    BOX = 'B'
-    SPACE = 'S'
 
 
 class Renderer(object):
@@ -128,12 +130,12 @@ class StreamRenderer(Renderer):
     }
 
     def cell_icon(self, state):
-        try:
-            return self.ICONS[state]
-        except KeyError:
-            if isinstance(state, integer_types):
-                return text_type(state)
-            raise
+        types = tuple(map(type, self.ICONS))
+        # why not just `isinstance(state, int)`?
+        # because `isinstance(True, int) == True`
+        if isinstance(state, integer_types) and not isinstance(state, types):
+            return text_type(state)
+        return self.ICONS[state]
 
 
 class AsciiRenderer(StreamRenderer):
