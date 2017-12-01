@@ -48,7 +48,7 @@ setup(
     version='.'.join(map(str, VERSION)),
     packages=find_packages(),
     install_requires=['six'],
-    tests_require=['tox'],
+    tests_require=['tox', 'coverage', 'pytest', 'flake8'],
 
     # PyPI metadata
     author="Tsionyx",

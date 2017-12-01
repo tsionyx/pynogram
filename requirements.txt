@@ -8,7 +8,8 @@ six >= 1.10.0
 # manual invocation
 tox
 coverage
+flake8
 
 # via PyCharm's 'Run Configuration'
 #nose
-pytest
+pytest >= 3.3
