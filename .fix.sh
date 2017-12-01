@@ -15,7 +15,7 @@
 # $ rm .git/hooks/pre-push
 #
 # Requirements:
-# bash, sed, xargs, md5sum, awk, git, python, flake8 (optional)
+# bash, sed, xargs, md5sum, awk, git, python
 
 
 DIR_PATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
@@ -155,15 +155,6 @@ for file in $(git submodule foreach 'git ls-files | sed "s|^|$path/|"' | grep -i
     check_syntax "$file"
 done
 unset IFS
-
-# pep8 checking
-#if command -v flake8 >/dev/null 2>&1; then
-#  #pip install flake8
-#  flake8 ${ROOT}/{src,contrib,tests} --max-line-length=100 --ignore=E402
-#fi
-
-
-# place your tests here
 
 
 fixed_files=$(diff <(git ls-files | xargs md5sum) "$hash_file" | grep -P '^[<>]' | awk '{print $3}' | sort -u)
