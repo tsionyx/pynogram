@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*
+"""
+Examples run here
+"""
 
 from __future__ import unicode_literals, print_function
 
-from pyngrm.board import ConsoleBoard
-from pyngrm.renderer import CellState, AsciiRenderer
+from pyngrm.board import AsciiBoard
+from pyngrm.state import BOX, SPACE
 
 
 def _solve_on_space_hints(board, hints):
@@ -12,18 +15,15 @@ def _solve_on_space_hints(board, hints):
     Pseudo solving with spaces given
     """
     # assert len(hints) == len(board.rows)
-
-    b = CellState.BOX
-    s = CellState.SPACE
     for i, (spaces_hint, row) in enumerate(zip(hints, board.rows)):
         assert len(spaces_hint) == len(row)
         cells = []
         for space_size, box_size in zip(spaces_hint, row):
-            cells.extend([s] * space_size)
-            cells.extend([b] * box_size)
+            cells.extend([SPACE] * space_size)
+            cells.extend([BOX] * box_size)
 
         # pad with spaces
-        solution = cells + ([s] * (board.width - len(cells)))
+        solution = cells + ([SPACE] * (board.width - len(cells)))
         board.cells[i] = solution
 
 
@@ -62,7 +62,10 @@ def solve(board):
     )
 
 
-if __name__ == '__main__':
+def main():
+    """
+    The main function
+    """
     columns = [
         1, 1, 2, 4, 7, 9, '2 8', '1 8', 8, '1 9', '2 7', '3 4',
         '6 4', '8 5', '1 11', '1 7', 8, '1 4 8', '6 8', '4 7',
@@ -91,10 +94,14 @@ if __name__ == '__main__':
         '1 1',
     ]
 
-    _board = ConsoleBoard(columns, rows, renderer=AsciiRenderer)
-    _r = _board.renderer
-    _r.ICONS[CellState.BOX] = '\u2B1B',
-    _r.ICONS[CellState.SPACE] = ' '  # '\u2022',
+    board = AsciiBoard(columns, rows)
+    rend = board.renderer
+    rend.ICONS[BOX] = '\u2B1B'
+    rend.ICONS[SPACE] = ' '  # '\u2022',
 
-    solve(_board)
-    _board.draw()
+    solve(board)
+    board.draw()
+
+
+if __name__ == '__main__':
+    main()

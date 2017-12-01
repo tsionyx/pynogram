@@ -6,7 +6,12 @@ import sys
 
 import pytest
 
-from pyngrm.utils import merge_dicts, pad_list, interleave, max_safe
+from pyngrm.utils import (
+    merge_dicts,
+    pad,
+    interleave,
+    max_safe,
+)
 
 
 class TestMergeDicts(object):
@@ -45,13 +50,13 @@ class TestPadList(object):
         return [1, 2, 3]
 
     def test_already_enough(self, to_pad):
-        assert pad_list(to_pad, 2, 5) == to_pad
+        assert pad(to_pad, 2, 5) == to_pad
 
     def test_simple(self, to_pad):
-        assert pad_list(to_pad, 5, 5) == [5, 5, 1, 2, 3]
+        assert pad(to_pad, 5, 5) == [5, 5, 1, 2, 3]
 
     def test_right(self, to_pad):
-        assert pad_list(to_pad, 5, 5, left=False) == [1, 2, 3, 5, 5]
+        assert pad(to_pad, 5, 5, left=False) == [1, 2, 3, 5, 5]
 
 
 class TestInterleave(object):

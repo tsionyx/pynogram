@@ -1,12 +1,33 @@
 <component name="ProjectDictionaryState">
   <dictionary name="default">
     <words>
+      <w>asdict</w>
+      <w>backtick</w>
+      <w>classmethod</w>
+      <w>contextlib</w>
       <w>coreutils</w>
+      <w>crlf</w>
+      <w>expectedly</w>
       <w>gitignore</w>
+      <w>inlinevar</w>
       <w>ipynb</w>
+      <w>msvs</w>
+      <w>mymodule</w>
+      <w>mypackage</w>
       <w>noninfringement</w>
+      <w>optparse</w>
+      <w>overgeneral</w>
+      <w>parseable</w>
+      <w>pygtk</w>
+      <w>pylint</w>
+      <w>pylintrc</w>
+      <w>rcfile</w>
+      <w>rdiv</w>
       <w>realpath</w>
+      <w>reenable</w>
+      <w>regexes</w>
       <w>relpath</w>
+      <w>typecheck</w>
       <w>xargs</w>
       <w>yaml</w>
     </words>

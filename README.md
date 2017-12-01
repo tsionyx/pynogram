@@ -5,3 +5,9 @@
 ```
 tox
 ```
+
+## Lint the project
+
+```
+tox -elint
+```

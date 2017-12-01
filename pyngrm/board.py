@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*
+"""
+Defines a board of nanogram game
+"""
 
 from __future__ import unicode_literals, print_function
 
@@ -8,20 +11,27 @@ import os
 from six import string_types, integer_types
 
 from pyngrm.renderer import (
-    CellState,
     Renderer,
     StreamRenderer,
+    AsciiRenderer,
 )
+from pyngrm.state import UNSURE
 
-_log_name = __name__
-if _log_name == '__main__':  # pragma: no cover
-    _log_name = os.path.basename(__file__)
+_LOG_NAME = __name__
+if _LOG_NAME == '__main__':  # pragma: no cover
+    _LOG_NAME = os.path.basename(__file__)
 
-log = logging.getLogger(_log_name)
+LOG = logging.getLogger(_LOG_NAME)
 
 
 class BaseBoard(object):
+    """
+    Basic nanogram board with columns and rows defined
+    """
     def __init__(self, columns, rows, renderer=Renderer):
+        """
+        :type renderer: Renderer | type[Renderer]
+        """
         self.columns = self._normalize(columns)
         self.rows = self._normalize(rows)
 
@@ -29,39 +39,46 @@ class BaseBoard(object):
         if isinstance(self.renderer, type):
             self.renderer = self.renderer(self)
         elif isinstance(self.renderer, Renderer):
-            self.renderer.init(self)
+            self.renderer.board_init(self)
         else:
             raise TypeError('Bad renderer: %s' % renderer)
 
-        self.cells = [[CellState.UNSURE] * self.width for _ in range(self.height)]
+        self.cells = [[UNSURE] * self.width for _ in range(self.height)]
         self.validate()
 
     @classmethod
     def _normalize(cls, rows):
         res = []
-        for r in rows:
-            if not r:  # None, 0, '', [], ()
-                r = ()
-            elif isinstance(r, (tuple, list)):
-                r = tuple(r)
-            elif isinstance(r, integer_types):
-                r = (r,)
-            elif isinstance(r, string_types):
-                r = tuple(map(int, r.split(' ')))
+        for row in rows:
+            if not row:  # None, 0, '', [], ()
+                row = ()
+            elif isinstance(row, (tuple, list)):
+                row = tuple(row)
+            elif isinstance(row, integer_types):
+                row = (row,)
+            elif isinstance(row, string_types):
+                row = tuple(map(int, row.split(' ')))
             else:
-                raise ValueError('Bad row: %s' % r)
-            res.append(r)
+                raise ValueError('Bad row: %s' % row)
+            res.append(row)
         return tuple(res)
 
     @property
     def height(self):
+        """The height of the playing area"""
         return len(self.rows)
 
     @property
     def width(self):
+        """The width of the playing area"""
         return len(self.columns)
 
     def validate(self):
+        """
+        Validate that the board is valid:
+        - all the clues in a row (a column) can fit into width (height) of the board
+        - the vertical and horizontal clues defines the same number of boxes
+        """
         self.validate_headers(self.columns, self.height)
         self.validate_headers(self.rows, self.width)
 
@@ -73,49 +90,48 @@ class BaseBoard(object):
 
     @classmethod
     def validate_headers(cls, rows, max_size):
+        """
+        Validate that the all the rows can fit into the given size
+        """
         for row in rows:
             need_cells = sum(row)
             if row:
                 # also need at least one space between every two blocks
                 need_cells += len(row) - 1
 
-            log.debug('Row: %s; Need: %s; Available: %s.',
+            LOG.debug('Row: %s; Need: %s; Available: %s.',
                       row, need_cells, max_size)
             if need_cells > max_size:
                 raise ValueError('Cannot allocate row {} in just {} cells'.format(
                     list(row), max_size))
 
-    @property
-    def full_size(self):
-        return (
-            self.headers_width + self.width,
-            self.headers_height + self.height)
-
     def draw(self):
-        self.renderer \
-            .draw_header() \
-            .draw_side() \
-            .draw_grid() \
-            .render()
+        """Draws a current state of a board with the renderer"""
+        self.renderer.draw()
 
-    @property
-    def headers_height(self):
-        return max(map(len, self.columns))
-
-    @property
-    def headers_width(self):
-        return max(map(len, self.rows))
-
-    def __repr__(self):
+    def __str__(self):
         return '{}({}x{})'.format(self.__class__.__name__, self.height, self.width)
 
 
 class ConsoleBoard(BaseBoard):
-    def __init__(self, columns, rows, renderer=StreamRenderer):
+    """A board that renders on stdout"""
+    def __init__(self, columns, rows, **renderer_params):
         super(ConsoleBoard, self).__init__(
-            columns, rows, renderer=renderer)
+            columns, rows, renderer=StreamRenderer(**renderer_params))
+
+
+class AsciiBoard(BaseBoard):
+    """A board that renders on stdout with ASCII graphic"""
+    def __init__(self, columns, rows, **renderer_params):
+        super(AsciiBoard, self).__init__(
+            columns, rows, renderer=AsciiRenderer(**renderer_params))
 
 
 class GameBoard(BaseBoard):
+    """
+    A board that renders using pygame or similar library with easy 2D drawing.
+
+    Not implemented yet.
+    """
     # TODO: http://programarcadegames.com/index.php?chapter=introduction_to_graphics
     pass

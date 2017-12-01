@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*
+"""
+Defines various renderers for the game of nanogram
+"""
 
 from __future__ import unicode_literals, print_function
 
@@ -8,75 +11,107 @@ import sys
 
 from six import integer_types, text_type
 
-from pyngrm.utils import pad_list, merge_dicts
+from pyngrm.state import BOX, SPACE, UNSURE
+from pyngrm.utils import pad, merge_dicts, max_safe
 
-_log_name = __name__
-if _log_name == '__main__':  # pragma: no cover
-    _log_name = os.path.basename(__file__)
+_LOG_NAME = __name__
+if _LOG_NAME == '__main__':  # pragma: no cover
+    _LOG_NAME = os.path.basename(__file__)
 
-log = logging.getLogger(_log_name)
+LOG = logging.getLogger(_LOG_NAME)
+
+# cell states that matters for renderer
+_NOT_SET = 'E'  # empty cell, e.g. in the headers
+_THUMBNAIL = 'T'
 
 
-class CellState(object):
-    UNSURE = None
-    BOX = True
-    SPACE = False
-
-    # only matters for renderer
-    NOT_SET = 'E'
-    THUMBNAIL = 'T'
+class _DummyBoard(object):  # pylint: disable=R0903
+    rows = columns = ()
+    width = height = 0
 
 
 class Renderer(object):
+    """Defines the abstract renderer for a nanogram board"""
+
     def __init__(self, board=None):
+        self.cells = None
+        self.board = None
+        self.board_init(board)
+
+    def board_init(self, board=None):
+        """Initialize renderer's properties dependent on board it draws"""
+        if board:
+            LOG.info("Init '%s' renderer with board '%s'",
+                     self.__class__.__name__, board)
+        else:
+            if self.board:
+                return  # already initialized, do nothing
+            board = _DummyBoard()
         self.board = board
 
-        self.cells = None
-        self.board_width, self.board_height = None, None
+    @property
+    def full_height(self):
+        """The size of the header block with vertical clues"""
+        return self.header_height + self.board.height
 
-        self.init()
-
-    def init(self, board=None):
-        board = board or self.board
-        if board:
-            log.info("Init '%s' renderer with board '%s'",
-                     self.__class__.__name__, board)
-            self.board = board
-            self.board_width, self.board_height = board.full_size
-            return True
+    @property
+    def full_width(self):
+        """The full size of """
+        return self.side_width + self.board.width
 
     @property
     def header_height(self):
-        return self.board.headers_height
+        """The size of the header block with vertical clues"""
+        return max_safe(map(len, self.board.columns), default=0)
 
     @property
     def side_width(self):
-        return self.board.headers_width
+        """The width of the side block with horizontal clues"""
+        return max_safe(map(len, self.board.rows), default=0)
 
     def render(self):
+        """Actually print out the board"""
         raise NotImplementedError()
 
+    def draw(self):
+        """Calculate all the cells and draw an image of the board"""
+        self.draw_header()
+        self.draw_side()
+        self.draw_grid()
+        self.render()
+
     def draw_header(self):
-        return self
+        """
+        Changes the internal state to be able to draw vertical clues
+        """
+        raise NotImplementedError()
 
     def draw_side(self):
-        return self
+        """
+        Changes the internal state to be able to draw horizontal clues
+        """
+        raise NotImplementedError()
 
     def draw_grid(self):
-        return self
+        """
+        Changes the internal state to be able to draw a main grid
+        """
+        raise NotImplementedError()
 
 
 class StreamRenderer(Renderer):
+    """
+    Renders a board as a simple text table to a stream (stdout by default)
+    """
     def __init__(self, board=None, stream=sys.stdout):
         super(StreamRenderer, self).__init__(board)
         self.stream = stream
 
-    def init(self, board=None):
-        if super(StreamRenderer, self).init(board):
-            log.info('init cells: %sx%s', self.board_width, self.board_height)
-            self.cells = [[self.cell_icon(CellState.NOT_SET)] * self.board_width
-                          for _ in range(self.board_height)]
-            return True
+    def board_init(self, board=None):
+        super(StreamRenderer, self).board_init(board)
+        LOG.info('init cells: %sx%s', self.full_width, self.full_width)
+        self.cells = [[self.cell_icon(_NOT_SET)] * self.full_width
+                      for _ in range(self.full_height)]
 
     def _print(self, *args):
         return print(*args, file=self.stream)
@@ -88,18 +123,16 @@ class StreamRenderer(Renderer):
     def draw_header(self):
         for i in range(self.header_height):
             for j in range(self.side_width):
-                self.cells[i][j] = CellState.THUMBNAIL
+                self.cells[i][j] = _THUMBNAIL
 
         for j, col in enumerate(self.board.columns):
             rend_j = j + self.side_width
             if not col:
                 col = [0]
-            rend_row = pad_list(col, self.header_height, CellState.NOT_SET)
+            rend_row = pad(col, self.header_height, _NOT_SET)
             # self.cells[:self.side_width][rend_j] = map(text_type, rend_row)
             for rend_i, cell in enumerate(rend_row):
                 self.cells[rend_i][rend_j] = cell
-
-        return super(StreamRenderer, self).draw_header()
 
     def draw_side(self):
         for i, row in enumerate(self.board.rows):
@@ -107,10 +140,8 @@ class StreamRenderer(Renderer):
             # row = list(row)
             if not row:
                 row = [0]
-            rend_row = pad_list(row, self.side_width, CellState.NOT_SET)
+            rend_row = pad(row, self.side_width, _NOT_SET)
             self.cells[rend_i][:self.side_width] = rend_row
-
-        return super(StreamRenderer, self).draw_side()
 
     def draw_grid(self):
         for i, row in enumerate(self.board.cells):
@@ -119,17 +150,19 @@ class StreamRenderer(Renderer):
                 rend_j = j + self.side_width
                 self.cells[rend_i][rend_j] = cell
 
-        return super(StreamRenderer, self).draw_grid()
-
     ICONS = {
-        CellState.NOT_SET: ' ',
-        CellState.THUMBNAIL: 't',
-        CellState.UNSURE: '_',
-        CellState.BOX: 'X',
-        CellState.SPACE: '.',
+        _NOT_SET: ' ',
+        _THUMBNAIL: 't',
+        UNSURE: '_',
+        BOX: 'X',
+        SPACE: '.',
     }
 
     def cell_icon(self, state):
+        """
+        Gets a symbolic representation of a cell given its state
+        and predefined table `ICONS`
+        """
         types = tuple(map(type, self.ICONS))
         # why not just `isinstance(state, int)`?
         # because `isinstance(True, int) == True`
@@ -155,10 +188,10 @@ class AsciiRenderer(StreamRenderer):
 
     def _cell_horizontal_border(self, header=False):
         if header:
-            pad = self.HEADER_DELIMITER
+            padding = self.HEADER_DELIMITER
         else:
-            pad = self.HORIZONTAL_LINE_PAD
-        return pad * self.CELL_WIDTH
+            padding = self.HORIZONTAL_LINE_PAD
+        return padding * self.CELL_WIDTH
 
     def _side_delimiter(self, grid=False):
         """
@@ -167,10 +200,10 @@ class AsciiRenderer(StreamRenderer):
         '++' for the 'grid' rows.
         """
         if grid:
-            ch = self.GRID_CROSS_SYMBOL
+            delimiter = self.GRID_CROSS_SYMBOL
         else:
-            ch = self.VERTICAL_GRID_SYMBOL
-        return ch * self.SIDE_DELIMITER_SIZE
+            delimiter = self.VERTICAL_GRID_SYMBOL
+        return delimiter * self.SIDE_DELIMITER_SIZE
 
     def _horizontal_grid(self, size, header=False):
         return self.GRID_CROSS_SYMBOL.join(
@@ -208,13 +241,14 @@ class AsciiRenderer(StreamRenderer):
         # pre-formatted to pad later
         res = '{}%s{}' % ico
 
-        pad = ' ' * int(padded / 2)
+        space_padding = ' ' * int(padded / 2)
+
         # e.g. 3 --> ' 3 '
         # but 13 --> ' 13'
         if padded % 2 == 0:
-            return res.format(pad, pad)
-        else:
-            return res.format(pad + ' ', pad)
+            return res.format(space_padding, space_padding)
+
+        return res.format(space_padding + ' ', space_padding)
 
     def _value_row(self, values):
         sep = self.VERTICAL_GRID_SYMBOL
@@ -243,6 +277,6 @@ class AsciiRenderer(StreamRenderer):
         self._print(self._grid_row(border=True))
 
     ICONS = merge_dicts(StreamRenderer.ICONS, {
-        CellState.THUMBNAIL: '#',
-        CellState.UNSURE: ' ',
+        _THUMBNAIL: '#',
+        UNSURE: ' ',
     })

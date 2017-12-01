@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*
+"""
+Here lie the utilities methods that does not depend on any domain
+e.g. manipulations with collections or streams.
+"""
 
 from __future__ import unicode_literals, print_function
 
@@ -19,28 +23,35 @@ def merge_dicts(*dict_args, **kwargs):
     return result
 
 
-def pad_list(l, n, x, left=True):
-    if len(l) >= n:
-        return l
+def pad(coll, size, padding, left=True):
+    """
+    Pad the collection `coll` with `padding` items
+    until it reaches the length of `size`.
+    By default do padding in the beginning (on the left side).
+    """
+    padding_size = size - len(coll)
+    if padding_size <= 0:
+        return coll
 
-    padding = [x] * (n - len(l))
-    return padding + list(l) if left else list(l) + padding
+    padding = [padding] * padding_size
+    new_list = list(coll)
+    return padding + new_list if left else new_list + padding
 
 
-def interleave(a, b):
+def interleave(list_a, list_b):
     """
     >>> interleave([0, 2, 4, 6], [1, 3, 5])
     [0, 1, 2, 3, 4, 5, 6]
 
     https://stackoverflow.com/a/7947461
     """
-    la, lb = len(a), len(b)
-    if la - lb not in (0, 1):
+    size_a, size_b = len(list_a), len(list_b)
+    if size_a - size_b not in (0, 1):
         raise ValueError("The lists' sizes are too different: ({}, {})"
-                         .format(la, lb))
-    res = [None] * (la + lb)
-    res[::2] = a
-    res[1::2] = b
+                         .format(size_a, size_b))
+    res = [None] * (size_a + size_b)
+    res[::2] = list_a
+    res[1::2] = list_b
     return res
 
 
