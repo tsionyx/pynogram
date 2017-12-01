@@ -2,9 +2,11 @@
 
 from __future__ import unicode_literals, print_function
 
+import sys
+
 import pytest
 
-from pyngrm.utils import merge_dicts, pad_list, interleave
+from pyngrm.utils import merge_dicts, pad_list, interleave, max_safe
 
 
 class TestMergeDicts(object):
@@ -76,3 +78,48 @@ class TestInterleave(object):
 
     def test_two_empties(self):
         assert interleave([], []) == []
+
+
+class TestMaxSafe(object):
+    @classmethod
+    def _the_same_as_max(cls, *args, **kwargs):
+        a = max_safe(*args, **kwargs)
+        b = max(*args, **kwargs)
+        assert a == b
+        return a
+
+    def test_simple(self):
+        assert self._the_same_as_max([1, 2, 3]) == 3
+
+    def test_args(self):
+        assert self._the_same_as_max(3, 4, 5) == 5
+
+    def test_with_key(self):
+        assert self._the_same_as_max([5, 6, 7], key=lambda x: -x) == 5
+
+    def test_args_with_key(self):
+        assert self._the_same_as_max(8, 9, 10, key=lambda x: 1.0 / x) == 8
+
+    @pytest.mark.skipif(sys.version_info < (3, 4), reason="requires Python3.4+")
+    def test_empty_with_default_on_34(self):
+        assert self._the_same_as_max([], default=7) == 7
+
+    @pytest.mark.skipif(sys.version_info >= (3, 4), reason="requires Python<3.4")
+    def test_empty_with_default_failed(self):
+        with pytest.raises(TypeError, match='got an unexpected keyword argument'):
+            self._the_same_as_max([], default=14)
+
+    def test_empty_with_default(self):
+        assert max_safe([], default=21) == 21
+
+    def test_empty_true_object_with_default(self):
+        assert max_safe(iter([]), default=28) == 28
+
+    def test_generator(self):
+        def _gen(n=5):
+            while n > 0:
+                yield n
+                n -= 1
+
+        assert max(_gen()) == 5
+        assert max_safe(_gen(), default=3) == 5
