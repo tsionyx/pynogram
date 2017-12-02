@@ -53,9 +53,9 @@ setup(
     # PyPI metadata
     author="Tsionyx",
     author_email="tsionyx@gmail.com",
-    description="Solve nanograms automatically",
+    description="Solve nonograms automatically",
     license="MIT",
-    keywords="game nanogram",
+    keywords="game nonogram",
     url="https://gitlab.com/tsionyx/{}".format(NAME),
 
     long_description=read('README.md'),

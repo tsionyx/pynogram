@@ -1,4 +1,4 @@
-# Solve nanograms automatically
+# Solve nonograms automatically
 
 ## Run tests
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 """
-Defines various renderers for the game of nanogram
+Defines various renderers for the game of nonogram
 """
 
 from __future__ import unicode_literals, print_function
@@ -31,7 +31,7 @@ class _DummyBoard(object):  # pylint: disable=R0903
 
 
 class Renderer(object):
-    """Defines the abstract renderer for a nanogram board"""
+    """Defines the abstract renderer for a nonogram board"""
 
     def __init__(self, board=None):
         self.cells = None

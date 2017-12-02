@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 """
-Defines the states of a single nanogram cell.
+Defines the states of a single nonogram cell.
 """
 
 from __future__ import unicode_literals, print_function

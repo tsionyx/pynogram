@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*
 """
-Defines a board of nanogram game
+Defines a board of nonogram game
 """
 
 from __future__ import unicode_literals, print_function
@@ -26,7 +26,7 @@ LOG = logging.getLogger(_LOG_NAME)
 
 class BaseBoard(object):
     """
-    Basic nanogram board with columns and rows defined
+    Basic nonogram board with columns and rows defined
     """
     def __init__(self, columns, rows, renderer=Renderer):
         """
