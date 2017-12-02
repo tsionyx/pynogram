@@ -1,4 +1,5 @@
 six >= 1.10.0
+numpy
 
 
 # it's possible to run tests with simply `setup.py test`

@@ -8,6 +8,7 @@ from __future__ import unicode_literals, print_function
 import logging
 import os
 
+import numpy as np
 from six import string_types, integer_types
 
 from pyngrm.renderer import (
@@ -43,7 +44,7 @@ class BaseBoard(object):
         else:
             raise TypeError('Bad renderer: %s' % renderer)
 
-        self.cells = [[UNSURE] * self.width for _ in range(self.height)]
+        self.cells = np.array([[UNSURE] * self.width for _ in range(self.height)])
         self.validate()
 
     @classmethod
