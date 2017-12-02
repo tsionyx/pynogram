@@ -25,16 +25,37 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 LOG = logging.getLogger(_LOG_NAME)
 
 
+def normalize_row(row):
+    """
+    Normalize the row to a standard tuple format:
+    - empty value (None, 0, '', [], ()) as an empty tuple
+    - tuple or list becomes simply as a tuple
+    - single number as a tuple with one item
+    - a string of space-separated numbers as a tuple of that numbers
+    """
+    if not row:  # None, 0, '', [], ()
+        return ()
+    elif isinstance(row, (tuple, list)):
+        return tuple(row)
+    elif isinstance(row, integer_types):
+        return row,  # it's a tuple!
+    elif isinstance(row, string_types):
+        return tuple(map(int, row.split(' ')))
+    else:
+        raise ValueError('Bad row: %s' % row)
+
+
 class BaseBoard(object):
     """
     Basic nonogram board with columns and rows defined
     """
+
     def __init__(self, columns, rows, renderer=Renderer):
         """
         :type renderer: Renderer | type[Renderer]
         """
-        self.columns = self._normalize(columns)
-        self.rows = self._normalize(rows)
+        self.columns = self.normalize(columns)
+        self.rows = self.normalize(rows)
 
         self.renderer = renderer
         if isinstance(self.renderer, type):
@@ -48,21 +69,11 @@ class BaseBoard(object):
         self.validate()
 
     @classmethod
-    def _normalize(cls, rows):
-        res = []
-        for row in rows:
-            if not row:  # None, 0, '', [], ()
-                row = ()
-            elif isinstance(row, (tuple, list)):
-                row = tuple(row)
-            elif isinstance(row, integer_types):
-                row = (row,)
-            elif isinstance(row, string_types):
-                row = tuple(map(int, row.split(' ')))
-            else:
-                raise ValueError('Bad row: %s' % row)
-            res.append(row)
-        return tuple(res)
+    def normalize(cls, rows):
+        """
+        Presents given rows in standard format
+        """
+        return tuple(map(normalize_row, rows))
 
     @property
     def height(self):
@@ -116,6 +127,7 @@ class BaseBoard(object):
 
 class ConsoleBoard(BaseBoard):
     """A board that renders on stdout"""
+
     def __init__(self, columns, rows, **renderer_params):
         super(ConsoleBoard, self).__init__(
             columns, rows, renderer=StreamRenderer(**renderer_params))
@@ -123,6 +135,7 @@ class ConsoleBoard(BaseBoard):
 
 class AsciiBoard(BaseBoard):
     """A board that renders on stdout with ASCII graphic"""
+
     def __init__(self, columns, rows, **renderer_params):
         super(AsciiBoard, self).__init__(
             columns, rows, renderer=AsciiRenderer(**renderer_params))

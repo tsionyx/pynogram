@@ -103,6 +103,7 @@ class StreamRenderer(Renderer):
     """
     Renders a board as a simple text table to a stream (stdout by default)
     """
+
     def __init__(self, board=None, stream=sys.stdout):
         super(StreamRenderer, self).__init__(board)
         self.stream = stream
