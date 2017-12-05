@@ -11,6 +11,7 @@ from pyngrm.fsm import (
     FiniteStateError,
     FiniteStateMachine,
     NonogramFSM,
+    NonogramError,
 )
 
 
@@ -168,23 +169,65 @@ class TestNonogramFiniteStateMachine(object):
             nfsm.match([True, True, True, False, True, True])
 
 
+INFORMAL_REPRESENTATIONS = {
+    UNSURE: ('_', ' ', '?', '*'),
+    SPACE: ('.', '0', 'O', '-'),
+    BOX: ('X', '+'),
+}
+
+
 class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
     def test_basic(self, nfsm):
         assert nfsm.partial_match(
             [UNSURE, SPACE, UNSURE, UNSURE, BOX] + [UNSURE] * 4)
 
+        assert nfsm.partial_match('_.__X____')
+
     def test_not_match_too_many_spaces(self, nfsm):
         assert not nfsm.partial_match(
             [UNSURE, UNSURE, SPACE, SPACE] + [UNSURE] * 5)
 
+        assert not nfsm.partial_match('  00     ')
+
     def test_not_match_too_many_boxes(self, nfsm):
         assert not nfsm.partial_match(
             [BOX] * 4 + [UNSURE] * 5)
+
+        assert not nfsm.partial_match('++++?????')
 
     def test_current_state_saved(self, nfsm):
         nfsm.transition(False, True, True)
         assert nfsm.current_state == 3
 
         assert nfsm.partial_match([UNSURE] * 9)
+        assert nfsm.partial_match('*********')
 
         assert nfsm.current_state == 3
+
+    def test_bad_informal_representation(self, nfsm):
+        with pytest.raises(ValueError) as ie:
+            nfsm.partial_match('_.0_X____')
+
+        exc = ie.value
+        assert str(exc) == ("Cannot contain different representations '., 0' "
+                            "of the same state 'False' in a single row "
+                            "'_.0_X____'")
+
+    def test_solve_bad_row(self, nfsm):
+        with pytest.raises(NonogramError) as ie:
+            nfsm.solve('_0__0____')
+
+        exc = ie.value
+        assert str(exc) == ("The 0 cell (None) in a row "
+                            "'[None, False, None, None, False, None, None, None, None]' "
+                            "cannot be neither space nor box")
+
+    # TODO: more solved rows
+    SOLVED_ROWS = [
+        ('3 2', '_0__X____', [SPACE, SPACE, UNSURE, BOX, BOX, UNSURE, UNSURE, BOX, UNSURE]),
+    ]
+
+    @pytest.mark.parametrize("clues,input_row,expected", SOLVED_ROWS)
+    def test_solve(self, clues, input_row, expected):
+        nfsm = NonogramFSM.from_clues(clues)
+        assert nfsm.solve(input_row) == expected

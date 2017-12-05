@@ -15,7 +15,7 @@ from collections import OrderedDict
 from six import iteritems, text_type
 from six.moves import range
 
-from pyngrm.base import BOX, SPACE, UNSURE, normalize_clues
+from pyngrm.base import BOX, SPACE, UNSURE, normalize_clues, normalize_row
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -25,6 +25,10 @@ LOG = logging.getLogger(_LOG_NAME)
 
 
 class FiniteStateError(ValueError):
+    """
+    Represents an error occurred when trying
+    to make bad transition with a FSM
+    """
     BAD_TRANSITION = 1
     BAD_ACTION = 2
 
@@ -33,7 +37,22 @@ class FiniteStateError(ValueError):
         super(FiniteStateError, self).__init__(*args)
 
 
+class NonogramError(ValueError):
+    """
+    Represents an error occurred when trying
+    to solve 'unsolvable' nonogram
+    """
+    pass
+
+
 class FiniteStateMachine(object):
+    """
+    Represents a simple deterministic automaton that can be
+    only in a single state in every single moment
+
+    https://en.wikipedia.org/wiki/Finite-state_machine
+    """
+
     def __init__(self, initial_state, state_map, final=None):
         self.initial_state = initial_state
         self._state = initial_state
@@ -43,6 +62,10 @@ class FiniteStateMachine(object):
         assert self.current_state in self.states
 
     def transition(self, *actions):
+        """
+        Change the state of a machine by consequently applying
+        one or more `actions`
+        """
         state = None
         for action in actions:
             state = self.transition_one(action)
@@ -50,6 +73,10 @@ class FiniteStateMachine(object):
         return state
 
     def transition_one(self, action):
+        """
+        Change the state of a machine according to the
+        `self.state_map` by applying an `action`
+        """
         LOG.debug("Current state: '%s'", self.current_state)
         LOG.debug("Action: '%s'", action)
 
@@ -67,14 +94,23 @@ class FiniteStateMachine(object):
 
     @property
     def current_state(self):
+        """
+        The current state of a machine
+        """
         return self._state
 
     @property
     def states(self):
+        """
+        All the possible states of a machine
+        """
         return tuple(set(state for state, action in self.state_map))
 
     @property
     def actions(self):
+        """
+        All the possible actions that can be applied to a machine
+        """
         return tuple(set(action for state, action in self.state_map))
 
     def __str__(self):
@@ -93,6 +129,11 @@ class FiniteStateMachine(object):
         return '\n'.join(res)
 
     def match(self, word):
+        """
+        Verify if the machine can accept the `word`
+        i.e. reach the `self.final_state` by applying
+        the words' letters one by one
+        """
         if self.current_state != self.initial_state:
             raise RuntimeError("Only run '{}' when in initial state '{}'".format(
                 self.match.__name__, self.initial_state))
@@ -120,6 +161,10 @@ class FiniteStateMachine(object):
 
 
 class NonogramFSM(FiniteStateMachine):
+    """
+    Represents a special class of a FSM
+    used to solve a nonogram
+    """
     @classmethod
     def _optional_space(cls, state):
         return (state, SPACE), state
@@ -136,6 +181,10 @@ class NonogramFSM(FiniteStateMachine):
 
     @classmethod
     def from_clues(cls, *clues):
+        """
+        Construct the machine from the clues
+        given in a nonogram definition
+        """
         if len(clues) == 1:
             clues = clues[0]
         clues = normalize_clues(clues)
@@ -166,6 +215,13 @@ class NonogramFSM(FiniteStateMachine):
         return cls(cls.INITIAL_STATE, state_map, final=state_counter)
 
     def partial_match(self, row):
+        """
+        Verify if the row of (possibly partly unsolved) cells
+        can be matched against the current machine
+        i.e. that the row can be a partial solution of a nonogram
+        """
+        row = normalize_row(row)
+
         save_state = self.current_state
 
         try:
@@ -206,3 +262,39 @@ class NonogramFSM(FiniteStateMachine):
             return self.final_state in possible_states
         finally:
             self._state = save_state
+
+    def solve(self, row):
+        """
+        Solve the nonogram `row` using the FSM and `self.partial_match` logic
+        """
+        original_row = normalize_row(row)
+
+        # do not change original
+        solved = list(original_row)
+        for i, cell in enumerate(original_row):
+            if cell in (BOX, SPACE):
+                continue
+
+            LOG.debug('Trying to guess the %s cell', i)
+
+            temp_row = list(original_row)
+            temp_row[i] = BOX
+            can_be_box = self.partial_match(temp_row)
+            LOG.debug('The %s cell can%s be a BOX',
+                      i, '' if can_be_box else 'not')
+
+            temp_row[i] = SPACE
+            can_be_space = self.partial_match(temp_row)
+            LOG.debug('The %s cell can%s be a SPACE',
+                      i, '' if can_be_space else 'not')
+
+            if can_be_box:
+                if not can_be_space:
+                    solved[i] = BOX
+            elif can_be_space:
+                solved[i] = SPACE
+            else:
+                raise NonogramError(
+                    "The {} cell ({}) in a row '{}' cannot be neither space nor box".format(
+                        i, cell, original_row))
+        return solved
