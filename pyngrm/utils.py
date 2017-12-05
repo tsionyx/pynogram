@@ -7,6 +7,7 @@ e.g. manipulations with collections or streams.
 from __future__ import unicode_literals, print_function
 
 import sys
+from itertools import islice
 
 
 def merge_dicts(*dict_args, **kwargs):
@@ -88,3 +89,19 @@ def list_replace(a_list, x, y):  # pylint: disable=C0103
     for i, item in enumerate(a_list):
         if item == x:
             a_list[i] = y
+
+
+def split_seq(iterable, size):
+    """
+    Split `iterable` into chunks with specified `size`
+    # http://stackoverflow.com/a/312467/
+
+    :param iterable: any iterable
+    :param size: chunk size
+    :return: chunks one by one
+    """
+    it = iter(iterable)  # pylint: disable=C0103
+    item = list(islice(it, size))
+    while item:
+        yield item
+        item = list(islice(it, size))

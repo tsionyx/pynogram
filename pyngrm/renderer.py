@@ -12,7 +12,7 @@ import sys
 from six import integer_types, text_type
 
 from pyngrm.base import BOX, SPACE, UNSURE
-from pyngrm.utils import pad, merge_dicts, max_safe
+from pyngrm.utils import pad, merge_dicts, max_safe, split_seq
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -187,11 +187,18 @@ class AsciiRenderer(StreamRenderer):
     GRID_CROSS_SYMBOL = '+'
     CORNER_SYMBOL = GRID_CROSS_SYMBOL
 
-    def _cell_horizontal_border(self, header=False):
+    BOLD_LINE_HORIZONTAL = HORIZONTAL_LINE_PAD
+    BOLD_LINE_VERTICAL_SIZE = 1
+    BOLD_LINE_EVERY = 5
+
+    def _cell_horizontal_border(self, header=False, bold=False):
         if header:
             padding = self.HEADER_DELIMITER
+        elif bold:
+            padding = self.BOLD_LINE_HORIZONTAL
         else:
             padding = self.HORIZONTAL_LINE_PAD
+
         return padding * self.CELL_WIDTH
 
     def _side_delimiter(self, grid=False):
@@ -200,20 +207,29 @@ class AsciiRenderer(StreamRenderer):
         Default values are '||' for the data rows or
         '++' for the 'grid' rows.
         """
+        size = self.SIDE_DELIMITER_SIZE
+
         if grid:
             delimiter = self.GRID_CROSS_SYMBOL
         else:
             delimiter = self.VERTICAL_GRID_SYMBOL
-        return delimiter * self.SIDE_DELIMITER_SIZE
+        return delimiter * size
 
-    def _horizontal_grid(self, size, header=False):
-        return self.GRID_CROSS_SYMBOL.join(
-            [self._cell_horizontal_border(header=header)] * size)
+    def _horizontal_grid(self, size, header=False, bold=False):
+        bold_cross_symbol = self.BOLD_LINE_VERTICAL_SIZE * self.GRID_CROSS_SYMBOL
 
-    def _grid_row(self, border=False, header=False):
+        return bold_cross_symbol.join(
+            self.GRID_CROSS_SYMBOL.join(block)
+            for block in
+            split_seq(
+                [self._cell_horizontal_border(header=header, bold=bold)] * size,
+                self.BOLD_LINE_EVERY))
+
+    def _grid_row(self, border=False, header=False, data_row_index=None):
         """
         The whole string representing a grid row.
         When `border` is True it's the most upper or lower row.
+        When `data_row_index` provided, draw a bold line if it's divisible by 5
         """
         if border:
             if header:
@@ -223,11 +239,16 @@ class AsciiRenderer(StreamRenderer):
         else:
             end = self.VERTICAL_GRID_SYMBOL
 
+        bold = False
+        if data_row_index:
+            if data_row_index > 0 and (data_row_index % self.BOLD_LINE_EVERY == 0):
+                bold = True
+
         return ''.join([
             end,
-            self._horizontal_grid(self.side_width, header=header),
+            self._horizontal_grid(self.side_width, header=header, bold=bold),
             self._side_delimiter(grid=True),
-            self._horizontal_grid(self.board.width, header=header),
+            self._horizontal_grid(self.board.width, header=header, bold=bold),
             end,
         ])
 
@@ -253,12 +274,18 @@ class AsciiRenderer(StreamRenderer):
 
     def _value_row(self, values):
         sep = self.VERTICAL_GRID_SYMBOL
+        bold_sep = self.BOLD_LINE_VERTICAL_SIZE * sep
 
         for i, cell in enumerate(values):
             if i == self.side_width:
                 yield self._side_delimiter()
             else:
-                yield sep
+                # only on a data area, every 5 column
+                if i > self.side_width and \
+                        (i - self.side_width) % self.BOLD_LINE_EVERY == 0:
+                    yield bold_sep
+                else:
+                    yield sep
 
             yield self.cell_icon(cell)
 
@@ -271,7 +298,7 @@ class AsciiRenderer(StreamRenderer):
             elif i == self.header_height:
                 grid_row = self._grid_row(header=True)
             else:
-                grid_row = self._grid_row()
+                grid_row = self._grid_row(data_row_index=i - self.header_height)
             self._print(grid_row)
             self._print(''.join(self._value_row(row)))
 
@@ -281,3 +308,13 @@ class AsciiRenderer(StreamRenderer):
         _THUMBNAIL: '#',
         UNSURE: ' ',
     })
+
+
+class AsciiRendererWithBold(AsciiRenderer):
+    """
+    AsciiRenderer that also splits the whole board into
+    5x5 squares using 'bold' grid lines
+    """
+    SIDE_DELIMITER_SIZE = 3
+    BOLD_LINE_HORIZONTAL = AsciiRenderer.HEADER_DELIMITER
+    BOLD_LINE_VERTICAL_SIZE = 2

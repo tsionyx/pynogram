@@ -9,7 +9,8 @@ from __future__ import unicode_literals, print_function
 import logging
 
 from pyngrm.base import BOX, SPACE
-from pyngrm.board import AsciiBoard
+from pyngrm.board import BaseBoard
+from pyngrm.renderer import AsciiRendererWithBold
 
 
 def main():
@@ -47,7 +48,7 @@ def main():
         '1 1',
     ]
 
-    board = AsciiBoard(columns, rows)
+    board = BaseBoard(columns, rows, renderer=AsciiRendererWithBold)
     rend = board.renderer
     rend.ICONS[BOX] = '\u2B1B'
     rend.ICONS[SPACE] = ' '  # '\u2022'
