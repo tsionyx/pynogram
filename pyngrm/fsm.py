@@ -15,7 +15,7 @@ from collections import OrderedDict
 from six import iteritems, text_type
 from six.moves import range
 
-from pyngrm.base import BOX, SPACE, normalize_clues
+from pyngrm.base import BOX, SPACE, UNSURE, normalize_clues
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -164,3 +164,45 @@ class NonogramFSM(FiniteStateMachine):
             state_map.append((trans, state_counter))
 
         return cls(cls.INITIAL_STATE, state_map, final=state_counter)
+
+    def partial_match(self, row):
+        save_state = self.current_state
+
+        try:
+            possible_states = {self.initial_state}
+
+            for i, cell in enumerate(row):
+                step_possible_states = []
+                for state in possible_states:
+                    if cell in (BOX, UNSURE):
+                        self._state = state
+                        LOG.debug('Check the ability to insert BOX')
+
+                        try:
+                            next_step = self.transition(BOX)
+                        except FiniteStateError:
+                            LOG.debug("Cannot go from state '%s' with BOX", state)
+                        else:
+                            step_possible_states.append(next_step)
+
+                    if cell in (SPACE, UNSURE):
+                        self._state = state
+                        LOG.debug('Check the ability to insert SPACE')
+
+                        try:
+                            next_step = self.transition(SPACE)
+                        except FiniteStateError:
+                            LOG.debug("Cannot go from state '%s' with SPACE", state)
+                        else:
+                            step_possible_states.append(next_step)
+
+                if not step_possible_states:
+                    return False
+
+                LOG.debug('Possible states after step %s: %s', i, step_possible_states)
+                possible_states = set(step_possible_states)
+
+            LOG.debug('Possible states after full scan: %s', possible_states)
+            return self.final_state in possible_states
+        finally:
+            self._state = save_state

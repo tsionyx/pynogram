@@ -6,6 +6,7 @@ from copy import copy
 
 import pytest
 
+from pyngrm.base import BOX, SPACE, UNSURE
 from pyngrm.fsm import (
     FiniteStateError,
     FiniteStateMachine,
@@ -165,3 +166,25 @@ class TestNonogramFiniteStateMachine(object):
         nfsm.transition(True)
         with pytest.raises(RuntimeError, match="Only run 'match' when in initial state"):
             nfsm.match([True, True, True, False, True, True])
+
+
+class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
+    def test_basic(self, nfsm):
+        assert nfsm.partial_match(
+            [UNSURE, SPACE, UNSURE, UNSURE, BOX] + [UNSURE] * 4)
+
+    def test_not_match_too_many_spaces(self, nfsm):
+        assert not nfsm.partial_match(
+            [UNSURE, UNSURE, SPACE, SPACE] + [UNSURE] * 5)
+
+    def test_not_match_too_many_boxes(self, nfsm):
+        assert not nfsm.partial_match(
+            [BOX] * 4 + [UNSURE] * 5)
+
+    def test_current_state_saved(self, nfsm):
+        nfsm.transition(False, True, True)
+        assert nfsm.current_state == 3
+
+        assert nfsm.partial_match([UNSURE] * 9)
+
+        assert nfsm.current_state == 3
