@@ -79,3 +79,12 @@ def max_safe(*args, **kwargs):
                 return max(arg, **kwargs)
 
     return max(*args, **kwargs)
+
+
+def list_replace(a_list, x, y):  # pylint: disable=C0103
+    """
+    Replaces every `x` item in `a_list` with `y` item
+    """
+    for i, item in enumerate(a_list):
+        if item == x:
+            a_list[i] = y
