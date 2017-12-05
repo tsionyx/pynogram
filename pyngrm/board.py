@@ -9,40 +9,19 @@ import logging
 import os
 
 import numpy as np
-from six import string_types, integer_types
 
+from pyngrm.base import UNSURE, normalize_clues
 from pyngrm.renderer import (
     Renderer,
     StreamRenderer,
     AsciiRenderer,
 )
-from pyngrm.state import UNSURE
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
     _LOG_NAME = os.path.basename(__file__)
 
 LOG = logging.getLogger(_LOG_NAME)
-
-
-def normalize_row(row):
-    """
-    Normalize the row to a standard tuple format:
-    - empty value (None, 0, '', [], ()) as an empty tuple
-    - tuple or list becomes simply as a tuple
-    - single number as a tuple with one item
-    - a string of space-separated numbers as a tuple of that numbers
-    """
-    if not row:  # None, 0, '', [], ()
-        return ()
-    elif isinstance(row, (tuple, list)):
-        return tuple(row)
-    elif isinstance(row, integer_types):
-        return row,  # it's a tuple!
-    elif isinstance(row, string_types):
-        return tuple(map(int, row.split(' ')))
-    else:
-        raise ValueError('Bad row: %s' % row)
 
 
 class BaseBoard(object):
@@ -73,7 +52,7 @@ class BaseBoard(object):
         """
         Presents given rows in standard format
         """
-        return tuple(map(normalize_row, rows))
+        return tuple(map(normalize_clues, rows))
 
     @property
     def height(self):

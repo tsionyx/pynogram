@@ -6,8 +6,8 @@ Examples run here
 
 from __future__ import unicode_literals, print_function
 
+from pyngrm.base import BOX, SPACE
 from pyngrm.board import AsciiBoard
-from pyngrm.state import BOX, SPACE
 
 
 def _solve_on_space_hints(board, hints):

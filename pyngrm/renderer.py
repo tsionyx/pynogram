@@ -11,7 +11,7 @@ import sys
 
 from six import integer_types, text_type
 
-from pyngrm.state import BOX, SPACE, UNSURE
+from pyngrm.base import BOX, SPACE, UNSURE
 from pyngrm.utils import pad, merge_dicts, max_safe
 
 _LOG_NAME = __name__

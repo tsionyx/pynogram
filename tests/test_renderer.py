@@ -6,9 +6,9 @@ from io import StringIO
 
 import pytest
 
+from pyngrm.base import BOX, SPACE
 from pyngrm.board import ConsoleBoard, AsciiBoard
 from pyngrm.renderer import Renderer
-from pyngrm.state import BOX, SPACE
 from .test_board import tested_board
 
 
