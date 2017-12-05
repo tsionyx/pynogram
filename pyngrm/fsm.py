@@ -165,6 +165,7 @@ class NonogramFSM(FiniteStateMachine):
     Represents a special class of a FSM
     used to solve a nonogram
     """
+
     @classmethod
     def _optional_space(cls, state):
         return (state, SPACE), state

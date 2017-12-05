@@ -7,10 +7,12 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
+import time
 
 import numpy as np
 
 from pyngrm.base import UNSURE, normalize_clues
+from pyngrm.fsm import NonogramFSM
 from pyngrm.renderer import (
     Renderer,
     StreamRenderer,
@@ -102,6 +104,66 @@ class BaseBoard(object):
 
     def __str__(self):
         return '{}({}x{})'.format(self.__class__.__name__, self.height, self.width)
+
+    @property
+    def solution_rate(self):
+        """How many cells are known to be box or space"""
+        empty = sum(1 for row in self.cells
+                    for cell in row if cell == UNSURE)
+
+        # if do not cast to float on py2, then we get '1' after very first round
+        return 1 - (float(empty) / (self.height * self.width))
+
+    def solve_rows(self):
+        """Solve every row with FSM"""
+        start = time.time()
+        for i, (horizontal_clue, row) in enumerate(zip(self.horizontal_clues, self.cells)):
+            LOG.debug('Solving %s row: %s. Partial: %s', i, horizontal_clue, row)
+            nfsm = NonogramFSM.from_clues(horizontal_clue)
+            self.cells[i] = nfsm.solve(row)
+
+        LOG.info('Rows solution: %ss', time.time() - start)
+
+    def solve_columns(self):
+        """Solve every column with FSM"""
+        start = time.time()
+
+        for j, (vertical_clue, column) in enumerate(zip(self.vertical_clues, self.cells.T)):
+            LOG.debug('Solving %s column: %s. Partial: %s', j, vertical_clue, column)
+            nfsm = NonogramFSM.from_clues(vertical_clue)
+            self.cells[:, j] = nfsm.solve(column)
+
+        LOG.info('Columns solution: %ss', time.time() - start)
+
+    def solve_round(self, rows_first=True):
+        """Solve every column and every row using FSM exactly one time"""
+        if rows_first:
+            self.solve_rows()
+            self.solve_columns()
+        else:
+            self.solve_rows()
+            self.solve_columns()
+
+    def solve(self, rows_first=True):
+        """Solve the nonogram to the most with FSM using multiple rounds"""
+        solved = self.solution_rate
+        counter = 0
+
+        start = time.time()
+        while True:
+            counter += 1
+            LOG.info('Round %s', counter)
+
+            self.solve_round(rows_first=rows_first)
+
+            if self.solution_rate == 1 or solved == self.solution_rate:
+                break
+
+            solved = self.solution_rate
+
+        if self.solution_rate != 1:
+            LOG.warning('The nonogram is not solved full. The rate is %s', self.solution_rate)
+        LOG.info('Full solution: %ss', time.time() - start)
 
 
 class ConsoleBoard(BaseBoard):
