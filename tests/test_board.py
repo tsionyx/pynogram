@@ -37,7 +37,7 @@ class TestBoard(object):
         return tested_board()
 
     def test_rows(self, board):
-        assert board.rows == tuple([
+        assert board.horizontal_clues == tuple([
             (),
             (4,),
             (6,),
@@ -52,7 +52,7 @@ class TestBoard(object):
         ])
 
     def test_columns(self, board):
-        assert board.columns == tuple([
+        assert board.vertical_clues == tuple([
             (),
             (9,),
             (9,),

@@ -33,8 +33,8 @@ class BaseBoard(object):
         """
         :type renderer: Renderer | type[Renderer]
         """
-        self.columns = self.normalize(columns)
-        self.rows = self.normalize(rows)
+        self.vertical_clues = self.normalize(columns)
+        self.horizontal_clues = self.normalize(rows)
 
         self.renderer = renderer
         if isinstance(self.renderer, type):
@@ -57,12 +57,12 @@ class BaseBoard(object):
     @property
     def height(self):
         """The height of the playing area"""
-        return len(self.rows)
+        return len(self.horizontal_clues)
 
     @property
     def width(self):
         """The width of the playing area"""
-        return len(self.columns)
+        return len(self.vertical_clues)
 
     def validate(self):
         """
@@ -70,11 +70,11 @@ class BaseBoard(object):
         - all the clues in a row (a column) can fit into width (height) of the board
         - the vertical and horizontal clues defines the same number of boxes
         """
-        self.validate_headers(self.columns, self.height)
-        self.validate_headers(self.rows, self.width)
+        self.validate_headers(self.vertical_clues, self.height)
+        self.validate_headers(self.horizontal_clues, self.width)
 
-        boxes_in_rows = sum(sum(block) for block in self.rows)
-        boxes_in_columns = sum(sum(block) for block in self.columns)
+        boxes_in_rows = sum(sum(block) for block in self.horizontal_clues)
+        boxes_in_columns = sum(sum(block) for block in self.vertical_clues)
         if boxes_in_rows != boxes_in_columns:
             raise ValueError('Number of boxes differs: {} (rows) and {} (columns)'.format(
                 boxes_in_rows, boxes_in_columns))

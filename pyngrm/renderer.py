@@ -26,7 +26,7 @@ _THUMBNAIL = 'T'
 
 
 class _DummyBoard(object):  # pylint: disable=R0903
-    rows = columns = ()
+    horizontal_clues = vertical_clues = ()
     width = height = 0
 
 
@@ -62,12 +62,12 @@ class Renderer(object):
     @property
     def header_height(self):
         """The size of the header block with vertical clues"""
-        return max_safe(map(len, self.board.columns), default=0)
+        return max_safe(map(len, self.board.vertical_clues), default=0)
 
     @property
     def side_width(self):
         """The width of the side block with horizontal clues"""
-        return max_safe(map(len, self.board.rows), default=0)
+        return max_safe(map(len, self.board.horizontal_clues), default=0)
 
     def render(self):
         """Actually print out the board"""
@@ -126,7 +126,7 @@ class StreamRenderer(Renderer):
             for j in range(self.side_width):
                 self.cells[i][j] = _THUMBNAIL
 
-        for j, col in enumerate(self.board.columns):
+        for j, col in enumerate(self.board.vertical_clues):
             rend_j = j + self.side_width
             if not col:
                 col = [0]
@@ -136,7 +136,7 @@ class StreamRenderer(Renderer):
                 self.cells[rend_i][rend_j] = cell
 
     def draw_side(self):
-        for i, row in enumerate(self.board.rows):
+        for i, row in enumerate(self.board.horizontal_clues):
             rend_i = i + self.header_height
             # row = list(row)
             if not row:
