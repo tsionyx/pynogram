@@ -9,5 +9,5 @@ tox
 ## Lint the project
 
 ```
-tox -elint
+tox -e lint
 ```
