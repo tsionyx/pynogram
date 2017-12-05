@@ -77,3 +77,20 @@ def normalize_row(row):
 
     assert set(row) <= {BOX, SPACE, UNSURE}
     return row
+
+
+def _solve_on_space_hints(board, hints):
+    """
+    Pseudo solving with spaces given
+    """
+    # assert len(hints) == len(board.horizontal_clues)
+    for i, (spaces_hint, row) in enumerate(zip(hints, board.horizontal_clues)):
+        assert len(spaces_hint) == len(row)
+        cells = []
+        for space_size, box_size in zip(spaces_hint, row):
+            cells.extend([SPACE] * space_size)
+            cells.extend([BOX] * box_size)
+
+        # pad with spaces
+        solution = cells + ([SPACE] * (board.width - len(cells)))
+        board.cells[i] = solution
