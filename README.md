@@ -1,5 +1,10 @@
 # Solve nonograms automatically
 
+## See the demo
+```
+python pyngrm
+```
+
 ## Run tests
 
 ```

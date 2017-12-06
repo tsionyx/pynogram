@@ -2,5 +2,7 @@
 - solve using more sophisticated algorithm O(n^2)
 - add web UI with AJAX-updates
 - import from different formats
+- export to PBM, BMP
 - make user interaction scripts
 - update README with images and examples
+- colored nonograms
