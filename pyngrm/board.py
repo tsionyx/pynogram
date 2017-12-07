@@ -49,6 +49,29 @@ class BaseBoard(object):
         self.cells = np.array([[UNSURE] * self.width for _ in range(self.height)])
         self.validate()
 
+        # you can provide custom callbacks here
+        self.on_row_update = None
+        self.on_column_update = None
+        self.on_solution_round_complete = None
+
+    def row_updated(self, row_index):
+        """Runs each time the row of the board gets partially solved"""
+        if self.on_row_update and callable(self.on_row_update):
+            self.on_row_update(row_index=row_index, board=self)
+
+    def column_updated(self, column_index):
+        """Runs each time the column of the board gets partially solved"""
+        if self.on_column_update and callable(self.on_column_update):
+            self.on_column_update(column_index=column_index, board=self)
+
+    def solution_round_completed(self):
+        """
+        Runs each time all the rows and the columns
+        of the board gets partially solved (one solution round is complete)
+        """
+        if self.on_solution_round_complete and callable(self.on_solution_round_complete):
+            self.on_solution_round_complete(board=self)
+
     @classmethod
     def normalize(cls, rows):
         """
@@ -121,6 +144,7 @@ class BaseBoard(object):
             LOG.debug('Solving %s row: %s. Partial: %s', i, horizontal_clue, row)
             nfsm = NonogramFSM.from_clues(horizontal_clue)
             self.cells[i] = nfsm.solve(row)
+            self.row_updated(i)
 
         LOG.info('Rows solution: %ss', time.time() - start)
 
@@ -132,6 +156,7 @@ class BaseBoard(object):
             LOG.debug('Solving %s column: %s. Partial: %s', j, vertical_clue, column)
             nfsm = NonogramFSM.from_clues(vertical_clue)
             self.cells[:, j] = nfsm.solve(column)
+            self.column_updated(j)
 
         LOG.info('Columns solution: %ss', time.time() - start)
 
@@ -143,6 +168,8 @@ class BaseBoard(object):
         else:
             self.solve_rows()
             self.solve_columns()
+
+        self.solution_round_completed()
 
     def solve(self, rows_first=True):
         """Solve the nonogram to the most with FSM using multiple rounds"""

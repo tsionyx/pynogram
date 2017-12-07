@@ -14,8 +14,8 @@ from pyngrm.demo import demo_board
 def main():
     """Traditional main function"""
     d_board = demo_board()
+    d_board.on_solution_round_complete = lambda board: board.draw()
     d_board.solve()
-    d_board.draw()
 
 
 if __name__ == '__main__':
