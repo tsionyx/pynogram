@@ -46,7 +46,7 @@ def demo_board(renderer=AsciiRendererWithBold, **rend_params):
 
     renderer = renderer(**rend_params)
     renderer.ICONS[BOX] = '\u2B1B'
-    renderer.ICONS[SPACE] = ' '  # '\u2022'
+    renderer.ICONS[SPACE] = '\u2022'
     return BaseBoard(columns, rows, renderer=renderer)
 
 
