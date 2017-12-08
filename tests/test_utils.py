@@ -11,6 +11,7 @@ from pyngrm.utils import (
     pad,
     interleave,
     max_safe,
+    avg,
 )
 
 
@@ -128,3 +129,21 @@ class TestMaxSafe(object):
 
         assert max(_gen()) == 5
         assert max_safe(_gen(), default=3) == 5
+
+
+class TestAvg(object):
+    def test_basic(self):
+        assert avg([1, 2, 3]) == 2
+
+    def test_float_result(self):
+        assert avg([5, 6, 8]) == 19.0 / 3
+
+    def test_float_input(self):
+        assert avg([5.5, 6.5]) == 6
+
+    def test_iterator(self):
+        it = iter([7, 8, 9])
+        assert avg(it) == 8
+
+    def test_empty(self):
+        assert avg([]) is None

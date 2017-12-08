@@ -134,6 +134,7 @@ class TestSolution(object):
             '|   | 0 || . | . | . | . | . | . | . | . |',
             '+---+---++---+---+---+---+---+---+---+---+',
         ])
+        assert board.solved
 
     def test_several_solutions(self, stream):
         columns = [3, None, 1, 1]
@@ -160,3 +161,4 @@ class TestSolution(object):
         ])
 
         assert board.solution_rate * 3 == 2.0
+        assert board.solved

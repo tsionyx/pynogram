@@ -4,7 +4,7 @@ Here lie the utilities methods that does not depend on any domain
 e.g. manipulations with collections or streams.
 """
 
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals, print_function, division
 
 import sys
 from itertools import islice
@@ -105,3 +105,17 @@ def split_seq(iterable, size):
     while item:
         yield item
         item = list(islice(it, size))
+
+
+def avg(iterable):
+    """
+    Return the average value of an iterable of numbers
+    """
+
+    # the iterable can be an iterator that gets exhausted
+    # while `sum` and `len` will return 0
+    list_copy = list(iterable)
+    if not list_copy:
+        return None
+
+    return sum(list_copy) / len(list_copy)

@@ -3,7 +3,7 @@
 Defines a board of nonogram game
 """
 
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals, print_function, division
 
 import logging
 import os
@@ -18,6 +18,7 @@ from pyngrm.renderer import (
     StreamRenderer,
     AsciiRenderer,
 )
+from pyngrm.utils import avg
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -53,6 +54,7 @@ class BaseBoard(object):
         self.on_row_update = None
         self.on_column_update = None
         self.on_solution_round_complete = None
+        self._solved = False
 
     def row_updated(self, row_index):
         """Runs each time the row of the board gets partially solved"""
@@ -130,21 +132,29 @@ class BaseBoard(object):
 
     @property
     def solution_rate(self):
-        """How many cells are known to be box or space"""
-        empty = sum(1 for row in self.cells
-                    for cell in row if cell == UNSURE)
+        """How many cells in the whole board are known to be box or space"""
+        return avg(self.row_solution_rate(row) for row in self.cells)
 
-        # if do not cast to float on py2, then we get '1' after very first round
-        return 1 - (float(empty) / (self.height * self.width))
+    @classmethod
+    def row_solution_rate(cls, row):
+        """How many cells in a row are known to be box or space"""
+        return sum(1 for cell in row if cell != UNSURE) / len(row)
 
     def solve_rows(self):
         """Solve every row with FSM"""
         start = time.time()
         for i, (horizontal_clue, row) in enumerate(zip(self.horizontal_clues, self.cells)):
+            pre_solution_rate = self.row_solution_rate(row)
+            if pre_solution_rate == 1:
+                continue  # already solved
+
             LOG.debug('Solving %s row: %s. Partial: %s', i, horizontal_clue, row)
             nfsm = NonogramFSM.from_clues(horizontal_clue)
-            self.cells[i] = nfsm.solve(row)
-            self.row_updated(i)
+            updated = nfsm.solve(row)
+            if self.row_solution_rate(updated) > pre_solution_rate:
+                LOG.debug('New info on row %s', i)
+                self.cells[i] = updated
+                self.row_updated(i)
 
         LOG.info('Rows solution: %ss', time.time() - start)
 
@@ -153,10 +163,17 @@ class BaseBoard(object):
         start = time.time()
 
         for j, (vertical_clue, column) in enumerate(zip(self.vertical_clues, self.cells.T)):
+            pre_solution_rate = self.row_solution_rate(column)
+            if pre_solution_rate == 1:
+                continue  # already solved
+
             LOG.debug('Solving %s column: %s. Partial: %s', j, vertical_clue, column)
             nfsm = NonogramFSM.from_clues(vertical_clue)
-            self.cells[:, j] = nfsm.solve(column)
-            self.column_updated(j)
+            updated = nfsm.solve(column)
+            if self.row_solution_rate(updated) > pre_solution_rate:
+                LOG.debug('New info on column %s', j)
+                self.cells[:, j] = updated
+                self.column_updated(j)
 
         LOG.info('Columns solution: %ss', time.time() - start)
 
@@ -171,6 +188,10 @@ class BaseBoard(object):
 
         self.solution_round_completed()
 
+    @property
+    def solved(self):
+        return self._solved
+
     def solve(self, rows_first=True):
         """Solve the nonogram to the most with FSM using multiple rounds"""
         solved = self.solution_rate
@@ -184,6 +205,7 @@ class BaseBoard(object):
             self.solve_round(rows_first=rows_first)
 
             if self.solution_rate == 1 or solved == self.solution_rate:
+                self._solved = True
                 break
 
             solved = self.solution_rate
