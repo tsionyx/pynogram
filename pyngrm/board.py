@@ -10,6 +10,7 @@ import os
 import time
 
 import numpy as np
+from six.moves import zip
 
 from pyngrm.base import UNSURE, normalize_clues
 from pyngrm.fsm import NonogramFSM
@@ -143,51 +144,48 @@ class BaseBoard(object):
         """How many cells in a row are known to be box or space"""
         return sum(1 for cell in row if cell != UNSURE) / len(row)
 
-    def solve_rows(self):
-        """Solve every row with FSM"""
+    def solve_rows(self, horizontal=True):
+        """Solve every row (or column) with FSM"""
         start = time.time()
-        for i, (horizontal_clue, row) in enumerate(zip(self.horizontal_clues, self.cells)):
+
+        if horizontal:
+            clue_cells_mapping = zip(self.horizontal_clues, self.cells)
+            desc = 'row'
+        else:
+            clue_cells_mapping = zip(self.vertical_clues, self.cells.T)
+            desc = 'column'
+
+        for i, (clue, row) in enumerate(clue_cells_mapping):
             pre_solution_rate = self.row_solution_rate(row)
             if pre_solution_rate == 1:
                 continue  # already solved
 
-            LOG.debug('Solving %s row: %s. Partial: %s', i, horizontal_clue, row)
-            nfsm = NonogramFSM.from_clues(horizontal_clue)
+            LOG.debug('Solving %s %s: %s. Partial: %s',
+                      i, desc, clue, row)
+
+            nfsm = NonogramFSM.from_clues(clue)
             updated = nfsm.solve(row)
             if self.row_solution_rate(updated) > pre_solution_rate:
-                LOG.debug('New info on row %s', i)
-                self.cells[i] = updated
-                self.row_updated(i)
+                LOG.debug('New info on %s %s', desc, i)
 
-        LOG.info('Rows solution: %ss', time.time() - start)
+                if horizontal:
+                    self.cells[i] = updated
+                    self.row_updated(i)
+                else:
+                    self.cells[:, i] = updated
+                    self.column_updated(i)
 
-    def solve_columns(self):
-        """Solve every column with FSM"""
-        start = time.time()
-
-        for j, (vertical_clue, column) in enumerate(zip(self.vertical_clues, self.cells.T)):
-            pre_solution_rate = self.row_solution_rate(column)
-            if pre_solution_rate == 1:
-                continue  # already solved
-
-            LOG.debug('Solving %s column: %s. Partial: %s', j, vertical_clue, column)
-            nfsm = NonogramFSM.from_clues(vertical_clue)
-            updated = nfsm.solve(column)
-            if self.row_solution_rate(updated) > pre_solution_rate:
-                LOG.debug('New info on column %s', j)
-                self.cells[:, j] = updated
-                self.column_updated(j)
-
-        LOG.info('Columns solution: %ss', time.time() - start)
+        LOG.info('%ss solution: %ss', desc.title(), time.time() - start)
 
     def solve_round(self, rows_first=True):
         """Solve every column and every row using FSM exactly one time"""
         if rows_first:
-            self.solve_rows()
-            self.solve_columns()
+            order = [True, False]
         else:
-            self.solve_rows()
-            self.solve_columns()
+            order = [False, True]
+
+        for horizontal in order:
+            self.solve_rows(horizontal=horizontal)
 
         self.solution_round_completed()
 
