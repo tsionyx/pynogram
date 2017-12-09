@@ -1,0 +1,29 @@
+<html>
+<head>
+    <title>Nonogram</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"
+            type="text/javascript"></script>
+    <script src="{{ static_url('update.js') }}" type="application/javascript"></script>
+    <link href="{{ static_url('style.css') }}" type="text/css" rel="stylesheet"/>
+</head>
+
+<body>
+<input type="hidden" id="session" value="{{ _id }}"/>
+<div class="header">
+    <h1>Demo #{{_id}}</h1>
+    <div class="button">Start</div>
+</div>
+
+<hr/>
+
+<div class="main">
+    <div>
+        <pre id="board">{{board_image}}</pre>
+    </div>
+    <div>
+        <pre id="extra"></pre>
+    </div>
+</div>
+
+</body>
+</html>

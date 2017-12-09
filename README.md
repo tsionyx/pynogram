@@ -5,6 +5,12 @@
 python pyngrm
 ```
 
+## Demo web-server
+```
+python pyngrm/web/app.py
+```
+
+
 ## Run tests
 
 ```

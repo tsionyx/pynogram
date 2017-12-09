@@ -1,5 +1,7 @@
 six >= 1.10.0
 numpy
+futures; python_version < '3.2'
+tornado
 
 
 # it's possible to run tests with simply `setup.py test`

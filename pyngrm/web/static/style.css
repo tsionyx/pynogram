@@ -1,0 +1,22 @@
+.header, .main {
+    display: flex;
+    justify-content: space-between;
+}
+
+.header {
+    align-items: center;
+}
+
+.button {
+    background-color: green;
+    color: white;
+    padding: 15px;
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    //self-align: center;
+    margin-right: 30px;
+}
+
+.board {
+}
