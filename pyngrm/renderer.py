@@ -25,7 +25,7 @@ _NOT_SET = 'E'  # empty cell, e.g. in the headers
 _THUMBNAIL = 'T'
 
 
-class _DummyBoard(object):  # pylint: disable=R0903
+class _DummyBoard(object):  # pylint: disable=too-few-public-methods
     horizontal_clues = vertical_clues = ()
     width = height = 0
 

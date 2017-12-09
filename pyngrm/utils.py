@@ -82,7 +82,7 @@ def max_safe(*args, **kwargs):
     return max(*args, **kwargs)
 
 
-def list_replace(a_list, x, y):  # pylint: disable=C0103
+def list_replace(a_list, x, y):  # pylint: disable=invalid-name
     """
     Replaces every `x` item in `a_list` with `y` item
     """
@@ -100,7 +100,7 @@ def split_seq(iterable, size):
     :param size: chunk size
     :return: chunks one by one
     """
-    it = iter(iterable)  # pylint: disable=C0103
+    it = iter(iterable)  # pylint: disable=invalid-name
     item = list(islice(it, size))
     while item:
         yield item

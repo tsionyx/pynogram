@@ -31,6 +31,7 @@ class BaseBoard(object):
     """
     Basic nonogram board with columns and rows defined
     """
+    # pylint: disable=too-many-instance-attributes
 
     def __init__(self, columns, rows, renderer=Renderer):
         """
@@ -56,11 +57,13 @@ class BaseBoard(object):
         self.on_solution_round_complete = None
         self._solved = False
 
+    # pylint: disable=not-callable
     def row_updated(self, row_index):
         """Runs each time the row of the board gets partially solved"""
         if self.on_row_update and callable(self.on_row_update):
             self.on_row_update(row_index=row_index, board=self)
 
+    # pylint: disable=not-callable
     def column_updated(self, column_index):
         """Runs each time the column of the board gets partially solved"""
         if self.on_column_update and callable(self.on_column_update):
@@ -190,6 +193,7 @@ class BaseBoard(object):
 
     @property
     def solved(self):
+        """Return whether the nonogram is completely solved"""
         return self._solved
 
     def solve(self, rows_first=True):
