@@ -7,7 +7,10 @@ e.g. manipulations with collections or streams.
 from __future__ import unicode_literals, print_function, division
 
 import sys
+from datetime import datetime
 from itertools import islice
+
+from six import text_type
 
 
 def merge_dicts(*dict_args, **kwargs):
@@ -119,3 +122,11 @@ def avg(iterable):
         return None
 
     return sum(list_copy) / len(list_copy)
+
+
+START_TIME = datetime.now()
+
+
+def get_uptime():  # pragma: no cover
+    """Return the time program run in human-readable form"""
+    return text_type(datetime.now() - START_TIME)

@@ -7,6 +7,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
+import socket
 from io import StringIO
 
 import tornado.gen
@@ -16,7 +17,14 @@ import tornado.web
 
 from pyngrm.demo import demo_board, demo_board2, more_complex_board
 from pyngrm.renderer import StreamRenderer
-from pyngrm.web.common import BaseHandler, LongPollNotifier, ThreadedBaseHandler
+from pyngrm.web.common import (
+    BaseHandler,
+    HelloHandler,
+    ThreadedBaseHandler,
+    LongPollNotifier,
+)
+
+# pylint: disable=arguments-differ
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -27,8 +35,17 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class BoardLiveHandler(ThreadedBaseHandler):
+    """Actually renders a board to an HTML-page"""
+
     @classmethod
     def get_board(cls, _id, **board_params):
+        """
+        Generates a board using given ID.
+
+        This can be a function that extracts a board
+        from a database for example. By now it just returns
+        one of hardcoded demo boards.
+        """
         remainder = _id % 3
         board_factory = [demo_board, demo_board2, more_complex_board][remainder]
         return board_factory(**board_params)
@@ -65,6 +82,12 @@ class BoardLiveHandler(ThreadedBaseHandler):
 
 
 class BoardStatusHandler(BaseHandler):
+    """
+    Returns a status of a board given its ID.
+    This handler uses long-polling technique to
+    respond only when the status gets updated
+    """
+
     @tornado.web.asynchronous
     def get(self, _id):
         _id = int(_id)
@@ -79,12 +102,20 @@ class BoardStatusHandler(BaseHandler):
             board_notifier.notify_callbacks(complete=True)
 
     def on_update(self, **kwargs):
+        """
+        Actually finish the request only when the status gets changed.
+        """
         LOG.debug(list(kwargs.keys()))
         self.write_as_json(kwargs)
         self.finish()
 
 
 class BoardUpdateNotifier(LongPollNotifier):
+    """
+    Stores info needed to correctly update board
+    image when its status gets changed.
+    """
+
     def __init__(self, _id, board):
         super(BoardUpdateNotifier, self).__init__()
         self._id = _id
@@ -96,7 +127,6 @@ class BoardUpdateNotifier(LongPollNotifier):
         self.clear_stream()
 
         # subscribe on updates
-        # TODO: make it work!
         board.on_solution_round_complete = self.notify_callbacks
         board.on_row_update = self.notify_callbacks
         board.on_column_update = self.notify_callbacks
@@ -118,6 +148,9 @@ class BoardUpdateNotifier(LongPollNotifier):
         callback(**params)
 
     def get_board_image(self):
+        """
+        Return current image of a draw using board's renderer
+        """
         self.board.draw()
         image = self.stream.getvalue()
         self.clear_stream()
@@ -126,14 +159,22 @@ class BoardUpdateNotifier(LongPollNotifier):
 
 
 class Application(tornado.web.Application):
+    """
+    Customized tornado application with
+    the routes and settings defined.
+    """
+
     def __init__(self, **kwargs):
         self.board_notifiers = dict()
+
         handlers = [
             (r"/board/([0-9]+)?", BoardLiveHandler),
             (r"/board/status/([0-9]+)?", BoardStatusHandler),
         ]
+        # noinspection PyTypeChecker
+        handlers += [('/', HelloHandler, {
+            'name': 'Nonogram Solver', 'handlers': handlers})]
 
-        # TODO: do we need that?
         settings = dict(
             kwargs,
             template_path=os.path.join(CURRENT_DIR, 'templates'),
@@ -143,21 +184,29 @@ class Application(tornado.web.Application):
 
 
 def main(port, debug=False):
+    """
+    Starts the tornado application on a given port
+    """
     app = Application(debug=debug)
 
     try:
+        host = socket.gethostbyname(socket.gethostname())
+        full_address = "http://{}:{}".format(host, port)
+
         if debug:
             app.listen(port)
-            # init_app()
-            LOG.info("Listening on %s port...", port)
+            LOG.info("Server started on %s", full_address)
             tornado.ioloop.IOLoop.instance().start()
         else:
             server = tornado.httpserver.HTTPServer(app)
             server.bind(port)
-            LOG.info("Listening on %s port...", port)
+            LOG.info("Server started on %s", full_address)
             server.start(0)
-            # init after the fork to avoid shared DB connections
-            # init_app()
+
+            # if you want to setup some DB connections
+            # do it now right after the fork
+            # to avoid shared DB connections
+
             tornado.ioloop.IOLoop.current().start()
     except (KeyboardInterrupt, SystemExit):
         LOG.warning("Exit...")
