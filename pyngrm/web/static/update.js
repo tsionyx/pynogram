@@ -4,6 +4,10 @@ $(document).ready(function() {
         $.ajax({url: window.location.pathname, type: 'POST'});
     });
     setTimeout(requestBoard, 100);
+
+    $("#slider").on("change", function() {
+        $("body").toggleClass("night");
+    })
 });
 
 
