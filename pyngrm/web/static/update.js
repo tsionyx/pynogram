@@ -2,6 +2,7 @@ $(document).ready(function() {
     document.session = $('#session').val();
     $(".button").on("click", function() {
         $.ajax({url: window.location.pathname, type: 'POST'});
+        setTimeout(requestBoard, 100);
     });
     setTimeout(requestBoard, 100);
 

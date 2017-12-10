@@ -50,14 +50,18 @@ class BoardLiveHandler(ThreadedBaseHandler):
         board_factory = [demo_board, demo_board2, more_complex_board][remainder]
         return board_factory(**board_params)
 
-    def get(self, _id):
-        _id = int(_id)
-
+    def _get_board_notifier(self, _id, create=False):
         board_notifier = self.application.board_notifiers.get(_id)
 
-        if not board_notifier:
+        if not board_notifier and create:
             board_notifier = BoardUpdateNotifier(_id, self.get_board(_id))
             self.application.board_notifiers[_id] = board_notifier
+
+        return board_notifier
+
+    def get(self, _id):
+        _id = int(_id)
+        board_notifier = self._get_board_notifier(_id, create=True)
 
         self.render("index.html",
                     _id=_id,
@@ -66,8 +70,7 @@ class BoardLiveHandler(ThreadedBaseHandler):
     @tornado.gen.coroutine
     def post(self, _id):
         _id = int(_id)
-
-        board_notifier = self.application.board_notifiers.get(_id)
+        board_notifier = self._get_board_notifier(_id, create=True)
 
         if not board_notifier:
             raise tornado.web.HTTPError(404, 'Not found board %s', _id)
