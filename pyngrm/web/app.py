@@ -37,31 +37,9 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 class BoardLiveHandler(ThreadedBaseHandler):
     """Actually renders a board to an HTML-page"""
 
-    @classmethod
-    def get_board(cls, _id, **board_params):
-        """
-        Generates a board using given ID.
-
-        This can be a function that extracts a board
-        from a database for example. By now it just returns
-        one of hardcoded demo boards.
-        """
-        remainder = _id % 3
-        board_factory = [demo_board, demo_board2, more_complex_board][remainder]
-        return board_factory(**board_params)
-
-    def _get_board_notifier(self, _id, create=False):
-        board_notifier = self.application.board_notifiers.get(_id)
-
-        if not board_notifier and create:
-            board_notifier = BoardUpdateNotifier(_id, self.get_board(_id))
-            self.application.board_notifiers[_id] = board_notifier
-
-        return board_notifier
-
     def get(self, _id):
         _id = int(_id)
-        board_notifier = self._get_board_notifier(_id, create=True)
+        board_notifier = self.application.get_board_notifier(_id, create=True)
 
         self.render("index.html",
                     _id=_id,
@@ -70,7 +48,7 @@ class BoardLiveHandler(ThreadedBaseHandler):
     @tornado.gen.coroutine
     def post(self, _id):
         _id = int(_id)
-        board_notifier = self._get_board_notifier(_id, create=True)
+        board_notifier = self.application.get_board_notifier(_id, create=True)
 
         if not board_notifier:
             raise tornado.web.HTTPError(404, 'Not found board %s', _id)
@@ -95,7 +73,7 @@ class BoardStatusHandler(BaseHandler):
     def get(self, _id):
         _id = int(_id)
 
-        board_notifier = self.application.board_notifiers.get(_id)
+        board_notifier = self.application.get_board_notifier(_id)
         if not board_notifier:
             raise tornado.web.HTTPError(404, 'Not found board %s', _id)
 
@@ -184,6 +162,32 @@ class Application(tornado.web.Application):
             static_path=os.path.join(CURRENT_DIR, 'static')
         )
         super(Application, self).__init__(handlers, **settings)
+
+    @classmethod
+    def get_board(cls, _id, **board_params):
+        """
+        Generates a board using given ID.
+
+        This can be a function that extracts a board
+        from a database for example. By now it just returns
+        one of hardcoded demo boards.
+        """
+        remainder = _id % 3
+        board_factory = [demo_board, demo_board2, more_complex_board][remainder]
+        return board_factory(**board_params)
+
+    def get_board_notifier(self, _id, create=False):
+        """
+        Get the notifier wrapper around the board
+        and optionally creates it.
+        """
+        board_notifier = self.board_notifiers.get(_id)
+
+        if not board_notifier and create:
+            board_notifier = BoardUpdateNotifier(_id, self.get_board(_id))
+            self.board_notifiers[_id] = board_notifier
+
+        return board_notifier
 
 
 def main(port, debug=False):
