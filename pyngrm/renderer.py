@@ -215,8 +215,13 @@ class AsciiRenderer(StreamRenderer):
             delimiter = self.VERTICAL_GRID_SYMBOL
         return delimiter * size
 
-    def _horizontal_grid(self, size, header=False, bold=False):
-        bold_cross_symbol = self.BOLD_LINE_VERTICAL_SIZE * self.GRID_CROSS_SYMBOL
+    def _horizontal_grid(self, size, header=False, bold=False, side=False):
+        if side:
+            # there should be no bold lines on a side
+            # so it's a stannard grid cross symbol
+            bold_cross_symbol = self.GRID_CROSS_SYMBOL
+        else:
+            bold_cross_symbol = self.BOLD_LINE_VERTICAL_SIZE * self.GRID_CROSS_SYMBOL
 
         return bold_cross_symbol.join(
             self.GRID_CROSS_SYMBOL.join(block)
@@ -246,7 +251,7 @@ class AsciiRenderer(StreamRenderer):
 
         return ''.join([
             end,
-            self._horizontal_grid(self.side_width, header=header, bold=bold),
+            self._horizontal_grid(self.side_width, header=header, bold=bold, side=True),
             self._side_delimiter(grid=True),
             self._horizontal_grid(self.board.width, header=header, bold=bold),
             end,

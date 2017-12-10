@@ -7,6 +7,7 @@ from io import StringIO
 import pytest
 
 from pyngrm.board import AsciiBoard, BaseBoard
+from pyngrm.renderer import AsciiRendererWithBold
 
 
 @pytest.fixture
@@ -162,3 +163,32 @@ class TestSolution(object):
 
         assert board.solution_rate * 3 == 2.0
         assert board.solved
+
+    def test_bold_lines(self, stream):
+        """
+        M letter
+        """
+        columns = [5, 1, 1, 1, 5]
+        rows = ['1 1', '2 2', '1 1 1', '1 1', '1 1']
+
+        renderer = AsciiRendererWithBold(stream=stream)
+        renderer.BOLD_LINE_EVERY = 2
+        board = BaseBoard(columns, rows, renderer=renderer)
+        board.solve()
+        board.draw()
+
+        assert stream.getvalue().rstrip() == '\n'.join([
+            '+---+---+---+++---+---++---+---++---+',
+            '| # | # | # ||| 5 | 1 || 1 | 1 || 5 |',
+            '|===+===+===+++===+===++===+===++===|',
+            '|   | 1 | 1 ||| X | . || . | . || X |',
+            '|---+---+---+++---+---++---+---++---|',
+            '|   | 2 | 2 ||| X | X || . | X || X |',
+            '|===+===+===+++===+===++===+===++===|',
+            '| 1 | 1 | 1 ||| X | . || X | . || X |',
+            '|---+---+---+++---+---++---+---++---|',
+            '|   | 1 | 1 ||| X | . || . | . || X |',
+            '|===+===+===+++===+===++===+===++===|',
+            '|   | 1 | 1 ||| X | . || . | . || X |',
+            '+---+---+---+++---+---++---+---++---+',
+        ])
