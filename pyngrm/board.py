@@ -32,6 +32,7 @@ class BaseBoard(object):
     """
     Basic nonogram board with columns and rows defined
     """
+
     # pylint: disable=too-many-instance-attributes
 
     def __init__(self, columns, rows, renderer=Renderer):

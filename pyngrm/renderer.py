@@ -224,7 +224,7 @@ class AsciiRenderer(StreamRenderer):
     def _horizontal_grid(self, size, header=False, bold=False, side=False):
         if side:
             # there should be no bold lines on a side
-            # so it's a stannard grid cross symbol
+            # so it's a standard grid cross symbol
             bold_cross_symbol = self.GRID_CROSS_SYMBOL
         else:
             bold_cross_symbol = self.BOLD_LINE_VERTICAL_SIZE * self.GRID_CROSS_SYMBOL
