@@ -70,6 +70,7 @@ class BaseBoard(object):
         if self.on_column_update and callable(self.on_column_update):
             self.on_column_update(column_index=column_index, board=self)
 
+    # pylint: disable=not-callable
     def solution_round_completed(self):
         """
         Runs each time all the rows and the columns

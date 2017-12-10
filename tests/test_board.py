@@ -192,3 +192,27 @@ class TestSolution(object):
             '|   | 1 | 1 ||| X | . || . | . || X |',
             '+---+---+---+++---+---++---+---++---+',
         ])
+
+    def test_callbacks(self):
+        # 'L' letter
+        columns = [3, 1]
+        rows = [1, 1, 2]
+
+        board = BaseBoard(columns, rows)
+        rows_updated = []
+        cols_updated = []
+        rounds = []
+
+        board.on_row_update = lambda **kwargs: rows_updated.append(kwargs['row_index'])
+        board.on_column_update = lambda **kwargs: cols_updated.append(kwargs['column_index'])
+        board.on_solution_round_complete = lambda **kwargs: rounds.append(1)
+        board.solve()
+
+        # draw the lower '_' in L
+        assert rows_updated == [2]
+        # draw the vertical '|' in L
+        # and fill the spaces on the second column
+        assert cols_updated == [0, 1]
+
+        # it takes only one round to solve that
+        assert sum(rounds) == 1
