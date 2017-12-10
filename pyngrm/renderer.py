@@ -12,7 +12,7 @@ import sys
 from six import integer_types, text_type
 
 from pyngrm.base import BOX, SPACE, UNSURE
-from pyngrm.utils import pad, merge_dicts, max_safe, split_seq
+from pyngrm.utils import pad, max_safe, split_seq
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -107,6 +107,13 @@ class StreamRenderer(Renderer):
     def __init__(self, board=None, stream=sys.stdout):
         super(StreamRenderer, self).__init__(board)
         self.stream = stream
+        self.icons = {
+            _NOT_SET: ' ',
+            _THUMBNAIL: 't',
+            UNSURE: '_',
+            BOX: 'X',
+            SPACE: '.',
+        }
 
     def board_init(self, board=None):
         super(StreamRenderer, self).board_init(board)
@@ -151,25 +158,17 @@ class StreamRenderer(Renderer):
                 rend_j = j + self.side_width
                 self.cells[rend_i][rend_j] = cell
 
-    ICONS = {
-        _NOT_SET: ' ',
-        _THUMBNAIL: 't',
-        UNSURE: '_',
-        BOX: 'X',
-        SPACE: '.',
-    }
-
     def cell_icon(self, state):
         """
         Gets a symbolic representation of a cell given its state
-        and predefined table `ICONS`
+        and predefined table `icons`
         """
-        types = tuple(map(type, self.ICONS))
+        types = tuple(map(type, self.icons))
         # why not just `isinstance(state, int)`?
         # because `isinstance(True, int) == True`
         if isinstance(state, integer_types) and not isinstance(state, types):
             return text_type(state)
-        return self.ICONS[state]
+        return self.icons[state]
 
 
 class AsciiRenderer(StreamRenderer):
@@ -177,6 +176,13 @@ class AsciiRenderer(StreamRenderer):
     Renders the board as a full-blown ASCII table
     with headers, grid and borders
     """
+
+    def __init__(self, board=None, stream=sys.stdout):
+        super(AsciiRenderer, self).__init__(board, stream=stream)
+        self.icons.update({
+            _THUMBNAIL: '#',
+            UNSURE: ' ',
+        })
 
     # cannot fit the value more than '999'
     CELL_WIDTH = 3
@@ -308,11 +314,6 @@ class AsciiRenderer(StreamRenderer):
             self._print(''.join(self._value_row(row)))
 
         self._print(self._grid_row(border=True))
-
-    ICONS = merge_dicts(StreamRenderer.ICONS, {
-        _THUMBNAIL: '#',
-        UNSURE: ' ',
-    })
 
 
 class AsciiRendererWithBold(AsciiRenderer):

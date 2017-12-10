@@ -45,8 +45,7 @@ def demo_board(renderer=AsciiRendererWithBold, **rend_params):
     ]
 
     renderer = renderer(**rend_params)
-    renderer.ICONS[BOX] = '\u2B1B'
-    renderer.ICONS[SPACE] = '\u2022'
+    # renderer.icons.update({BOX: '\u2B1B', SPACE: '\u2022'})
     return BaseBoard(columns, rows, renderer=renderer)
 
 
@@ -56,8 +55,7 @@ def demo_board2(renderer=AsciiRendererWithBold, **rend_params):
     source: https://en.wikipedia.org/wiki/Nonogram#Example
     """
     renderer = renderer(**rend_params)
-    renderer.ICONS[BOX] = '\u2B1B'
-    renderer.ICONS[SPACE] = '\u2022'
+    renderer.icons.update({BOX: '\u2B1B', SPACE: '\u2022'})
     return tested_board(renderer=renderer)
 
 
@@ -68,8 +66,6 @@ def more_complex_board(renderer=AsciiRenderer, **rend_params):
     Currently it takes 29 rounds and more than 7 minutes to solve it!
     """
     renderer = renderer(**rend_params)
-    renderer.ICONS[BOX] = '\u2B1B'
-    renderer.ICONS[SPACE] = '\u2022'
 
     cols = [
         '14 9',
