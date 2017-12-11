@@ -84,12 +84,19 @@ def demo_board2(board_cls=BaseBoard, renderer=AsciiRendererWithBold, **rend_para
 
 
 def more_complex_board(renderer=AsciiRenderer, **rend_params):
+    # noinspection SpellCheckingInspection
     """
     The board from a magazine.
+    Currently it takes 29 rounds to solve it.
 
-    Currently it takes 29 rounds and more than 7 minutes to solve it!
+    Time consuming (8-cores Intel(R) Xeon(R) CPU E3-1275 v5 @ 3.60GHz):
+    py27:
+        77 seconds with multiprocessing;
+        260 seconds in a single process.
 
-    UPDATE: with multiprocessing it takes about 250 seconds now.
+    py35:
+        65 seconds with multiprocessing;
+        225 seconds in a single process.
     """
     renderer = renderer(**rend_params)
 
