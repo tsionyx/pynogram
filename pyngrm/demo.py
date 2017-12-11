@@ -8,7 +8,6 @@ from __future__ import unicode_literals, print_function
 from pyngrm.base import BOX, SPACE
 from pyngrm.board import BaseBoard
 from pyngrm.renderer import AsciiRendererWithBold, AsciiRenderer
-from tests.test_board import tested_board
 
 
 def demo_board(renderer=AsciiRendererWithBold, **rend_params):
@@ -49,14 +48,39 @@ def demo_board(renderer=AsciiRendererWithBold, **rend_params):
     return BaseBoard(columns, rows, renderer=renderer)
 
 
-def demo_board2(renderer=AsciiRendererWithBold, **rend_params):
+def p_board(board_cls=BaseBoard, renderer=AsciiRendererWithBold, **rend_params):
     """
     Very simple demonstration board with the 'P' letter
     source: https://en.wikipedia.org/wiki/Nonogram#Example
     """
-    renderer = renderer(**rend_params)
-    renderer.icons.update({BOX: '\u2B1B', SPACE: '\u2022'})
-    return tested_board(renderer=renderer)
+    columns = [[], 9, [9], [2, 2], (2, 2), 4, '4', '']
+    rows = [
+        None,
+        4,
+        6,
+        '2 2',
+        [2, 2],
+        6,
+        4,
+        2,
+        [2],
+        2,
+        0,
+    ]
+
+    if board_cls == BaseBoard:
+        rend_params['renderer'] = renderer
+
+    return board_cls(columns, rows, **rend_params)
+
+
+def demo_board2(board_cls=BaseBoard, renderer=AsciiRendererWithBold, **rend_params):
+    """
+    Easy board with customized cells icons
+    """
+    board = p_board(board_cls, renderer=renderer, **rend_params)
+    board.renderer.icons.update({BOX: '\u2B1B', SPACE: '\u2022'})
+    return board
 
 
 def more_complex_board(renderer=AsciiRenderer, **rend_params):

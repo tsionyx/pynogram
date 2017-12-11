@@ -105,7 +105,6 @@ class StreamRenderer(Renderer):
     """
 
     def __init__(self, board=None, stream=sys.stdout):
-        super(StreamRenderer, self).__init__(board)
         self.stream = stream
         self.icons = {
             _NOT_SET: ' ',
@@ -114,6 +113,7 @@ class StreamRenderer(Renderer):
             BOX: 'X',
             SPACE: '.',
         }
+        super(StreamRenderer, self).__init__(board)
 
     def board_init(self, board=None):
         super(StreamRenderer, self).board_init(board)

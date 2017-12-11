@@ -7,6 +7,7 @@ from io import StringIO
 import pytest
 
 from pyngrm.board import AsciiBoard, BaseBoard
+from pyngrm.demo import p_board
 from pyngrm.renderer import AsciiRendererWithBold
 
 
@@ -17,21 +18,7 @@ def tested_board(board_cls=BaseBoard, **kwargs):
 
     https://en.wikipedia.org/wiki/Nonogram#Example
     """
-    return board_cls(
-        [[], 9, [9], [2, 2], (2, 2), 4, '4', ''],
-        [
-            None,
-            4,
-            6,
-            '2 2',
-            [2, 2],
-            6,
-            4,
-            2,
-            [2],
-            2,
-            0,
-        ], **kwargs)
+    return p_board(board_cls, **kwargs)
 
 
 class TestBoard(object):
