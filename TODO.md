@@ -1,3 +1,4 @@
+- tests for Web UI
 - choose which directions to solve first: rows or columns (with some heuristics)
 - solve using more sophisticated algorithm O(n^2)
 - import from different formats

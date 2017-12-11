@@ -13,6 +13,7 @@ from io import StringIO
 import tornado.gen
 import tornado.httpserver
 import tornado.ioloop
+import tornado.options
 import tornado.web
 
 from pyngrm.demo import demo_board, demo_board2, more_complex_board
@@ -32,6 +33,9 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 
 LOG = logging.getLogger(_LOG_NAME)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+tornado.options.define("port", default=3145, help="run on the given port", type=int)
+tornado.options.define("debug", default=False, help="debug mode", type=bool)
 
 
 class BoardLiveHandler(ThreadedBaseHandler):
@@ -220,5 +224,11 @@ def main(port, debug=False):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO)
-    main(3145, debug=True)
+    tornado.options.parse_command_line()
+    PORT, DEBUG = tornado.options.options.port, tornado.options.options.debug
+    if not DEBUG:
+        # FIXME
+        LOG.warning('Only debug mode supported for now. Switching.')
+        DEBUG = True
+
+    main(port=PORT, debug=DEBUG)

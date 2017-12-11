@@ -47,7 +47,7 @@ setup(
     name=NAME,
     version='.'.join(map(str, VERSION)),
     packages=find_packages(),
-    install_requires=['six', 'numpy'],
+    install_requires=['six', 'numpy', 'futures', 'tornado'],
     tests_require=['tox', 'coverage', 'pytest', 'flake8'],
 
     # PyPI metadata
