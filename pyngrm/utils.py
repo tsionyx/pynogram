@@ -6,7 +6,9 @@ e.g. manipulations with collections or streams.
 
 from __future__ import unicode_literals, print_function, division
 
+import multiprocessing
 import sys
+from contextlib import contextmanager
 from datetime import datetime
 from itertools import islice
 
@@ -130,3 +132,17 @@ START_TIME = datetime.now()
 def get_uptime():  # pragma: no cover
     """Return the time program run in human-readable form"""
     return text_type(datetime.now() - START_TIME)
+
+
+@contextmanager
+def terminating_mp_pool(*args, **kwargs):
+    """
+    Allows to use multiprocessing.Pool as a contextmanager in both PY2 and PY3
+
+    https://stackoverflow.com/a/25968716
+    """
+    pool = multiprocessing.Pool(*args, **kwargs)
+    try:
+        yield pool
+    finally:
+        pool.terminate()

@@ -299,3 +299,13 @@ class NonogramFSM(FiniteStateMachine):
                     "The {} cell ({}) in a row '{}' cannot be neither space nor box".format(
                         i, cell, original_row))
         return solved
+
+
+def solve_row(args):
+    """
+    Utility for row solving that can be used in multiprocessing map
+    """
+    # mp's map supports only one iterable, so this weird syntax
+    clues, row = args
+    nfsm = NonogramFSM.from_clues(clues)
+    return nfsm.solve(row)

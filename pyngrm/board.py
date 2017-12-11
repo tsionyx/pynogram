@@ -13,13 +13,13 @@ import numpy as np
 from six.moves import zip
 
 from pyngrm.base import UNSURE, normalize_clues
-from pyngrm.fsm import NonogramFSM
+from pyngrm.fsm import solve_row
 from pyngrm.renderer import (
     Renderer,
     StreamRenderer,
     AsciiRenderer,
 )
-from pyngrm.utils import avg
+from pyngrm.utils import avg, terminating_mp_pool
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -157,16 +157,24 @@ class BaseBoard(object):
             clue_cells_mapping = zip(self.vertical_clues, self.cells.T)
             desc = 'column'
 
+        rows_scores = []
+        rows_to_solve = []
+
         for i, (clue, row) in enumerate(clue_cells_mapping):
             pre_solution_rate = self.row_solution_rate(row)
             if pre_solution_rate == 1:
                 continue  # already solved
 
+            rows_scores.append((i, pre_solution_rate))
             LOG.debug('Solving %s %s: %s. Partial: %s',
                       i, desc, clue, row)
 
-            nfsm = NonogramFSM.from_clues(clue)
-            updated = nfsm.solve(row)
+            rows_to_solve.append((clue, row))
+
+        with terminating_mp_pool() as pool:
+            solved_rows = pool.map(solve_row, rows_to_solve)
+
+        for (i, pre_solution_rate), updated in zip(rows_scores, solved_rows):
             if self.row_solution_rate(updated) > pre_solution_rate:
                 LOG.debug('New info on %s %s', desc, i)
 

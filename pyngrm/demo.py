@@ -64,6 +64,8 @@ def more_complex_board(renderer=AsciiRenderer, **rend_params):
     The board from a magazine.
 
     Currently it takes 29 rounds and more than 7 minutes to solve it!
+
+    UPDATE: with multiprocessing it takes about 250 seconds now.
     """
     renderer = renderer(**rend_params)
 

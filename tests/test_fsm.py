@@ -12,6 +12,7 @@ from pyngrm.fsm import (
     FiniteStateMachine,
     NonogramFSM,
     NonogramError,
+    solve_row,
 )
 
 
@@ -229,5 +230,4 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
 
     @pytest.mark.parametrize("clues,input_row,expected", SOLVED_ROWS)
     def test_solve(self, clues, input_row, expected):
-        nfsm = NonogramFSM.from_clues(clues)
-        assert nfsm.solve(input_row) == expected
+        assert solve_row((clues, input_row)) == expected
