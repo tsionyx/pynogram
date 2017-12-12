@@ -230,4 +230,6 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
 
     @pytest.mark.parametrize("clues,input_row,expected", SOLVED_ROWS)
     def test_solve(self, clues, input_row, expected):
+        # both arguments passes work
         assert solve_row((clues, input_row)) == expected
+        assert solve_row(clues, input_row) == expected

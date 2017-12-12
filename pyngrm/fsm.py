@@ -301,11 +301,14 @@ class NonogramFSM(FiniteStateMachine):
         return solved
 
 
-def solve_row(args):
+def solve_row(*args):
     """
     Utility for row solving that can be used in multiprocessing map
     """
-    # mp's map supports only one iterable, so this weird syntax
+    if len(args) == 1:
+        # mp's map supports only one iterable, so this weird syntax
+        args = args[0]
+
     clues, row = args
     nfsm = NonogramFSM.from_clues(clues)
     return nfsm.solve(row)
