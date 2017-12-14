@@ -1,7 +1,8 @@
 $(document).ready(function() {
     document.session = $('#session').val();
+    var loc = window.location;
     $(".button").on("click", function() {
-        $.ajax({url: window.location.pathname, type: 'POST'});
+        $.ajax({url: loc.pathname + loc.search, type: 'POST'});
         setTimeout(requestBoard, 100);
     });
     setTimeout(requestBoard, 100);

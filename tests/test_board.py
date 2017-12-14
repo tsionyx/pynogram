@@ -5,6 +5,7 @@ from __future__ import unicode_literals, print_function
 from io import StringIO
 
 import pytest
+import time
 
 from pyngrm.board import AsciiBoard, BaseBoard
 from pyngrm.demo import p_board
@@ -203,3 +204,28 @@ class TestSolution(object):
 
         # it takes only one round to solve that
         assert sum(rounds) == 1
+
+    # @pytest.mark.skip('Too hard for unit tests')
+    def test_various_modes(self):
+        solutions = dict()
+
+        for parallel in (False, True):
+            for rows_first in (False, True):
+                stream = StringIO()
+                board = p_board(stream=stream)
+                start = time.time()
+
+                board.solve(rows_first=rows_first, parallel=parallel)
+                solutions[(rows_first, parallel)] = (
+                    stream.getvalue().rstrip(), time.time() - start)
+
+        assert len(solutions) == 4
+        assert len(set(v[0] for v in solutions.values())) == 1
+
+        # multiprocessing should be faster in general
+        # but on the small board like this it could be slower also
+        #
+        # solutions = {k: v[1] for k, v in solutions.items()}
+        # mp = solutions[(True, True)] + solutions[(True, False)]
+        # sp = solutions[(False, True)] + solutions[(False, False)]
+        # assert mp < sp

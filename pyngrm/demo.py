@@ -7,7 +7,7 @@ from __future__ import unicode_literals, print_function
 
 from pyngrm.base import BOX, SPACE
 from pyngrm.board import BaseBoard
-from pyngrm.renderer import AsciiRendererWithBold, AsciiRenderer
+from pyngrm.renderer import AsciiRendererWithBold, AsciiRenderer, Renderer
 
 
 def demo_board(renderer=AsciiRendererWithBold, **rend_params):
@@ -69,7 +69,10 @@ def p_board(board_cls=BaseBoard, renderer=AsciiRendererWithBold, **rend_params):
     ]
 
     if board_cls == BaseBoard:
-        rend_params['renderer'] = renderer
+        if renderer is Renderer:
+            renderer = renderer(**rend_params)
+
+        rend_params = dict(renderer=renderer)
 
     return board_cls(columns, rows, **rend_params)
 
@@ -91,12 +94,12 @@ def more_complex_board(renderer=AsciiRenderer, **rend_params):
 
     Time consuming (8-cores Intel(R) Xeon(R) CPU E3-1275 v5 @ 3.60GHz):
     py27:
-        77 seconds with multiprocessing;
-        260 seconds in a single process.
+        8.4 seconds with multiprocessing;
+        2.2 seconds in a single process.
 
     py35:
-        65 seconds with multiprocessing;
-        225 seconds in a single process.
+        8.5 seconds with multiprocessing;
+        1.7 seconds in a single process.
     """
     renderer = renderer(**rend_params)
 

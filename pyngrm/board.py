@@ -146,7 +146,7 @@ class BaseBoard(object):
         """How many cells in a row are known to be box or space"""
         return sum(1 for cell in row if cell != UNSURE) / len(row)
 
-    def solve_rows(self, horizontal=True):
+    def solve_rows(self, horizontal=True, parallel=False):
         """Solve every row (or column) with FSM"""
         start = time.time()
 
@@ -171,8 +171,11 @@ class BaseBoard(object):
 
             rows_to_solve.append((clue, row))
 
-        with terminating_mp_pool() as pool:
-            solved_rows = pool.map(solve_row, rows_to_solve)
+        if parallel:
+            with terminating_mp_pool() as pool:
+                solved_rows = pool.map(solve_row, rows_to_solve)
+        else:
+            solved_rows = map(solve_row, rows_to_solve)
 
         for (i, pre_solution_rate), updated in zip(rows_scores, solved_rows):
             if self.row_solution_rate(updated) > pre_solution_rate:
@@ -187,7 +190,7 @@ class BaseBoard(object):
 
         LOG.info('%ss solution: %ss', desc.title(), time.time() - start)
 
-    def solve_round(self, rows_first=True):
+    def solve_round(self, rows_first=True, parallel=False):
         """Solve every column and every row using FSM exactly one time"""
         if rows_first:
             order = [True, False]
@@ -195,7 +198,7 @@ class BaseBoard(object):
             order = [False, True]
 
         for horizontal in order:
-            self.solve_rows(horizontal=horizontal)
+            self.solve_rows(horizontal=horizontal, parallel=parallel)
 
         self.solution_round_completed()
 
@@ -204,17 +207,20 @@ class BaseBoard(object):
         """Return whether the nonogram is completely solved"""
         return self._solved
 
-    def solve(self, rows_first=True):
+    def solve(self, rows_first=True, parallel=False):
         """Solve the nonogram to the most with FSM using multiple rounds"""
         solved = self.solution_rate
         counter = 0
+
+        if parallel:
+            LOG.info("Using several processes to solve")
 
         start = time.time()
         while True:
             counter += 1
             LOG.info('Round %s', counter)
 
-            self.solve_round(rows_first=rows_first)
+            self.solve_round(rows_first=rows_first, parallel=parallel)
 
             if self.solution_rate == 1 or solved == self.solution_rate:
                 self._solved = True

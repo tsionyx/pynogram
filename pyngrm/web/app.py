@@ -51,6 +51,9 @@ class BoardLiveHandler(ThreadedBaseHandler):
 
     @tornado.gen.coroutine
     def post(self, _id):
+        rows_first = 'columns_first' not in self.request.arguments
+        parallel = 'parallel' in self.request.arguments
+
         _id = int(_id)
         board_notifier = self.application.get_board_notifier(_id, create=True)
 
@@ -60,7 +63,9 @@ class BoardLiveHandler(ThreadedBaseHandler):
         LOG.info('Solving board #%s', _id)
         LOG.debug('Callbacks: %s', board_notifier.callbacks)
 
-        yield self.executor.submit(board_notifier.board.solve)
+        yield self.executor.submit(board_notifier.board.solve,
+                                   rows_first=rows_first,
+                                   parallel=parallel)
 
         # force callbacks to execute
         board_notifier.board.solution_round_completed()
