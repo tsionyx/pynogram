@@ -24,7 +24,7 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 LOG = logging.getLogger(_LOG_NAME)
 
 
-class FiniteStateError(ValueError):
+class StateMachineError(ValueError):
     """
     Represents an error occurred when trying
     to make bad transition with a FSM
@@ -34,7 +34,7 @@ class FiniteStateError(ValueError):
 
     def __init__(self, *args, **kwargs):
         self.code = kwargs.pop('code', None)
-        super(FiniteStateError, self).__init__(*args)
+        super(StateMachineError, self).__init__(*args)
 
 
 class NonogramError(ValueError):
@@ -81,16 +81,34 @@ class FiniteStateMachine(object):
         LOG.debug("Action: '%s'", action)
 
         if action not in self.actions:
-            raise FiniteStateError("Action '{}' not available".format(
-                action), code=FiniteStateError.BAD_ACTION)
+            raise StateMachineError("Action '{}' not available".format(
+                action), code=StateMachineError.BAD_ACTION)
 
-        try:
-            self._state = self.state_map[(self.current_state, action)]
+        new_state = self.reaction(action)
+        if new_state is None:
+            raise StateMachineError("Cannot do '{}' from the state '{}'".format(
+                action, self.current_state), code=StateMachineError.BAD_TRANSITION)
+        else:
+            self._state = new_state
             LOG.debug("New state: '%s'", self.current_state)
             return self.current_state
+
+    def reaction(self, action, current_state=None):
+        """
+        Returns the state in which the machine would be
+        if the `action` will apply to it
+        (without actual changing of the state).
+
+        If the `current_state` is given, pretend that
+        the machine is in this state before action.
+        """
+        if current_state is None:
+            current_state = self.current_state
+
+        try:
+            return self.state_map[(current_state, action)]
         except KeyError:
-            raise FiniteStateError("Cannot do '{}' from the state '{}'".format(
-                action, self.current_state), code=FiniteStateError.BAD_TRANSITION)
+            return None
 
     @property
     def current_state(self):
@@ -148,7 +166,7 @@ class FiniteStateMachine(object):
                 self.transition(letter)
                 LOG.info("Transition from '%s' to '%s' with action '%s'",
                          prev, self.current_state, letter)
-            except FiniteStateError:
+            except StateMachineError:
                 LOG.info("Cannot do action '%s' in the state '%s'",
                          letter, self.current_state)
                 return False
@@ -223,6 +241,7 @@ class NonogramFSM(FiniteStateMachine):
         """
         row = normalize_row(row)
 
+        # save the state in case of something change it
         save_state = self.current_state
 
         try:
@@ -232,23 +251,19 @@ class NonogramFSM(FiniteStateMachine):
                 step_possible_states = []
                 for state in possible_states:
                     if cell in (BOX, UNSURE):
-                        self._state = state
                         LOG.debug('Check the ability to insert BOX')
 
-                        try:
-                            next_step = self.transition(BOX)
-                        except FiniteStateError:
+                        next_step = self.reaction(BOX, current_state=state)
+                        if next_step is None:
                             LOG.debug("Cannot go from state '%s' with BOX", state)
                         else:
                             step_possible_states.append(next_step)
 
                     if cell in (SPACE, UNSURE):
-                        self._state = state
                         LOG.debug('Check the ability to insert SPACE')
 
-                        try:
-                            next_step = self.transition(SPACE)
-                        except FiniteStateError:
+                        next_step = self.reaction(SPACE, current_state=state)
+                        if next_step is None:
                             LOG.debug("Cannot go from state '%s' with SPACE", state)
                         else:
                             step_possible_states.append(next_step)

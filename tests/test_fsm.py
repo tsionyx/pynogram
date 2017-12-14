@@ -8,7 +8,7 @@ import pytest
 
 from pyngrm.base import BOX, SPACE, UNSURE
 from pyngrm.fsm import (
-    FiniteStateError,
+    StateMachineError,
     FiniteStateMachine,
     NonogramFSM,
     NonogramError,
@@ -35,7 +35,7 @@ class TestFiniteStateMachine(object):
         assert fsm.current_state == 'bed'
 
     def test_bad_action(self, fsm):
-        with pytest.raises(FiniteStateError,
+        with pytest.raises(StateMachineError,
                            match="Action 'eat' not available") as ie:
             fsm.transition('eat')
 
@@ -45,7 +45,7 @@ class TestFiniteStateMachine(object):
     def test_bad_transition(self, fsm):
         fsm.transition('take train')
         assert fsm.current_state == 'work'
-        with pytest.raises(FiniteStateError,
+        with pytest.raises(StateMachineError,
                            match="Cannot do 'sleep' from the state 'work'") as ie:
             fsm.transition('sleep')
 
@@ -110,7 +110,7 @@ class TestNonogramFiniteStateMachine(object):
         nfsm.transition(True)
         assert nfsm.current_state == 3
 
-        with pytest.raises(FiniteStateError) as ie:
+        with pytest.raises(StateMachineError) as ie:
             nfsm.transition(False)
 
         assert ie.value.code == 1
