@@ -2,10 +2,10 @@
 
 from __future__ import unicode_literals, print_function
 
+import time
 from io import StringIO
 
 import pytest
-import time
 
 from pyngrm.board import AsciiBoard, BaseBoard
 from pyngrm.demo import p_board
@@ -19,7 +19,7 @@ def tested_board(board_cls=BaseBoard, **kwargs):
 
     https://en.wikipedia.org/wiki/Nonogram#Example
     """
-    return p_board(board_cls, **kwargs)
+    return p_board(board_cls=board_cls, **kwargs)
 
 
 class TestBoard(object):

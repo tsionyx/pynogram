@@ -10,7 +10,24 @@ from pyngrm.board import BaseBoard
 from pyngrm.renderer import AsciiRendererWithBold, AsciiRenderer, Renderer
 
 
-def demo_board(renderer=AsciiRendererWithBold, **rend_params):
+def base_demo_board(columns, rows, board_cls=BaseBoard,
+                    renderer=AsciiRendererWithBold, **rend_params):
+    """
+    :param columns:
+    :param rows:
+    :type board_cls: Type[BaseBoard]
+    :type renderer: Type[Renderer]
+    """
+    if board_cls == BaseBoard:
+        if isinstance(renderer, type) and issubclass(renderer, Renderer):
+            renderer = renderer(**rend_params)
+
+        rend_params = dict(renderer=renderer)
+
+    return board_cls(columns, rows, **rend_params)
+
+
+def demo_board(**kwargs):
     """
     The demonstration board with the 'W' letter
     source: https://en.wikipedia.org/wiki/Nonogram#/media/File:Nonogram.svg
@@ -43,12 +60,10 @@ def demo_board(renderer=AsciiRendererWithBold, **rend_params):
         '1 1',
     ]
 
-    renderer = renderer(**rend_params)
-    # renderer.icons.update({BOX: '\u2B1B', SPACE: '\u2022'})
-    return BaseBoard(columns, rows, renderer=renderer)
+    return base_demo_board(columns, rows, **kwargs)
 
 
-def p_board(board_cls=BaseBoard, renderer=AsciiRendererWithBold, **rend_params):
+def p_board(**kwargs):
     """
     Very simple demonstration board with the 'P' letter
     source: https://en.wikipedia.org/wiki/Nonogram#Example
@@ -67,26 +82,19 @@ def p_board(board_cls=BaseBoard, renderer=AsciiRendererWithBold, **rend_params):
         2,
         0,
     ]
-
-    if board_cls == BaseBoard:
-        if renderer is Renderer:
-            renderer = renderer(**rend_params)
-
-        rend_params = dict(renderer=renderer)
-
-    return board_cls(columns, rows, **rend_params)
+    return base_demo_board(columns, rows, **kwargs)
 
 
-def demo_board2(board_cls=BaseBoard, renderer=AsciiRendererWithBold, **rend_params):
+def demo_board2(**kwargs):
     """
     Easy board with customized cells icons
     """
-    board = p_board(board_cls, renderer=renderer, **rend_params)
+    board = p_board(**kwargs)
     board.renderer.icons.update({BOX: '\u2B1B', SPACE: '\u2022'})
     return board
 
 
-def more_complex_board(renderer=AsciiRenderer, **rend_params):
+def more_complex_board(renderer=AsciiRenderer, **kwargs):
     # noinspection SpellCheckingInspection
     """
     The board from a magazine.
@@ -101,9 +109,8 @@ def more_complex_board(renderer=AsciiRenderer, **rend_params):
         8.5 seconds with multiprocessing;
         1.7 seconds in a single process.
     """
-    renderer = renderer(**rend_params)
 
-    cols = [
+    columns = [
         '14 9',
         '3 2 10',
         '3 12 1 3 1 4',
@@ -197,4 +204,4 @@ def more_complex_board(renderer=AsciiRenderer, **rend_params):
         '5 2',
     ]
 
-    return BaseBoard(cols, rows, renderer=renderer)
+    return base_demo_board(columns, rows, renderer=renderer, **kwargs)
