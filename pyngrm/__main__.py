@@ -8,12 +8,18 @@ from __future__ import unicode_literals, print_function
 
 import logging
 
-from pyngrm.demo import demo_board
+from pyngrm.board import ConsoleBoard
+from pyngrm.demo import base_demo_board
+from pyngrm.reader import examples_file, read
 
 
 def main():
     """Traditional main function"""
-    d_board = demo_board()
+    with open(examples_file('hello.txt')) as _file:
+        columns, rows = read(_file)
+
+    d_board = base_demo_board(columns, rows, board_cls=ConsoleBoard)
+    d_board.renderer.icons.update({True: '\u2B1B'})
     d_board.on_solution_round_complete = lambda board: board.draw()
     d_board.solve()
 
