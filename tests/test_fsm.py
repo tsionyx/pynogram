@@ -214,9 +214,9 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
                             "of the same state 'False' in a single row "
                             "'_.0_X____'")
 
-    def test_solve_bad_row(self, nfsm):
+    def test_solve_with_partial_match_bad_row(self, nfsm):
         with pytest.raises(NonogramError) as ie:
-            nfsm.solve('_0__0____')
+            nfsm.solve_with_partial_match('_0__0____')
 
         exc = ie.value
         assert str(exc) == ("The 0 cell (None) in a row "

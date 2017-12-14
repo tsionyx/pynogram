@@ -279,7 +279,7 @@ class NonogramFSM(FiniteStateMachine):
         finally:
             self._state = save_state
 
-    def solve(self, row):
+    def solve_with_partial_match(self, row):
         """
         Solve the nonogram `row` using the FSM and `self.partial_match` logic
         """
@@ -326,4 +326,4 @@ def solve_row(*args):
 
     clues, row = args
     nfsm = NonogramFSM.from_clues(clues)
-    return nfsm.solve(row)
+    return nfsm.solve_with_partial_match(row)
