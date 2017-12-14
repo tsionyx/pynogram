@@ -12,7 +12,7 @@ import logging
 import os
 from collections import OrderedDict
 
-from six import iteritems, text_type
+from six import iteritems, text_type, itervalues
 from six.moves import range
 
 from pyngrm.base import BOX, SPACE, UNSURE, normalize_clues, normalize_row
@@ -315,15 +315,174 @@ class NonogramFSM(FiniteStateMachine):
                         i, cell, original_row))
         return solved
 
+    def _make_transition_table(self, row):
+        row = normalize_row(row)
 
-def solve_row(*args):
+        # for each read cell store a list of StepState
+        # plus O-th for the state before any read cells
+        transition_table = TransitionTable.with_capacity(len(row) + 1)
+        transition_table.append_transition(0, self.INITIAL_STATE)
+
+        for i, cell in enumerate(row):
+            transition_index = i + 1
+
+            for prev in itervalues(transition_table[transition_index - 1]):
+                if cell in (BOX, UNSURE):
+                    LOG.debug('Add states with BOX transition')
+                    cell_type = BOX
+
+                    prev_state = prev.state
+                    new_state = self.reaction(cell_type, prev_state)
+                    if new_state is None:
+                        LOG.debug('Cannot go from %s with the BOX cell', prev_state)
+                    else:
+                        transition_table.append_transition(
+                            transition_index, new_state, prev, cell_type)
+
+                if cell in (SPACE, UNSURE):
+                    LOG.debug('Add states with SPACE transition')
+                    cell_type = SPACE
+
+                    prev_state = prev.state
+                    new_state = self.reaction(cell_type, prev_state)
+                    if new_state is None:
+                        LOG.debug('Cannot go from %s with the SPACE cell', prev_state)
+                    else:
+                        transition_table.append_transition(
+                            transition_index, new_state, prev, cell_type)
+
+        return transition_table
+
+    def solve_with_reverse_tracking(self, row):
+        """
+        Solve the nonogram `row` using the FSM and reverse tracking
+        """
+        transition_table = self._make_transition_table(row)
+
+        if self.final_state not in transition_table[-1]:
+            raise NonogramError("The row '{}' cannot fit".format(row))
+        # print(transition_table)
+
+        solved_row = []
+        for states in reversed(list(
+                transition_table.reverse_tracking(self.final_state))):
+            assert states
+
+            if len(states) == 1:
+                solved_row.append(states[0])
+            else:
+                solved_row.append(UNSURE)
+
+        assert len(solved_row) == len(row)
+        return solved_row
+
+
+class _StepState(object):  # pylint: disable=too-few-public-methods
+    """
+    Stores state of the machine,
+    the link to the previous StepState object
+    and the list of transitions which led to this state
+    """
+
+    def __init__(self, state, prev=None, cell_type=None):
+        # self.id = id(self)
+        self.state = state
+        self.previous_states = dict()
+        self.add_previous_state(prev, cell_type)
+
+    def add_previous_state(self, prev, cell_type):
+        """
+        Add transition which led to the current StepState.
+        As a result it could be one or more pairs (StepState, cell_type).
+        """
+        if prev is not None:
+            self.previous_states[prev] = cell_type
+
+    def __str__(self):
+        previous_states = sorted(
+            iteritems(self.previous_states),
+            key=lambda x: x[0].state)
+
+        return '({}): [{}]'.format(
+            # self.id,
+            self.state,
+            ', '.join('{}<-{}'.format(prev.state, cell_type)
+                      for prev, cell_type in previous_states))
+
+
+class TransitionTable(list):
+    """
+    Stores the map of all the transitions that
+    can be made with given automaton for given input row
+    """
+
+    @classmethod
+    def with_capacity(cls, capacity):
+        """Generates a list of dicts with given capacity"""
+        return cls([dict() for _ in range(capacity)])
+
+    def append_transition(self, cell_index, state, prev=None, cell_type=None):
+        """
+        Add transition that shifts from `prev` StepState
+        after reading `cell_index`-th cell from a row
+        (which value is `cell_type`)
+        to the new StepState of given `state`
+        """
+        transition_row = self[cell_index]
+        if state in transition_row:
+            LOG.debug('State %s already exists in transition table for cell %s',
+                      state, cell_index)
+            transition_row[state].add_previous_state(prev, cell_type)
+        else:
+            transition_row[state] = _StepState(state, prev, cell_type)
+
+    def __str__(self):
+        res = []
+        for i, states in enumerate(self):
+            if i > 0:
+                res.append('')
+            res.append(i)
+            res.extend(itervalues(states))
+
+        return '\n'.join(map(str, res))
+
+    def reverse_tracking(self, final_state):
+        """
+        Find all the possible reverse ways.
+
+        Yield the actions that the machine can do
+        on each step from final to initial.
+        """
+        possible_states = {final_state}
+
+        # ignore the first row, it's for pre-read state
+        for row in reversed(self[1:]):
+            step_possible_cell_types = set()
+            step_possible_states = set()
+            for state in possible_states:
+                step = row[state]
+                for prev, cell_type in iteritems(step.previous_states):
+                    step_possible_cell_types.add(cell_type)
+                    step_possible_states.add(prev.state)
+            possible_states = step_possible_states
+            yield tuple(step_possible_cell_types)
+
+
+def solve_row(*args, **kwargs):
     """
     Utility for row solving that can be used in multiprocessing map
     """
+    method = kwargs.pop('method', 'reverse_tracking')
+
     if len(args) == 1:
         # mp's map supports only one iterable, so this weird syntax
         args = args[0]
 
     clues, row = args
     nfsm = NonogramFSM.from_clues(clues)
-    return nfsm.solve_with_partial_match(row)
+
+    method_func = getattr(nfsm, 'solve_with_' + method, None)
+    if not method_func:
+        raise AttributeError("Cannot find solving method '%s'" % method)
+
+    return method_func(row)

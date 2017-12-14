@@ -226,10 +226,90 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
     # TODO: more solved rows
     SOLVED_ROWS = [
         ('3 2', '_0__X____', [SPACE, SPACE, UNSURE, BOX, BOX, UNSURE, UNSURE, BOX, UNSURE]),
+        ('2 2', '___.X_____', [UNSURE, UNSURE, UNSURE, SPACE, BOX, BOX, SPACE,
+                               UNSURE, UNSURE, UNSURE]),
     ]
 
     @pytest.mark.parametrize("clues,input_row,expected", SOLVED_ROWS)
     def test_solve(self, clues, input_row, expected):
         # both arguments passes work
+        # assert solve_row((clues, input_row)) == expected
+        assert solve_row(clues, input_row, method='partial_match') == expected
+
+
+class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
+    @pytest.mark.parametrize("clues,input_row,expected",
+                             TestNonogramFSMPartialMatch.SOLVED_ROWS)
+    def test_solve(self, clues, input_row, expected):
+        # both arguments passes work
         assert solve_row((clues, input_row)) == expected
-        assert solve_row(clues, input_row) == expected
+        assert solve_row(clues, input_row, method='reverse_tracking') == expected
+
+    def test_transition_table(self):
+        clues, row = '2 2', '___0X_____'
+        nfsm = NonogramFSM.from_clues(clues)
+        # noinspection PyProtectedMember
+        transition_table = nfsm._make_transition_table(row)
+        # TODO: assert string representation
+        assert str(transition_table) == '\n'.join([
+            '0',
+            '(1): []',
+            '',
+            '1',
+            '(1): [1<-False]',
+            '(2): [1<-True]',
+            '',
+            '2',
+            '(1): [1<-False]',
+            '(2): [1<-True]',
+            '(3): [2<-True]',
+            '',
+            '3',
+            '(1): [1<-False]',
+            '(2): [1<-True]',
+            '(3): [2<-True]',
+            '(4): [3<-False]',
+            '',
+            '4',
+            '(1): [1<-False]',
+            '(4): [3<-False, 4<-False]',
+            '',
+            '5',
+            '(2): [1<-True]',
+            '(5): [4<-True]',
+            '',
+            '6',
+            '(3): [2<-True]',
+            '(6): [5<-True]',
+            '',
+            '7',
+            '(4): [3<-False]',
+            '(6): [6<-False]',
+            '',
+            '8',
+            '(4): [4<-False]',
+            '(5): [4<-True]',
+            '(6): [6<-False]',
+            '',
+            '9',
+            '(4): [4<-False]',
+            '(5): [4<-True]',
+            '(6): [5<-True, 6<-False]',
+            '',
+            '10',
+            '(4): [4<-False]',
+            '(5): [4<-True]',
+            '(6): [5<-True, 6<-False]',
+        ])
+
+    def test_solve_bad_row(self):
+        with pytest.raises(NonogramError) as ie:
+            solve_row('1 1', '__.', method='reverse_tracking')
+
+        assert str(ie.value) == "The row '__.' cannot fit"
+
+    def test_solve_bad_method(self):
+        with pytest.raises(AttributeError) as ie:
+            solve_row('1 1', '___', method='brute_force')
+
+        assert str(ie.value) == "Cannot find solving method 'brute_force'"
