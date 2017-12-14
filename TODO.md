@@ -1,5 +1,8 @@
+- pretty SVG renderer
 - tests for Web UI
-- choose which directions to solve first: rows or columns (with some heuristics)
+- add heuristics:
+  - which directions to solve first: rows or columns
+  - use multiprocessing?
 - import from different formats
 - export to PBM, BMP
 - make user interaction scripts
