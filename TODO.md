@@ -1,5 +1,6 @@
 - pretty SVG renderer
 - tests for Web UI
+- solve 'unsolvable' boards (see in examples/)
 - add heuristics:
   - which directions to solve first: rows or columns
   - use multiprocessing?
