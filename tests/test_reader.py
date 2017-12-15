@@ -41,9 +41,10 @@ class TestReader(object):
         assert os.path.isdir(examples_file())
 
     def test_read_after_eof(self):
-        stream = StringIO('1\n\n1\n\nbad')
+        text = '\n'.join(['1', '', '', '1', '', '', 'bad'])
+        stream = StringIO(text)
 
         with pytest.raises(ValueError) as ei:
             read(stream)
 
-        assert str(ei.value) == "Found excess info on the line 4 while EOF expected: 'bad'"
+        assert str(ei.value) == "Found excess info on the line 6 while EOF expected: 'bad'"

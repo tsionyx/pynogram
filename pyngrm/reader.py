@@ -23,6 +23,9 @@ def _append_line_to_list(clues_line, clues_list):
     return clues_list.extend(clues)
 
 
+_ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK = 1
+
+
 def read(stream):
     """
     Read and parse lines from a stream to create a nonogram board
@@ -39,6 +42,8 @@ def read(stream):
     columns = []
     rows = []
 
+    empty_lines_counter = 0
+
     for i, line in enumerate(stream):
         # ignore whitespaces
         line = line.strip()
@@ -50,20 +55,25 @@ def read(stream):
 
         # ignore empty lines
         if not line:
+            empty_lines_counter += 1
+
             # if already start to read columns
             # and the empty line appeared
             # then the following info is about rows
             if columns_appears:
-                fill_rows = True
+                if empty_lines_counter > _ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK:
+                    fill_rows = True
 
             # if already start to read rows
             # and the empty line appeared
             # then all the info already had read
             if rows_appears:
-                read_complete = True
+                if empty_lines_counter > _ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK:
+                    read_complete = True
 
-            continue   # pragma: no cover
+            continue  # pragma: no cover
 
+        empty_lines_counter = 0
         # the first non-empty line should contains column(s) info
         if fill_rows:  # pylint: disable=simplifiable-if-statement
             rows_appears = True
