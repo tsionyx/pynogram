@@ -44,8 +44,8 @@ class TestConsoleBoard(object):
     def test_draw_empty(self, board, stream):
         board.draw()
         assert stream.getvalue().rstrip() == '\n'.join([
-            't t       2 2      ',
-            't t 0 9 9 2 2 4 4 0',
+            '- -       2 2      ',
+            '- - 0 9 9 2 2 4 4 0',
             '  0 _ _ _ _ _ _ _ _',
             '  4 _ _ _ _ _ _ _ _',
             '  6 _ _ _ _ _ _ _ _',
@@ -65,8 +65,8 @@ class TestConsoleBoard(object):
         board.cells[2][-1] = SPACE
         board.draw()
         assert stream.getvalue().rstrip() == '\n'.join([
-            't t       2 2      ',
-            't t 0 9 9 2 2 4 4 0',
+            '- -       2 2      ',
+            '- - 0 9 9 2 2 4 4 0',
             '  0 _ _ _ _ _ _ _ _',
             '  4 _ _ _ _ _ _ _ _',
             '  6 . X X X X X X .',

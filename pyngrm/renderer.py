@@ -108,7 +108,7 @@ class StreamRenderer(Renderer):
         self.stream = stream
         self.icons = {
             _NOT_SET: ' ',
-            _THUMBNAIL: 't',
+            _THUMBNAIL: '-',
             UNSURE: '_',
             BOX: 'X',
             SPACE: '.',
