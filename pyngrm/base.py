@@ -23,6 +23,22 @@ BOX = True
 SPACE = False
 
 
+def invert(cell_state):
+    """
+    Invert the given cell state:
+    BOX --> SPACE
+    SPACE --> BOX
+
+    For other values return unchanged.
+    """
+    if cell_state == BOX:
+        return SPACE
+    elif cell_state == SPACE:
+        return BOX
+
+    return cell_state
+
+
 def normalize_clues(row):
     """
     Normalize a nonogram clues row to a standard tuple format:

@@ -3,7 +3,11 @@
 from __future__ import unicode_literals, print_function
 
 # noinspection PyProtectedMember
-from pyngrm.base import _solve_on_space_hints
+from pyngrm.base import (
+    _solve_on_space_hints,
+    invert,
+    BOX, SPACE, UNSURE,
+)
 from pyngrm.board import BaseBoard
 
 
@@ -21,3 +25,9 @@ def test_space_hints_solving():
         [True, False, True],
         [True, False, True],
     ]
+
+
+def test_invert():
+    assert invert(SPACE) is True
+    assert invert(BOX) is False
+    assert invert(UNSURE) is UNSURE
