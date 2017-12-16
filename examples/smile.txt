@@ -1,0 +1,17 @@
+# The board from an article
+# source: http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.177.76&rep=rep1&type=pdf
+#
+# See the file format in hello.txt
+
+
+1
+1 1
+1
+1 1
+1
+
+
+1 1
+0
+1 1
+3

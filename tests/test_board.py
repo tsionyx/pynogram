@@ -9,7 +9,9 @@ import pytest
 
 from pyngrm.board import AsciiBoard, BaseBoard
 from pyngrm.demo import p_board
+from pyngrm.reader import examples_file, read
 from pyngrm.renderer import AsciiRendererWithBold
+from pyngrm.utils import is_close
 
 
 @pytest.fixture
@@ -229,3 +231,68 @@ class TestSolution(object):
         # mp = solutions[(True, True)] + solutions[(True, False)]
         # sp = solutions[(False, True)] + solutions[(False, False)]
         # assert mp < sp
+
+
+class TestContradictions(object):
+    # TODO: more tests on simple contradictions boards
+
+    def test_smile(self):
+        with open(examples_file('smile.txt')) as _file:
+            columns, rows = read(_file)
+
+        board = BaseBoard(columns, rows)
+
+        board.solve()
+        assert is_close(board.solution_rate, 0.6)
+        # assert is_close(board.solution_rate, 407.0 / 625)
+
+        board.solve_with_contradictions(propagate_on_row=True)
+        assert board.solution_rate == 1
+
+    def test_simple(self):
+        board = tested_board()
+        board.solve_with_contradictions()
+        assert board.solution_rate == 1
+
+    def test_many_solutions(self):
+        # source: https://en.wikipedia.org/wiki/Nonogram#Contradictions
+        columns = [3, 1, 2, 2, '1 1', '1 1']
+        rows = ['1 2', 1, 1, 3, 2, 2]
+
+        board = BaseBoard(columns, rows)
+
+        board.solve()
+        assert board.solution_rate == 0
+
+        board.solve_with_contradictions()
+        assert is_close(board.solution_rate, 7.0 / 9)
+
+    def test_chessboard(self):
+        """Just trying all the choices for full coverage"""
+
+        # The real chessboard could be defined like this
+        #
+        # `columns = rows = [[1, 1, 1, 1]] * 8`
+        #
+        # but it really slows down the test.
+        #
+        # So we just use simple 2x2 chessboard here
+        # with the same effect on test coverage
+
+        columns = rows = [1, 1]
+        board = BaseBoard(columns, rows)
+
+        board.solve()
+        assert board.solution_rate == 0
+
+        board.solve_with_contradictions(by_rows=False)
+        assert board.solution_rate == 0
+
+        board.solve_with_contradictions(propagate_on_row=True)
+        assert board.solution_rate == 0
+
+        board.solve_with_contradictions(by_rows=False, propagate_on_row=True)
+        assert board.solution_rate == 0
+
+        board.solve_with_contradictions(assumption=None)
+        assert board.solution_rate == 0

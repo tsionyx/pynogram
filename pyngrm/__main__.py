@@ -21,7 +21,11 @@ def main():
     d_board = base_demo_board(columns, rows, board_cls=ConsoleBoard)
     d_board.renderer.icons.update({True: '\u2B1B'})
     d_board.on_solution_round_complete = lambda board: board.draw()
-    d_board.solve()
+
+    try:
+        d_board.solve_with_contradictions(by_rows=False)
+    finally:
+        d_board.draw()
 
 
 if __name__ == '__main__':
