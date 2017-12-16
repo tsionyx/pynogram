@@ -146,3 +146,24 @@ def terminating_mp_pool(*args, **kwargs):
         yield pool
     finally:
         pool.terminate()
+
+
+def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):  # pylint: disable=invalid-name
+    """
+    Almost equality for float numbers
+
+    :param a: first number
+    :param b: second number
+
+    :param rel_tol: relative tolerance, it is multiplied
+    by the greater of the magnitudes of the two arguments;
+    as the values get larger, so does the allowed difference
+    between them while still considering them equal.
+    :param abs_tol: absolute tolerance that is applied as-is in all cases.
+
+    If the difference is less than either of those tolerances,
+    the values are considered equal.
+
+    Source: https://stackoverflow.com/a/33024979
+    """
+    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
