@@ -126,7 +126,18 @@ class StreamRenderer(Renderer):
 
     def render(self):
         for row in self.cells:
-            self._print(' '.join(self.cell_icon(cell) for cell in row))
+            res = []
+            for index, cell in enumerate(row):
+                ico = self.cell_icon(cell)
+
+                # do not pad the last symbol in a line
+                if len(ico) == 1:
+                    if index < len(row) - 1:
+                        ico += ' '
+
+                res.append(ico)
+
+            self._print(''.join(res))
 
     def draw_header(self):
         for i in range(self.header_height):

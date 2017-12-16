@@ -87,6 +87,19 @@ class TestConsoleBoard(object):
 
         assert str(ei.value), "'space'"
 
+    def test_two_digits_bad_drawing(self, stream):
+        width = 10
+        cols = [1] * width + [0, 1]
+        rows = [[width, 1]]
+
+        b = ConsoleBoard(cols, rows, stream=stream)
+        b.draw()
+
+        assert stream.getvalue().rstrip() == '\n'.join([
+            '- - 1 1 1 1 1 1 1 1 1 1 0 1',
+            '101 _ _ _ _ _ _ _ _ _ _ _ _',
+        ])
+
 
 def clear_stream(s):
     """
