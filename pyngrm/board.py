@@ -200,8 +200,6 @@ class BaseBoard(object):
         for horizontal in order:
             self.solve_rows(horizontal=horizontal, parallel=parallel)
 
-        self.solution_round_completed()
-
     @property
     def solved(self):
         """Return whether the nonogram is completely solved"""
@@ -221,6 +219,9 @@ class BaseBoard(object):
             LOG.info('Round %s', counter)
 
             self.solve_round(rows_first=rows_first, parallel=parallel)
+
+            if self.solution_rate > solved:
+                self.solution_round_completed()
 
             if self.solution_rate == 1 or solved == self.solution_rate:
                 self._solved = True
