@@ -321,12 +321,14 @@ class NonogramFSM(FiniteStateMachine):
         transition_table.append_transition(0, self.INITIAL_STATE)
 
         def _shift_one_cell(cell_type, trans_index,
-                            previous_step_state, previous_state, desc_cell):
-            LOG.debug('Add states with %s transition', desc_cell)
+                            previous_step_state, previous_state, desc_cell=None):
+            if desc_cell:  # pragma: no cover
+                LOG.debug('Add states with %s transition', desc_cell)
 
             new_state = self.reaction(cell_type, previous_state)
             if new_state is None:
-                LOG.debug('Cannot go from %s with the %s cell', previous_state, desc_cell)
+                if desc_cell:  # pragma: no cover
+                    LOG.debug('Cannot go from %s with the %s cell', previous_state, desc_cell)
             else:
                 transition_table.append_transition(
                     trans_index, new_state, previous_step_state, cell_type)
@@ -337,11 +339,11 @@ class NonogramFSM(FiniteStateMachine):
             for prev_state, prev in iteritems(transition_table[i]):
                 if cell in (BOX, UNSURE):
                     _shift_one_cell(BOX, transition_index,
-                                    prev, prev_state, 'BOX')
+                                    prev, prev_state)
 
                 if cell in (SPACE, UNSURE):
                     _shift_one_cell(SPACE, transition_index,
-                                    prev, prev_state, 'SPACE')
+                                    prev, prev_state)
 
         return transition_table
 
@@ -422,8 +424,8 @@ class TransitionTable(list):
         """
         transition_row = self[cell_index]
         if state in transition_row:
-            LOG.debug('State %s already exists in transition table for cell %s',
-                      state, cell_index)
+            # LOG.debug('State %s already exists in transition table for cell %s',
+            #           state, cell_index)
             transition_row[state].add_previous_state(prev, cell_type)
         else:
             transition_row[state] = _StepState(state, prev, cell_type)
