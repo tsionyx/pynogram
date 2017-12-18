@@ -1,6 +1,7 @@
 <component name="ProjectDictionaryState">
   <dictionary name="default">
     <words>
+      <w>asctime</w>
       <w>asdict</w>
       <w>backtick</w>
       <w>classmethod</w>
@@ -11,6 +12,8 @@
       <w>gitignore</w>
       <w>inlinevar</w>
       <w>ipynb</w>
+      <w>levelname</w>
+      <w>lineno</w>
       <w>msvs</w>
       <w>mymodule</w>
       <w>mypackage</w>

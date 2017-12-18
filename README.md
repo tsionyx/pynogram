@@ -13,6 +13,8 @@ python setup.py install
 ### See the demo
 ```
 python pyngrm
+
+python pyngrm --board=winter --draw-final
 ```
 
 ### Demo web-server
