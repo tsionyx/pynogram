@@ -339,13 +339,3 @@ class AsciiBoard(BaseBoard):
     def __init__(self, columns, rows, **renderer_params):
         super(AsciiBoard, self).__init__(
             columns, rows, renderer=AsciiRenderer(**renderer_params))
-
-
-class GameBoard(BaseBoard):
-    """
-    A board that renders using pygame or similar library with easy 2D drawing.
-
-    Not implemented yet.
-    """
-    # TODO: http://programarcadegames.com/index.php?chapter=introduction_to_graphics
-    pass
