@@ -48,3 +48,16 @@ class TestReader(object):
             read(stream)
 
         assert str(ei.value) == "Found excess info on the line 6 while EOF expected: 'bad'"
+
+    def test_txt_suffix(self):
+        with open(examples_file('w.txt')) as f:
+            columns1, rows1 = read(f)
+
+        with open(examples_file('w')) as f:
+            columns2, rows2 = read(f)
+
+        assert columns1 == columns2
+        assert rows1 == rows2
+
+    def test_not_existed_file_does_not_append_txt(self):
+        assert examples_file('board.pbm').endswith('board.pbm')

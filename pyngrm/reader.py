@@ -96,6 +96,12 @@ def examples_file(file_name=''):
     """
     examples_dir = os.path.join(os.path.dirname(CURRENT_DIR), 'examples')
     if file_name:
-        return os.path.join(examples_dir, file_name)
+        file_name = os.path.join(examples_dir, file_name)
+        if not os.path.isfile(file_name):
+            txt_file_name = file_name + '.txt'
+            if os.path.isfile(txt_file_name):
+                return txt_file_name
+
+        return file_name
 
     return examples_dir
