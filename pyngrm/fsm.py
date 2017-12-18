@@ -105,10 +105,7 @@ class FiniteStateMachine(object):
         if current_state is None:
             current_state = self.current_state
 
-        try:
-            return self.state_map[(current_state, action)]
-        except KeyError:
-            return None
+        return self.state_map.get((current_state, action), None)
 
     @property
     def current_state(self):
@@ -323,33 +320,28 @@ class NonogramFSM(FiniteStateMachine):
         transition_table = TransitionTable.with_capacity(len(row) + 1)
         transition_table.append_transition(0, self.INITIAL_STATE)
 
+        def _shift_one_cell(cell_type, trans_index,
+                            previous_step_state, previous_state, desc_cell):
+            LOG.debug('Add states with %s transition', desc_cell)
+
+            new_state = self.reaction(cell_type, previous_state)
+            if new_state is None:
+                LOG.debug('Cannot go from %s with the %s cell', previous_state, desc_cell)
+            else:
+                transition_table.append_transition(
+                    trans_index, new_state, previous_step_state, cell_type)
+
         for i, cell in enumerate(row):
             transition_index = i + 1
 
-            for prev in itervalues(transition_table[transition_index - 1]):
+            for prev_state, prev in iteritems(transition_table[i]):
                 if cell in (BOX, UNSURE):
-                    LOG.debug('Add states with BOX transition')
-                    cell_type = BOX
-
-                    prev_state = prev.state
-                    new_state = self.reaction(cell_type, prev_state)
-                    if new_state is None:
-                        LOG.debug('Cannot go from %s with the BOX cell', prev_state)
-                    else:
-                        transition_table.append_transition(
-                            transition_index, new_state, prev, cell_type)
+                    _shift_one_cell(BOX, transition_index,
+                                    prev, prev_state, 'BOX')
 
                 if cell in (SPACE, UNSURE):
-                    LOG.debug('Add states with SPACE transition')
-                    cell_type = SPACE
-
-                    prev_state = prev.state
-                    new_state = self.reaction(cell_type, prev_state)
-                    if new_state is None:
-                        LOG.debug('Cannot go from %s with the SPACE cell', prev_state)
-                    else:
-                        transition_table.append_transition(
-                            transition_index, new_state, prev, cell_type)
+                    _shift_one_cell(SPACE, transition_index,
+                                    prev, prev_state, 'SPACE')
 
         return transition_table
 
@@ -419,7 +411,7 @@ class TransitionTable(list):
     @classmethod
     def with_capacity(cls, capacity):
         """Generates a list of dicts with given capacity"""
-        return cls([dict() for _ in range(capacity)])
+        return TransitionTable([dict() for _ in range(capacity)])
 
     def append_transition(self, cell_index, state, prev=None, cell_type=None):
         """
@@ -443,6 +435,8 @@ class TransitionTable(list):
                 res.append('')
             res.append(i)
             res.extend(itervalues(states))
+            # for state, step in iteritems(states):
+            #     res.append('({}): {}'.format(state, step))
 
         return '\n'.join(map(str, res))
 
@@ -459,11 +453,13 @@ class TransitionTable(list):
         for row in reversed(self[1:]):
             step_possible_cell_types = set()
             step_possible_states = set()
+
             for state in possible_states:
                 step = row[state]
                 for prev, cell_type in iteritems(step.previous_states):
                     step_possible_cell_types.add(cell_type)
                     step_possible_states.add(prev.state)
+
             possible_states = step_possible_states
             yield tuple(step_possible_cell_types)
 
