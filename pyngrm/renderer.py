@@ -9,6 +9,7 @@ import logging
 import os
 import sys
 
+import svgwrite as svg
 from six import integer_types, text_type
 
 from pyngrm.core import UNKNOWN, BOX, SPACE
@@ -270,6 +271,32 @@ class AsciiRendererWithBold(AsciiRenderer):
     SIDE_DELIMITER_SIZE = 3
     BOLD_LINE_HORIZONTAL = AsciiRenderer.HEADER_DELIMITER
     BOLD_LINE_VERTICAL_SIZE = 2
+
+
+class SvgRenderer(StreamRenderer):
+    """
+    Draws the board like an SVG image (best representation for web)
+    """
+
+    def draw_grid(self):
+        pass
+
+    def draw_header(self):
+        pass
+
+    def draw_side(self):
+        pass
+
+    def render(self):
+        # TODO: pull request
+        # explicitly reset size to enable custom width
+        draw = svg.Drawing(size=None, width=500)
+        draw.add(draw.text(
+            'Here is the SVG representation of a board',
+            (0, 15), fill='red',
+        ))
+
+        self._print(draw.tostring())
 
 
 # ============================= BOARDS ============================= #

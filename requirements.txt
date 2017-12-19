@@ -3,6 +3,7 @@ numpy
 futures; python_version < '3.2'
 tornado
 lxml
+svgwrite
 
 
 # it's possible to run tests with simply `setup.py test`

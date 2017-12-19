@@ -48,7 +48,7 @@ if __name__ == '__main__':
         name=NAME,
         version='.'.join(map(str, VERSION)),
         packages=find_packages(),
-        install_requires=['six', 'numpy', 'futures', 'tornado', 'lxml'],
+        install_requires=['six', 'numpy', 'futures', 'tornado', 'svgwrite'],
         tests_require=['tox', 'coverage', 'pytest', 'flake8'],
 
         # PyPI metadata
