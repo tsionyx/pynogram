@@ -146,7 +146,7 @@ class BaseBoard(object):
         """How many cells in a row are known to be box or space"""
         return sum(1 for cell in row if cell != UNSURE) / len(row)
 
-    def solve_rows(self, horizontal=True, parallel=False):
+    def solve_rows(self, horizontal=True, parallel=False):  # pylint: disable=too-many-locals
         """Solve every row (or column) with FSM"""
         start = time.time()
 
