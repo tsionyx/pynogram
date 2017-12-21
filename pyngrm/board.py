@@ -13,7 +13,7 @@ import numpy as np
 from six.moves import zip
 
 from pyngrm.base import UNSURE, normalize_clues, BOX, invert, SPACE
-from pyngrm.fsm import solve_row, NonogramError
+from pyngrm.fsm import solve_row, NonogramError, CACHE
 from pyngrm.renderer import (
     Renderer,
     StreamRenderer,
@@ -333,6 +333,7 @@ class BaseBoard(object):
         if self.solution_rate != 1:
             LOG.warning('The nonogram is not solved full. The rate is %s', self.solution_rate)
         LOG.info('Full solution: %ss', time.time() - start)
+        LOG.info('Cache hit rate: %s%%', CACHE.hit_rate * 100.0)
 
 
 class ConsoleBoard(BaseBoard):

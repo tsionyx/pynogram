@@ -16,12 +16,15 @@ from six import iteritems, text_type, itervalues
 from six.moves import range
 
 from pyngrm.base import BOX, SPACE, UNSURE, normalize_clues, normalize_row
+from pyngrm.cache import Cache
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
     _LOG_NAME = os.path.basename(__file__)
 
 LOG = logging.getLogger(_LOG_NAME)
+
+CACHE = Cache()
 
 
 class StateMachineError(ValueError):
@@ -181,6 +184,10 @@ class NonogramFSM(FiniteStateMachine):
     used to solve a nonogram
     """
 
+    def __init__(self, clues, initial_state, state_map, final=None):
+        self.clues = clues
+        super(NonogramFSM, self).__init__(initial_state, state_map, final=final)
+
     @classmethod
     def _optional_space(cls, state):
         return (state, SPACE), state
@@ -228,7 +235,7 @@ class NonogramFSM(FiniteStateMachine):
             LOG.debug('Add transition: %s -> %s', trans, state_counter)
             state_map.append((trans, state_counter))
 
-        return cls(cls.INITIAL_STATE, state_map, final=state_counter)
+        return cls(clues, cls.INITIAL_STATE, state_map, final=state_counter)
 
     def partial_match(self, row):
         """
@@ -352,6 +359,12 @@ class NonogramFSM(FiniteStateMachine):
         Solve the nonogram `row` using the FSM and reverse tracking
         """
         original_row, row = row, normalize_row(row)
+
+        solved_row = CACHE.get((self.clues, row))
+        if solved_row is not None:
+            assert len(solved_row) == len(row)
+            return solved_row
+
         transition_table = self._make_transition_table(row)
 
         if self.final_state not in transition_table[-1]:
@@ -369,6 +382,7 @@ class NonogramFSM(FiniteStateMachine):
                 solved_row.append(UNSURE)
 
         assert len(solved_row) == len(row)
+        CACHE.save((self.clues, row), solved_row)
         return solved_row
 
 
