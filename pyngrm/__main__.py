@@ -15,6 +15,7 @@ from six import PY2
 
 from pyngrm.board import ConsoleBoard
 from pyngrm.demo import base_demo_board
+from pyngrm.pbn_parser import get_puzzle_desc
 from pyngrm.reader import examples_file, read
 
 
@@ -25,16 +26,21 @@ def cli_args():
 
     parser.add_argument('-b', '--board', default='hello',
                         help='board file to solve')
+    parser.add_argument('--pbn', type=int, help='id of a board on the webpbn.com')
     parser.add_argument('--verbose', '-v', action='count')
     parser.add_argument('--draw-final', action='store_true',
                         help='Draw only final result, skip all the intermediate steps')
     return parser.parse_args()
 
 
-def main(board_file, draw_every_round=True):
+def main(board_file, draw_every_round=True, pbn_id=None):
     """Solve the given board in terminal with animation"""
-    with open(examples_file(board_file)) as _file:
-        columns, rows = read(_file)
+
+    if pbn_id:
+        columns, rows = get_puzzle_desc(pbn_id)
+    else:
+        with open(examples_file(board_file)) as _file:
+            columns, rows = read(_file)
 
     d_board = base_demo_board(columns, rows, board_cls=ConsoleBoard)
     d_board.renderer.icons.update({True: '\u2B1B'})
@@ -71,4 +77,4 @@ if __name__ == '__main__':
         format='[%(asctime)s] %(levelname)-8s %(filename)s:%(lineno)d -> %(message)s',
         level=log_level(ARGS.verbose),
     )
-    main(ARGS.board, draw_every_round=not ARGS.draw_final)
+    main(ARGS.board, draw_every_round=not ARGS.draw_final, pbn_id=ARGS.pbn)

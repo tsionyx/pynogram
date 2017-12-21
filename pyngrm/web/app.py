@@ -16,7 +16,14 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 
-from pyngrm.demo import demo_board, demo_board2, more_complex_board
+from pyngrm.board import ConsoleBoard
+from pyngrm.demo import (
+    base_demo_board,
+    demo_board,
+    demo_board2,
+    more_complex_board,
+)
+from pyngrm.pbn_parser import get_puzzle_desc
 from pyngrm.renderer import StreamRenderer
 from pyngrm.web.common import (
     BaseHandler,
@@ -181,8 +188,20 @@ class Application(tornado.web.Application):
         from a database for example. By now it just returns
         one of hardcoded demo boards.
         """
-        remainder = _id % 3
-        board_factory = [demo_board, demo_board2, more_complex_board][remainder]
+        predefined = [demo_board, demo_board2, more_complex_board]
+
+        if _id >= len(predefined):
+            # noinspection PyBroadException
+            try:
+                columns, rows = get_puzzle_desc(_id)
+            except Exception:  # pylint: disable=broad-except
+                pass
+            else:
+                board = base_demo_board(columns, rows, board_cls=ConsoleBoard, **board_params)
+                board.renderer.icons.update({True: '\u2B1B'})
+                return board
+
+        board_factory = predefined[_id % len(predefined)]
         return board_factory(**board_params)
 
     def get_board_notifier(self, _id, create=False):
