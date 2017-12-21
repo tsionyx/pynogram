@@ -272,12 +272,15 @@ class BaseBoard(object):
                                          assumption=BOX, propagate=True):
         if assumption in (BOX, SPACE):
             self.try_contradiction(row_index, column_index,
-                                   assumption=assumption, propagate=propagate)
+                                   assumption=assumption,
+                                   propagate=propagate)
         else:
             self.try_contradiction(row_index, column_index,
-                                   assumption=BOX, propagate=propagate)
+                                   assumption=BOX,
+                                   propagate=propagate)
             self.try_contradiction(row_index, column_index,
-                                   assumption=SPACE, propagate=propagate)
+                                   assumption=SPACE,
+                                   propagate=propagate)
 
     def solve_with_contradictions(self, propagate_on_row=False,
                                   assumption=BOX, by_rows=True):
@@ -306,7 +309,10 @@ class BaseBoard(object):
                 LOG.info('Trying row %s', solved_row)
                 for solved_column in range(self.width):
                     self._solve_with_contradictions_round(
-                        solved_row, solved_column, assumption, propagate_on_cell)
+                        solved_row, solved_column,
+                        assumption=assumption,
+                        propagate=propagate_on_cell
+                    )
 
                 if propagate_on_row:
                     self.solve()
@@ -315,7 +321,10 @@ class BaseBoard(object):
                 LOG.info('Trying column %s', solved_column)
                 for solved_row in range(self.height):
                     self._solve_with_contradictions_round(
-                        solved_row, solved_column, assumption, propagate_on_cell)
+                        solved_row, solved_column,
+                        assumption=assumption,
+                        propagate=propagate_on_cell
+                    )
 
                 if propagate_on_row:
                     self.solve()

@@ -220,7 +220,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
 
         exc = ie.value
         assert str(exc) == ("The 0 cell (None) in a row "
-                            "'[None, False, None, None, False, None, None, None, None]' "
+                            "'(None, False, None, None, False, None, None, None, None)' "
                             "cannot be neither space nor box")
 
     # TODO: more solved rows

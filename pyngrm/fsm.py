@@ -351,10 +351,11 @@ class NonogramFSM(FiniteStateMachine):
         """
         Solve the nonogram `row` using the FSM and reverse tracking
         """
+        original_row, row = row, normalize_row(row)
         transition_table = self._make_transition_table(row)
 
         if self.final_state not in transition_table[-1]:
-            raise NonogramError("The row '{}' cannot fit".format(row))
+            raise NonogramError("The row '{}' cannot fit".format(original_row))
         # print(transition_table)
 
         solved_row = []

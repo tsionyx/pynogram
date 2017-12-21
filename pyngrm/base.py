@@ -92,7 +92,7 @@ def normalize_row(row):
         list_replace(row, informal, formal)
 
     assert set(row) <= {BOX, SPACE, UNSURE}
-    return row
+    return tuple(row)
 
 
 def _solve_on_space_hints(board, hints):
