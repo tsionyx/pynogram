@@ -12,7 +12,7 @@ import time
 import numpy as np
 from six.moves import zip
 
-from pyngrm.base import UNSURE, normalize_clues, BOX, invert, SPACE
+from pyngrm.base import UNSURE, normalize_clues, BOX, invert
 from pyngrm.fsm import solve_row, NonogramError, CACHE
 from pyngrm.renderer import (
     Renderer,
@@ -268,29 +268,52 @@ class BaseBoard(object):
                 if propagate:
                     self.solve()
 
-    def _solve_with_contradictions_round(self, row_index, column_index,
-                                         assumption=BOX, propagate=True):
-        if assumption in (BOX, SPACE):
-            self.try_contradiction(row_index, column_index,
-                                   assumption=assumption,
-                                   propagate=propagate)
-        else:
-            self.try_contradiction(row_index, column_index,
-                                   assumption=BOX,
-                                   propagate=propagate)
-            self.try_contradiction(row_index, column_index,
-                                   assumption=SPACE,
-                                   propagate=propagate)
+    def _contradictions_round(
+            self, assumption,
+            propagate_on_cell=True, by_rows=True):
+        """
+        Solve the nonogram with contradictions
+        by trying every cell and the basic `solve` method.
 
-    def solve_with_contradictions(self, propagate_on_row=False,
-                                  assumption=BOX, by_rows=True):
+        :param assumption: which state to try: BOX or SPACE
+        :param propagate_on_cell: how to propagate changes:
+        after each solved cell or in the end of the row
+        :param by_rows: iterate by rows (left-to-right) or by columns (top-to-bottom)
+        """
+
+        if by_rows:
+            for solved_row in range(self.height):
+                LOG.info('Trying row %s', solved_row)
+                for solved_column in range(self.width):
+                    self.try_contradiction(
+                        solved_row, solved_column,
+                        assumption=assumption,
+                        propagate=propagate_on_cell
+                    )
+
+                if not propagate_on_cell:
+                    self.solve()
+        else:
+            for solved_column in range(self.width):
+                LOG.info('Trying column %s', solved_column)
+                for solved_row in range(self.height):
+                    self.try_contradiction(
+                        solved_row, solved_column,
+                        assumption=assumption,
+                        propagate=propagate_on_cell
+                    )
+
+                if propagate_on_cell:
+                    self.solve()
+
+    def solve_with_contradictions(
+            self, propagate_on_row=False, by_rows=True):
         """
         Solve the nonogram to the most with contradictions
         and the basic `solve` method.
 
         :param propagate_on_row: how to propagate changes:
         in the end of the row or after each solved cell
-        :param assumption: which states to try: BOX, SPACE, or both (None)
         :param by_rows: iterate by rows (left-to-right) or by columns (top-to-bottom)
         """
 
@@ -304,34 +327,33 @@ class BaseBoard(object):
         self._solved = False
         start = time.time()
 
-        if by_rows:
-            for solved_row in range(self.height):
-                LOG.info('Trying row %s', solved_row)
-                for solved_column in range(self.width):
-                    self._solve_with_contradictions_round(
-                        solved_row, solved_column,
-                        assumption=assumption,
-                        propagate=propagate_on_cell
-                    )
+        solved = self.solution_rate
+        counter = 0
 
-                if propagate_on_row:
-                    self.solve()
-        else:
-            for solved_column in range(self.width):
-                LOG.info('Trying column %s', solved_column)
-                for solved_row in range(self.height):
-                    self._solve_with_contradictions_round(
-                        solved_row, solved_column,
-                        assumption=assumption,
-                        propagate=propagate_on_cell
-                    )
+        assumption = BOX  # try the different assumptions every time
 
-                if propagate_on_row:
-                    self.solve()
+        while True:
+            counter += 1
+            LOG.warning('Contradiction round %s (assumption %s)', counter, assumption)
+
+            self._contradictions_round(
+                assumption,
+                propagate_on_cell=propagate_on_cell,
+                by_rows=by_rows)
+
+            if self.solution_rate > solved:
+                self.solution_round_completed()
+
+            if self.solution_rate == 1 or solved == self.solution_rate:
+                break
+
+            solved = self.solution_rate
+            assumption = invert(assumption)
 
         self._solved = True
         if self.solution_rate != 1:
-            LOG.warning('The nonogram is not solved full. The rate is %s', self.solution_rate)
+            LOG.warning('The nonogram is not solved full (with contradictions). '
+                        'The rate is %s', self.solution_rate)
         LOG.info('Full solution: %ss', time.time() - start)
         LOG.info('Cache hit rate: %s%%', CACHE.hit_rate * 100.0)
 

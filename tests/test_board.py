@@ -293,6 +293,3 @@ class TestContradictions(object):
 
         board.solve_with_contradictions(by_rows=False, propagate_on_row=True)
         assert board.solution_rate == 0
-
-        board.solve_with_contradictions(assumption=None)
-        assert board.solution_rate == 0
