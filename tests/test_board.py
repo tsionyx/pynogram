@@ -7,21 +7,34 @@ from io import StringIO
 
 import pytest
 
-from pyngrm.board import AsciiBoard, BaseBoard
-from pyngrm.demo import p_board
-from pyngrm.reader import examples_file, read
-from pyngrm.renderer import AsciiRendererWithBold
-from pyngrm.utils import is_close
+from pyngrm.core.board import Board
+from pyngrm.input.reader import examples_file, read
+from pyngrm.renderer import AsciiRendererWithBold, AsciiBoard
+from pyngrm.utils.other import is_close
 
 
 @pytest.fixture
-def tested_board(board_cls=BaseBoard, **kwargs):
+def tested_board(board_cls=Board, **kwargs):
     """
-    Simple example with 'P' letter
+    Very simple demonstration board with the 'P' letter
 
-    https://en.wikipedia.org/wiki/Nonogram#Example
+    source: https://en.wikipedia.org/wiki/Nonogram#Example
     """
-    return p_board(board_cls=board_cls, **kwargs)
+    columns = [[], 9, [9], [2, 2], (2, 2), 4, '4', '']
+    rows = [
+        None,
+        4,
+        6,
+        '2 2',
+        [2] * 2,
+        6,
+        4,
+        2,
+        [2],
+        2,
+        0,
+    ]
+    return board_cls(columns, rows, **kwargs)
 
 
 class TestBoard(object):
@@ -30,7 +43,7 @@ class TestBoard(object):
         return tested_board()
 
     def test_rows(self, board):
-        assert board.horizontal_clues == tuple([
+        assert board.rows_descriptions == tuple([
             (),
             (4,),
             (6,),
@@ -45,7 +58,7 @@ class TestBoard(object):
         ])
 
     def test_columns(self, board):
-        assert board.vertical_clues == tuple([
+        assert board.columns_descriptions == tuple([
             (),
             (9,),
             (9,),
@@ -64,20 +77,20 @@ class TestBoard(object):
 
     def test_bad_row_value(self):
         with pytest.raises(ValueError) as ei:
-            BaseBoard(columns=[2.0, 1], rows=[1, 2])
+            Board(columns=[2.0, 1], rows=[1, 2])
 
         assert str(ei.value), 'Bad row: 2.0'
 
     def test_columns_and_rows_does_not_match(self):
         with pytest.raises(ValueError) as ei:
-            BaseBoard(columns=[1, 1], rows=[1, 2])
+            Board(columns=[1, 1], rows=[1, 2])
 
         assert str(ei.value), \
             'Number of boxes differs: 3 (rows) and 2 (columns)'
 
     def test_row_does_not_fit(self):
         with pytest.raises(ValueError) as ei:
-            BaseBoard(columns=[1, 1], rows=[1, [1, 1]])
+            Board(columns=[1, 1], rows=[1, [1, 1]])
 
         assert str(ei.value), \
             'Cannot allocate row [1, 1] in just 2 cells'
@@ -163,7 +176,7 @@ class TestSolution(object):
 
         renderer = AsciiRendererWithBold(stream=stream)
         renderer.BOLD_LINE_EVERY = 2
-        board = BaseBoard(columns, rows, renderer=renderer)
+        board = Board(columns, rows, renderer=renderer)
         board.solve()
         board.draw()
 
@@ -188,7 +201,7 @@ class TestSolution(object):
         columns = [3, 1]
         rows = [1, 1, 2]
 
-        board = BaseBoard(columns, rows)
+        board = Board(columns, rows)
         rows_updated = []
         cols_updated = []
         rounds = []
@@ -219,7 +232,7 @@ class TestSolution(object):
         for parallel in (False, True):
             for contradiction_mode in (False, True):
                 stream = StringIO()
-                board = p_board(stream=stream)
+                board = self.board(stream=stream)
                 start = time.time()
 
                 board.solve(parallel=parallel, contradiction_mode=contradiction_mode)
@@ -245,7 +258,7 @@ class TestContradictions(object):
         with open(examples_file('smile.txt')) as _file:
             columns, rows = read(_file)
 
-        board = BaseBoard(columns, rows)
+        board = Board(columns, rows)
 
         board.solve()
         assert is_close(board.solution_rate, 0.6)
@@ -264,7 +277,7 @@ class TestContradictions(object):
         columns = [3, 1, 2, 2, '1 1', '1 1']
         rows = ['1 2', 1, 1, 3, 2, 2]
 
-        board = BaseBoard(columns, rows)
+        board = Board(columns, rows)
 
         board.solve()
         assert board.solution_rate == 0
@@ -285,7 +298,7 @@ class TestContradictions(object):
         # with the same effect on test coverage
 
         columns = rows = [1, 1]
-        board = BaseBoard(columns, rows)
+        board = Board(columns, rows)
 
         board.solve()
         assert board.solution_rate == 0

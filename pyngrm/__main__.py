@@ -13,10 +13,10 @@ from argparse import ArgumentParser
 
 from six import PY2
 
-from pyngrm.board import ConsoleBoard
+from input.pbn import get_puzzle_desc
+from input.reader import examples_file, read
 from pyngrm.demo import base_demo_board
-from pyngrm.pbn_parser import get_puzzle_desc
-from pyngrm.reader import examples_file, read
+from pyngrm.renderer import ConsoleBoard
 
 
 def cli_args():

@@ -6,14 +6,14 @@ import sys
 
 import pytest
 
-from pyngrm.utils import (
+from pyngrm.utils.collections import (
     merge_dicts,
     pad,
     interleave,
     max_safe,
     avg,
-    PriorityDict,
 )
+from pyngrm.utils.priority_dict import PriorityDict
 
 
 class TestMergeDicts(object):

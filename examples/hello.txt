@@ -4,20 +4,20 @@
 # Also if the '#' becomes at the middle of the line,
 # the rest of the line is also becomes a comment.
 #
-# At first goes the list of columns (vertical clues)
+# At first goes the list of columns (vertical descriptions)
 # on one or more lines, separated by commas and/or newline.
 # Then two or more empty lines (that separates columns from rows).
-# And finally the list of rows (horizontal clues) formatted the same way.
+# And finally the list of rows (horizontal descriptions) formatted the same way.
 #
 # Inside the block of columns or rows the empty (comment) lines can appear
-# to visually break the long series of clues
+# to visually break the long series of descriptions
 # (split by blocks of 5 lines for example).
 # No more than one such a line in a row allows: two or more
 # empty (comment) lines can appear only as a separator
 # between the columns and rows or at the beginning and at the end of the file.
 #
-# If the clues for a row have two or more blocks
-# then you could enclose the clues in a single or double quotes.
+# If the description for a row have two or more blocks
+# then you could enclose that description in a single or double quotes.
 # However you could safely skip the quotes:
 #
 # EXAMPLE:

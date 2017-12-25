@@ -11,8 +11,9 @@ import sys
 
 from six import integer_types, text_type
 
-from pyngrm.base import BOX, SPACE, UNSURE
-from pyngrm.utils import pad, max_safe, split_seq
+from pyngrm.core import UNKNOWN, BOX, SPACE
+from pyngrm.core.board import Renderer, Board
+from pyngrm.utils.collections import pad, split_seq
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -25,80 +26,6 @@ _NOT_SET = 'E'  # empty cell, e.g. in the headers
 _THUMBNAIL = 'T'
 
 
-class _DummyBoard(object):  # pylint: disable=too-few-public-methods
-    horizontal_clues = vertical_clues = ()
-    width = height = 0
-
-
-class Renderer(object):
-    """Defines the abstract renderer for a nonogram board"""
-
-    def __init__(self, board=None):
-        self.cells = None
-        self.board = None
-        self.board_init(board)
-
-    def board_init(self, board=None):
-        """Initialize renderer's properties dependent on board it draws"""
-        if board:
-            LOG.info("Init '%s' renderer with board '%s'",
-                     self.__class__.__name__, board)
-        else:
-            if self.board:
-                return  # already initialized, do nothing
-            board = _DummyBoard()
-        self.board = board
-
-    @property
-    def full_height(self):
-        """The size of the header block with vertical clues"""
-        return self.header_height + self.board.height
-
-    @property
-    def full_width(self):
-        """The full size of """
-        return self.side_width + self.board.width
-
-    @property
-    def header_height(self):
-        """The size of the header block with vertical clues"""
-        return max_safe(map(len, self.board.vertical_clues), default=0)
-
-    @property
-    def side_width(self):
-        """The width of the side block with horizontal clues"""
-        return max_safe(map(len, self.board.horizontal_clues), default=0)
-
-    def render(self):
-        """Actually print out the board"""
-        raise NotImplementedError()
-
-    def draw(self):
-        """Calculate all the cells and draw an image of the board"""
-        self.draw_header()
-        self.draw_side()
-        self.draw_grid()
-        self.render()
-
-    def draw_header(self):
-        """
-        Changes the internal state to be able to draw vertical clues
-        """
-        raise NotImplementedError()
-
-    def draw_side(self):
-        """
-        Changes the internal state to be able to draw horizontal clues
-        """
-        raise NotImplementedError()
-
-    def draw_grid(self):
-        """
-        Changes the internal state to be able to draw a main grid
-        """
-        raise NotImplementedError()
-
-
 class StreamRenderer(Renderer):
     """
     Renders a board as a simple text table to a stream (stdout by default)
@@ -109,7 +36,7 @@ class StreamRenderer(Renderer):
         self.icons = {
             _NOT_SET: ' ',
             _THUMBNAIL: '-',
-            UNSURE: '_',
+            UNKNOWN: '_',
             BOX: 'X',
             SPACE: '.',
         }
@@ -144,7 +71,7 @@ class StreamRenderer(Renderer):
             for j in range(self.side_width):
                 self.cells[i][j] = _THUMBNAIL
 
-        for j, col in enumerate(self.board.vertical_clues):
+        for j, col in enumerate(self.board.columns_descriptions):
             rend_j = j + self.side_width
             if not col:
                 col = [0]
@@ -154,7 +81,7 @@ class StreamRenderer(Renderer):
                 self.cells[rend_i][rend_j] = cell
 
     def draw_side(self):
-        for i, row in enumerate(self.board.horizontal_clues):
+        for i, row in enumerate(self.board.rows_descriptions):
             rend_i = i + self.header_height
             # row = list(row)
             if not row:
@@ -192,7 +119,7 @@ class AsciiRenderer(StreamRenderer):
         super(AsciiRenderer, self).__init__(board, stream=stream)
         self.icons.update({
             _THUMBNAIL: '#',
-            UNSURE: ' ',
+            UNKNOWN: ' ',
         })
 
     # cannot fit the value more than '999'
@@ -220,7 +147,7 @@ class AsciiRenderer(StreamRenderer):
 
     def _side_delimiter(self, grid=False):
         """
-        Separates side clues list from the main grid.
+        Separates side descriptions from the main grid.
         Default values are '||' for the data rows or
         '++' for the 'grid' rows.
         """
@@ -335,3 +262,21 @@ class AsciiRendererWithBold(AsciiRenderer):
     SIDE_DELIMITER_SIZE = 3
     BOLD_LINE_HORIZONTAL = AsciiRenderer.HEADER_DELIMITER
     BOLD_LINE_VERTICAL_SIZE = 2
+
+
+# ============================= BOARDS ============================= #
+
+class ConsoleBoard(Board):
+    """A board that renders on stdout"""
+
+    def __init__(self, columns, rows, **renderer_params):
+        super(ConsoleBoard, self).__init__(
+            columns, rows, renderer=StreamRenderer, **renderer_params)
+
+
+class AsciiBoard(Board):
+    """A board that renders on stdout with ASCII graphic"""
+
+    def __init__(self, columns, rows, **renderer_params):
+        super(AsciiBoard, self).__init__(
+            columns, rows, renderer=AsciiRenderer, **renderer_params)

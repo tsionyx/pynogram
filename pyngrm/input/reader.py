@@ -10,17 +10,17 @@ import os
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def _append_line_to_list(clues_line, clues_list):
+def _append_line_to_list(description_line, descriptions_list):
     """
-    Parse a line and correctly add the clues to a collection
+    Parse a line and correctly add the description(s) to a collection
     """
     # there can be trailing commas if you copy from source code
-    clues = clues_line.strip(',').split(',')
+    descriptions = description_line.strip(',').split(',')
 
     # strip all the spaces and quotes
-    clues = [clue.strip().strip("'").strip('"').strip() for clue in clues]
+    descriptions = [desc.strip().strip("'").strip('"').strip() for desc in descriptions]
 
-    return clues_list.extend(clues)
+    return descriptions_list.extend(descriptions)
 
 
 _ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK = 1
@@ -94,7 +94,8 @@ def examples_file(file_name=''):
     """
     Returns a path to the examples board in text files
     """
-    examples_dir = os.path.join(os.path.dirname(CURRENT_DIR), 'examples')
+    project_dir = os.path.dirname(os.path.dirname(CURRENT_DIR))
+    examples_dir = os.path.join(project_dir, 'examples')
     if file_name:
         file_name = os.path.join(examples_dir, file_name)
         if not os.path.isfile(file_name):

@@ -15,16 +15,18 @@ from collections import OrderedDict
 from six import iteritems, text_type, itervalues
 from six.moves import range
 
-from pyngrm.base import BOX, SPACE, UNSURE, normalize_clues, normalize_row
-from pyngrm.cache import Cache
+from pyngrm.core import (
+    UNKNOWN, BOX, SPACE,
+    normalize_description,
+    normalize_row,
+)
+from pyngrm.utils.cache import Cache
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
     _LOG_NAME = os.path.basename(__file__)
 
 LOG = logging.getLogger(_LOG_NAME)
-
-SOLUTIONS_CACHE = Cache()
 
 
 class StateMachineError(ValueError):
@@ -184,8 +186,8 @@ class NonogramFSM(FiniteStateMachine):
     used to solve a nonogram
     """
 
-    def __init__(self, clues, initial_state, state_map, final=None):
-        self.clues = clues
+    def __init__(self, description, initial_state, state_map, final=None):
+        self.description = description
         if final is None:
             final = state_map[-1][1]
         super(NonogramFSM, self).__init__(initial_state, state_map, final=final)
@@ -204,22 +206,27 @@ class NonogramFSM(FiniteStateMachine):
 
     INITIAL_STATE = 1
 
-    _fsm_cache = Cache()
+    _fsm_cache = Cache(1000)
+    _solutions_cache = Cache(10000)
 
     @classmethod
-    def from_clues(cls, *clues):
+    def solutions_cache(cls):
+        return cls._solutions_cache
+
+    @classmethod
+    def from_description(cls, *description):
         """
-        Construct the machine from the clues
+        Construct the machine from the description
         given in a nonogram definition
         """
-        if len(clues) == 1:
-            clues = clues[0]
-        clues = normalize_clues(clues)
-        LOG.debug('Clues: %s', clues)
+        if len(description) == 1:
+            description = description[0]
+        description = normalize_description(description)
+        LOG.debug('Clues: %s', description)
 
-        state_map = cls._fsm_cache.get(clues)
+        state_map = cls._fsm_cache.get(description)
         if state_map is not None:
-            return cls(clues, cls.INITIAL_STATE, state_map)
+            return cls(description, cls.INITIAL_STATE, state_map)
 
         state_counter = cls.INITIAL_STATE
         state_map = []
@@ -228,13 +235,13 @@ class NonogramFSM(FiniteStateMachine):
         LOG.debug('Add transition: %s -> %s', trans, state_counter)
         state_map.append((trans, state_counter))
 
-        for i, clue in enumerate(clues):
-            for _ in range(clue):
+        for i, block in enumerate(description):
+            for _ in range(block):
                 trans, state_counter = cls._required_box(state_counter)
                 LOG.debug('Add transition: %s -> %s', trans, state_counter)
                 state_map.append((trans, state_counter))
 
-            if i < len(clues) - 1:  # all but last
+            if i < len(description) - 1:  # all but last
                 trans, state_counter = cls._required_space(state_counter)
                 LOG.debug('Add transition: %s -> %s', trans, state_counter)
                 state_map.append((trans, state_counter))
@@ -243,8 +250,8 @@ class NonogramFSM(FiniteStateMachine):
             LOG.debug('Add transition: %s -> %s', trans, state_counter)
             state_map.append((trans, state_counter))
 
-        cls._fsm_cache.save(clues, state_map)
-        return cls(clues, cls.INITIAL_STATE, state_map)
+        cls._fsm_cache.save(description, state_map)
+        return cls(description, cls.INITIAL_STATE, state_map)
 
     def partial_match(self, row):
         """
@@ -263,7 +270,7 @@ class NonogramFSM(FiniteStateMachine):
             for i, cell in enumerate(row):
                 step_possible_states = []
                 for state in possible_states:
-                    if cell in (BOX, UNSURE):
+                    if cell in (BOX, UNKNOWN):
                         LOG.debug('Check the ability to insert BOX')
 
                         next_step = self.reaction(BOX, current_state=state)
@@ -272,7 +279,7 @@ class NonogramFSM(FiniteStateMachine):
                         else:
                             step_possible_states.append(next_step)
 
-                    if cell in (SPACE, UNSURE):
+                    if cell in (SPACE, UNKNOWN):
                         LOG.debug('Check the ability to insert SPACE')
 
                         next_step = self.reaction(SPACE, current_state=state)
@@ -353,11 +360,11 @@ class NonogramFSM(FiniteStateMachine):
             transition_index = i + 1
 
             for prev_state, prev in iteritems(transition_table[i]):
-                if cell in (BOX, UNSURE):
+                if cell in (BOX, UNKNOWN):
                     _shift_one_cell(BOX, transition_index,
                                     prev, prev_state)
 
-                if cell in (SPACE, UNSURE):
+                if cell in (SPACE, UNKNOWN):
                     _shift_one_cell(SPACE, transition_index,
                                     prev, prev_state)
 
@@ -369,7 +376,7 @@ class NonogramFSM(FiniteStateMachine):
         """
         original_row, row = row, normalize_row(row)
 
-        solved_row = SOLUTIONS_CACHE.get((self.clues, row))
+        solved_row = self.solutions_cache().get((self.description, row))
         if solved_row is not None:
             assert len(solved_row) == len(row)
             return solved_row
@@ -388,10 +395,10 @@ class NonogramFSM(FiniteStateMachine):
             if len(states) == 1:
                 solved_row.append(states[0])
             else:
-                solved_row.append(UNSURE)
+                solved_row.append(UNKNOWN)
 
         assert len(solved_row) == len(row)
-        SOLUTIONS_CACHE.save((self.clues, row), solved_row)
+        self.solutions_cache().save((self.description, row), solved_row)
         return solved_row
 
 
@@ -500,8 +507,8 @@ def solve_row(*args, **kwargs):
         # mp's map supports only one iterable, so this weird syntax
         args = args[0]
 
-    clues, row = args
-    nfsm = NonogramFSM.from_clues(clues)
+    row_desc, row = args
+    nfsm = NonogramFSM.from_description(row_desc)
 
     method_func = getattr(nfsm, 'solve_with_' + method, None)
     if not method_func:

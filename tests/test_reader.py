@@ -8,7 +8,7 @@ import pytest
 from six.moves import StringIO
 
 from pyngrm.demo import base_demo_board
-from pyngrm.reader import examples_file, read
+from pyngrm.input.reader import examples_file, read
 from pyngrm.renderer import StreamRenderer
 
 

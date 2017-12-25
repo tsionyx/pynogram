@@ -6,8 +6,8 @@ from copy import copy
 
 import pytest
 
-from pyngrm.base import BOX, SPACE, UNSURE
-from pyngrm.fsm import (
+from pyngrm.core import UNKNOWN, BOX, SPACE
+from pyngrm.core.fsm import (
     StateMachineError,
     FiniteStateMachine,
     NonogramFSM,
@@ -78,8 +78,8 @@ class TestFiniteStateMachine(object):
 
 class TestNonogramFiniteStateMachine(object):
     @classmethod
-    def fsm(cls, *clues):
-        return NonogramFSM.from_clues(*clues)
+    def fsm(cls, *description):
+        return NonogramFSM.from_description(*description)
 
     @pytest.fixture
     def nfsm(self):
@@ -117,9 +117,9 @@ class TestNonogramFiniteStateMachine(object):
 
     def test_from_list(self):
         for nfsm in (
-                NonogramFSM.from_clues([1, 1]),
-                NonogramFSM.from_clues(1, 1),
-                NonogramFSM.from_clues('1 1'),
+                NonogramFSM.from_description([1, 1]),
+                NonogramFSM.from_description(1, 1),
+                NonogramFSM.from_description('1 1'),
         ):
             assert nfsm.current_state == 1
             assert nfsm.states == (1, 2, 3, 4)
@@ -170,29 +170,22 @@ class TestNonogramFiniteStateMachine(object):
             nfsm.match([True, True, True, False, True, True])
 
 
-INFORMAL_REPRESENTATIONS = {
-    UNSURE: ('_', ' ', '?', '*'),
-    SPACE: ('.', '0', 'O', '-'),
-    BOX: ('X', '+'),
-}
-
-
 class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
     def test_basic(self, nfsm):
         assert nfsm.partial_match(
-            [UNSURE, SPACE, UNSURE, UNSURE, BOX] + [UNSURE] * 4)
+            [UNKNOWN, SPACE, UNKNOWN, UNKNOWN, BOX] + [UNKNOWN] * 4)
 
         assert nfsm.partial_match('_.__X____')
 
     def test_not_match_too_many_spaces(self, nfsm):
         assert not nfsm.partial_match(
-            [UNSURE, UNSURE, SPACE, SPACE] + [UNSURE] * 5)
+            [UNKNOWN, UNKNOWN, SPACE, SPACE] + [UNKNOWN] * 5)
 
         assert not nfsm.partial_match('  00     ')
 
     def test_not_match_too_many_boxes(self, nfsm):
         assert not nfsm.partial_match(
-            [BOX] * 4 + [UNSURE] * 5)
+            [BOX] * 4 + [UNKNOWN] * 5)
 
         assert not nfsm.partial_match('++++?????')
 
@@ -200,7 +193,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
         nfsm.transition(False, True, True)
         assert nfsm.current_state == 3
 
-        assert nfsm.partial_match([UNSURE] * 9)
+        assert nfsm.partial_match([UNKNOWN] * 9)
         assert nfsm.partial_match('*********')
 
         assert nfsm.current_state == 3
@@ -225,29 +218,29 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
 
     # TODO: more solved rows
     SOLVED_ROWS = [
-        ('3 2', '_0__X____', [SPACE, SPACE, UNSURE, BOX, BOX, UNSURE, UNSURE, BOX, UNSURE]),
-        ('2 2', '___.X_____', [UNSURE, UNSURE, UNSURE, SPACE, BOX, BOX, SPACE,
-                               UNSURE, UNSURE, UNSURE]),
+        ('3 2', '_0__X____', [SPACE, SPACE, UNKNOWN, BOX, BOX, UNKNOWN, UNKNOWN, BOX, UNKNOWN]),
+        ('2 2', '___.X_____', [UNKNOWN, UNKNOWN, UNKNOWN, SPACE, BOX, BOX, SPACE,
+                               UNKNOWN, UNKNOWN, UNKNOWN]),
     ]
 
-    @pytest.mark.parametrize("clues,input_row,expected", SOLVED_ROWS)
-    def test_solve(self, clues, input_row, expected):
+    @pytest.mark.parametrize("description,input_row,expected", SOLVED_ROWS)
+    def test_solve(self, description, input_row, expected):
         # both arguments passes work
-        # assert solve_row((clues, input_row)) == expected
-        assert solve_row(clues, input_row, method='partial_match') == expected
+        # assert solve_row((description, input_row)) == expected
+        assert solve_row(description, input_row, method='partial_match') == expected
 
 
 class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
-    @pytest.mark.parametrize("clues,input_row,expected",
+    @pytest.mark.parametrize("description,input_row,expected",
                              TestNonogramFSMPartialMatch.SOLVED_ROWS)
-    def test_solve(self, clues, input_row, expected):
+    def test_solve(self, description, input_row, expected):
         # both arguments passes work
-        assert solve_row((clues, input_row)) == expected
-        assert solve_row(clues, input_row, method='reverse_tracking') == expected
+        assert solve_row((description, input_row)) == expected
+        assert solve_row(description, input_row, method='reverse_tracking') == expected
 
     def test_transition_table(self):
-        clues, row = '2 2', '___0X_____'
-        nfsm = NonogramFSM.from_clues(clues)
+        description, row = '2 2', '___0X_____'
+        nfsm = NonogramFSM.from_description(description)
         # noinspection PyProtectedMember
         transition_table = nfsm._make_transition_table(row)
         # TODO: assert string representation

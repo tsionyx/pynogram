@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function
 
 import time
 
-from pyngrm.cache import Cache
+from pyngrm.utils.cache import Cache
 
 
 class TestCache(object):

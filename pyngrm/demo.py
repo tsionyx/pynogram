@@ -5,21 +5,24 @@ Demos and examples
 
 from __future__ import unicode_literals, print_function
 
-from pyngrm.base import BOX, SPACE
-from pyngrm.board import BaseBoard
-from pyngrm.reader import examples_file, read
-from pyngrm.renderer import AsciiRendererWithBold, AsciiRenderer, Renderer
+from pyngrm.core import BOX, SPACE
+from pyngrm.core.board import Board, Renderer
+from pyngrm.input.reader import examples_file, read
+from pyngrm.renderer import (
+    AsciiRenderer,
+    AsciiRendererWithBold,
+)
 
 
-def base_demo_board(columns, rows, board_cls=BaseBoard,
+def base_demo_board(columns, rows, board_cls=Board,
                     renderer=AsciiRendererWithBold, **rend_params):
     """
     :param columns:
     :param rows:
-    :type board_cls: Type[BaseBoard]
+    :type board_cls: Type[Board]
     :type renderer: Type[Renderer]
     """
-    if board_cls == BaseBoard:
+    if board_cls == Board:
         if isinstance(renderer, type) and issubclass(renderer, Renderer):
             renderer = renderer(**rend_params)
 

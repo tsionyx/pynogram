@@ -13,14 +13,18 @@ import numpy as np
 from six.moves import zip, range
 
 import pyngrm
-from pyngrm.base import UNSURE, normalize_clues, BOX, invert, SPACE
-from pyngrm.fsm import solve_row, NonogramError, SOLUTIONS_CACHE
-from pyngrm.renderer import (
-    Renderer,
-    StreamRenderer,
-    AsciiRenderer,
+from pyngrm.core import (
+    UNKNOWN, BOX, SPACE,
+    normalize_description,
+    invert,
 )
-from pyngrm.utils import avg, PriorityDict
+from pyngrm.core.fsm import (
+    solve_row,
+    NonogramError,
+    NonogramFSM,
+)
+from pyngrm.utils.collections import avg, max_safe
+from pyngrm.utils.priority_dict import PriorityDict
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -28,33 +32,101 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 
 LOG = logging.getLogger(_LOG_NAME)
 
-pyngrm.fsm.LOG.setLevel(logging.WARNING)
-pyngrm.base.LOG.setLevel(logging.WARNING)
+pyngrm.core.fsm.LOG.setLevel(logging.WARNING)
 
 
-class BaseBoard(object):
+class Renderer(object):
+    """Defines the abstract renderer for a nonogram board"""
+
+    def __init__(self, board=None):
+        self.cells = None
+        self.board = None
+        self.board_init(board)
+
+    def board_init(self, board=None):
+        """Initialize renderer's properties dependent on board it draws"""
+        if board:
+            LOG.info("Init '%s' renderer with board '%s'",
+                     self.__class__.__name__, board)
+        else:
+            if self.board:
+                return  # already initialized, do nothing
+            board = _DummyBoard()
+        self.board = board
+
+    @property
+    def full_height(self):
+        """The full visual height of a board"""
+        return self.header_height + self.board.height
+
+    @property
+    def full_width(self):
+        """The full visual width of a board"""
+        return self.side_width + self.board.width
+
+    @property
+    def header_height(self):
+        """The size of the header block with columns descriptions"""
+        return max_safe(map(len, self.board.columns_descriptions), default=0)
+
+    @property
+    def side_width(self):
+        """The width of the side block with rows descriptions"""
+        return max_safe(map(len, self.board.rows_descriptions), default=0)
+
+    def render(self):
+        """Actually print out the board"""
+        raise NotImplementedError()
+
+    def draw(self):
+        """Calculate all the cells and draw an image of the board"""
+        self.draw_header()
+        self.draw_side()
+        self.draw_grid()
+        self.render()
+
+    def draw_header(self):
+        """
+        Changes the internal state to be able to draw columns descriptions
+        """
+        raise NotImplementedError()
+
+    def draw_side(self):
+        """
+        Changes the internal state to be able to draw rows descriptions
+        """
+        raise NotImplementedError()
+
+    def draw_grid(self):
+        """
+        Changes the internal state to be able to draw a main grid
+        """
+        raise NotImplementedError()
+
+
+class Board(object):
     """
-    Basic nonogram board with columns and rows defined
+    Nonogram board with columns and rows defined
     """
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, columns, rows, renderer=Renderer):
+    def __init__(self, columns, rows, renderer=Renderer, **renderer_params):
         """
         :type renderer: Renderer | type[Renderer]
         """
-        self.vertical_clues = self.normalize(columns)
-        self.horizontal_clues = self.normalize(rows)
+        self.columns_descriptions = self.normalize(columns)
+        self.rows_descriptions = self.normalize(rows)
 
         self.renderer = renderer
         if isinstance(self.renderer, type):
-            self.renderer = self.renderer(self)
+            self.renderer = self.renderer(self, **renderer_params)
         elif isinstance(self.renderer, Renderer):
             self.renderer.board_init(self)
         else:
             raise TypeError('Bad renderer: %s' % renderer)
 
-        self.cells = np.array([[UNSURE] * self.width for _ in range(self.height)])
+        self.cells = np.array([[UNKNOWN] * self.width for _ in range(self.height)])
         self.validate()
 
         # you can provide custom callbacks here
@@ -89,29 +161,29 @@ class BaseBoard(object):
         """
         Presents given rows in standard format
         """
-        return tuple(map(normalize_clues, rows))
+        return tuple(map(normalize_description, rows))
 
     @property
     def height(self):
         """The height of the playing area"""
-        return len(self.horizontal_clues)
+        return len(self.rows_descriptions)
 
     @property
     def width(self):
         """The width of the playing area"""
-        return len(self.vertical_clues)
+        return len(self.columns_descriptions)
 
     def validate(self):
         """
         Validate that the board is valid:
-        - all the clues in a row (a column) can fit into width (height) of the board
-        - the vertical and horizontal clues defines the same number of boxes
+        - all the descriptions of a row (column) can fit into width (height) of the board
+        - the vertical and horizontal descriptions define the same number of boxes
         """
-        self.validate_headers(self.vertical_clues, self.height)
-        self.validate_headers(self.horizontal_clues, self.width)
+        self.validate_headers(self.columns_descriptions, self.height)
+        self.validate_headers(self.rows_descriptions, self.width)
 
-        boxes_in_rows = sum(sum(block) for block in self.horizontal_clues)
-        boxes_in_columns = sum(sum(block) for block in self.vertical_clues)
+        boxes_in_rows = sum(sum(block) for block in self.rows_descriptions)
+        boxes_in_columns = sum(sum(block) for block in self.columns_descriptions)
         if boxes_in_rows != boxes_in_columns:
             raise ValueError('Number of boxes differs: {} (rows) and {} (columns)'.format(
                 boxes_in_rows, boxes_in_columns))
@@ -148,7 +220,7 @@ class BaseBoard(object):
     @classmethod
     def row_solution_rate(cls, row):
         """How many cells in a row are known to be box or space"""
-        return sum(1 for cell in row if cell != UNSURE) / len(row)
+        return sum(1 for cell in row if cell != UNKNOWN) / len(row)
 
     # pylint: disable=too-many-arguments, too-many-locals
     def solve_row(self, index, is_column, priority, jobs_queue,
@@ -162,10 +234,10 @@ class BaseBoard(object):
         start = time.time()
 
         if is_column:
-            clue, row = self.vertical_clues[index], self.cells.T[index]
+            row_desc, row = self.columns_descriptions[index], self.cells.T[index]
             desc = 'column'
         else:
-            clue, row = self.horizontal_clues[index], self.cells[index]
+            row_desc, row = self.rows_descriptions[index], self.cells[index]
             desc = 'row'
 
         pre_solution_rate = self.row_solution_rate(row)
@@ -175,9 +247,9 @@ class BaseBoard(object):
             return
 
         LOG.debug('Solving %s %s: %s. Partial: %s. Priority: %s',
-                  index, desc, clue, row, priority)
+                  index, desc, row_desc, row, priority)
 
-        updated = solve_row(clue, row)
+        updated = solve_row(row_desc, row)
 
         if self.row_solution_rate(updated) > pre_solution_rate:
             LOG.debug('New info on %s %s: %s', desc, index, updated)
@@ -185,7 +257,7 @@ class BaseBoard(object):
 
             for i, (pre, post) in enumerate(zip(row, updated)):
                 if pre != post:
-                    assert pre == UNSURE
+                    assert pre == UNKNOWN
                     assert post in (BOX, SPACE)
 
                     jobs_queue[(not is_column, i)] = priority - 1
@@ -260,7 +332,7 @@ class BaseBoard(object):
         in an inverted state and propagate the changes if needed.
         """
         # already solved
-        if self.cells[row_index][column_index] != UNSURE:
+        if self.cells[row_index][column_index] != UNKNOWN:
             return
 
         save = self.cells.copy()
@@ -382,20 +454,29 @@ class BaseBoard(object):
             LOG.warning('The nonogram is not solved full (with contradictions). '
                         'The rate is %.4f', self.solution_rate)
         LOG.info('Full solution: %.6f sec', time.time() - start)
-        LOG.info('Cache hit rate: %.4f%%', SOLUTIONS_CACHE.hit_rate * 100.0)
+        LOG.info('Cache hit rate: %.4f%%', NonogramFSM.solutions_cache().hit_rate * 100.0)
 
 
-class ConsoleBoard(BaseBoard):
-    """A board that renders on stdout"""
+class _DummyBoard(object):  # pylint: disable=too-few-public-methods
+    """
+    Stub for renderer init in case of it created before the board.
+    """
+    rows_descriptions = columns_descriptions = ()
+    width = height = 0
 
-    def __init__(self, columns, rows, **renderer_params):
-        super(ConsoleBoard, self).__init__(
-            columns, rows, renderer=StreamRenderer(**renderer_params))
 
+def _solve_on_space_hints(board, hints):
+    """
+    Pseudo solving with spaces given
+    """
+    # assert len(hints) == len(board.rows_descriptions)
+    for i, (spaces_hint, row) in enumerate(zip(hints, board.rows_descriptions)):
+        assert len(spaces_hint) == len(row)
+        cells = []
+        for space_size, box_size in zip(spaces_hint, row):
+            cells.extend([SPACE] * space_size)
+            cells.extend([BOX] * box_size)
 
-class AsciiBoard(BaseBoard):
-    """A board that renders on stdout with ASCII graphic"""
-
-    def __init__(self, columns, rows, **renderer_params):
-        super(AsciiBoard, self).__init__(
-            columns, rows, renderer=AsciiRenderer(**renderer_params))
+        # pad with spaces
+        solution = cells + ([SPACE] * (board.width - len(cells)))
+        board.cells[i] = solution

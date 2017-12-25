@@ -14,7 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import tornado.web
 
-from pyngrm.utils import get_uptime
+from pyngrm.utils.other import get_uptime
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

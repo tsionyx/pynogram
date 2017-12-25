@@ -16,15 +16,14 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 
-from pyngrm.board import ConsoleBoard
 from pyngrm.demo import (
     base_demo_board,
     demo_board,
     demo_board2,
     more_complex_board,
 )
-from pyngrm.pbn_parser import get_puzzle_desc
-from pyngrm.renderer import StreamRenderer
+from pyngrm.input.pbn import get_puzzle_desc
+from pyngrm.renderer import StreamRenderer, ConsoleBoard
 from pyngrm.web.common import (
     BaseHandler,
     HelloHandler,
