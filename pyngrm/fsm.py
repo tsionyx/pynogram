@@ -43,7 +43,7 @@ class StateMachineError(ValueError):
 class NonogramError(ValueError):
     """
     Represents an error occurred when trying
-    to solve 'unsolvable' nonogram
+    to solve a nonogram which has an internal contradiction.
     """
     pass
 

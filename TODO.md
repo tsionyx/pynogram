@@ -1,10 +1,9 @@
-- pretty SVG renderer
+- pretty SVG and console (e.g. curses-based) renderers
 - tests for Web UI
-- solve 'unsolvable' boards (see in examples/)
 - profile and improve bottlenecks:
 
 ```bash
-$ time python -m cProfile -o non.prof pyngrm/__main__.py -b UNSOLVED_Friendship-Is-Magic --draw-final
+$ time python -m cProfile -o hot.prof pyngrm/__main__.py --pbn 2040 --draw-final
 ```
 
 ```
