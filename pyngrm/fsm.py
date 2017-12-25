@@ -24,7 +24,7 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 
 LOG = logging.getLogger(_LOG_NAME)
 
-CACHE = Cache()
+SOLUTIONS_CACHE = Cache()
 
 
 class StateMachineError(ValueError):
@@ -360,7 +360,7 @@ class NonogramFSM(FiniteStateMachine):
         """
         original_row, row = row, normalize_row(row)
 
-        solved_row = CACHE.get((self.clues, row))
+        solved_row = SOLUTIONS_CACHE.get((self.clues, row))
         if solved_row is not None:
             assert len(solved_row) == len(row)
             return solved_row
@@ -382,7 +382,7 @@ class NonogramFSM(FiniteStateMachine):
                 solved_row.append(UNSURE)
 
         assert len(solved_row) == len(row)
-        CACHE.save((self.clues, row), solved_row)
+        SOLUTIONS_CACHE.save((self.clues, row), solved_row)
         return solved_row
 
 

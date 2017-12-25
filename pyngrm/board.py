@@ -13,7 +13,7 @@ import numpy as np
 from six.moves import zip
 
 from pyngrm.base import UNSURE, normalize_clues, BOX, invert
-from pyngrm.fsm import solve_row, NonogramError, CACHE
+from pyngrm.fsm import solve_row, NonogramError, SOLUTIONS_CACHE
 from pyngrm.renderer import (
     Renderer,
     StreamRenderer,
@@ -355,7 +355,7 @@ class BaseBoard(object):
             LOG.warning('The nonogram is not solved full (with contradictions). '
                         'The rate is %s', self.solution_rate)
         LOG.info('Full solution: %ss', time.time() - start)
-        LOG.info('Cache hit rate: %s%%', CACHE.hit_rate * 100.0)
+        LOG.info('Cache hit rate: %s%%', SOLUTIONS_CACHE.hit_rate * 100.0)
 
 
 class ConsoleBoard(BaseBoard):
