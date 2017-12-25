@@ -12,6 +12,7 @@ from pyngrm.utils import (
     interleave,
     max_safe,
     avg,
+    PriorityDict,
 )
 
 
@@ -147,3 +148,68 @@ class TestAvg(object):
 
     def test_empty(self):
         assert avg([]) is None
+
+
+class TestPriorityDict(object):
+    @pytest.fixture
+    def p_dict(self):
+        res = PriorityDict()
+        res['foo'] = 1
+        res['bar'] = 3
+        res['baz'] = 2
+        return res
+
+    def test_basic(self, p_dict):
+        assert p_dict.pop_smallest() == ('foo', 1)
+        assert p_dict.pop_smallest() == ('baz', 2)
+        assert p_dict.pop_smallest() == ('bar', 3)
+
+        assert not p_dict
+
+    def test_repeating_priorities(self, p_dict):
+        p_dict['baz'] = 1
+
+        # undefined
+        assert p_dict.pop_smallest()[0] == 'baz'
+        assert p_dict.pop_smallest()[0] == 'foo'
+        assert p_dict.pop_smallest() == ('bar', 3)
+
+        assert not p_dict
+
+    def test_repeating_keys(self, p_dict):
+        p_dict['foo'] = 0
+        assert p_dict.pop_smallest()[0] == 'foo'
+        assert p_dict.smallest()[0] == 'baz'
+        assert p_dict.smallest()[0] == 'baz'
+
+    def test_update(self, p_dict):
+        p_dict.update({'baz': 1, 'foo': 7, 'bar': 5})
+        assert p_dict.pop_smallest() == ('baz', 1)
+        assert p_dict.pop_smallest() == ('bar', 5)
+        assert p_dict.pop_smallest() == ('foo', 7)
+
+        assert not p_dict
+
+    def test_sorted(self, p_dict):
+        assert [k for k, v in p_dict.sorted_iter()] == ['foo', 'baz', 'bar']
+
+    def test_set_default(self, p_dict):
+        assert 'tutu' not in p_dict
+        assert p_dict.setdefault('tutu', 5) == 5
+        assert 'tutu' in p_dict
+
+        assert p_dict.setdefault('foo', 'something') == 1
+
+    # noinspection PyProtectedMember
+    def test_rebuild(self, p_dict):
+        old_heap_id = id(p_dict._heap)
+
+        p_dict['baz'] = 1
+        p_dict['foo'] = 7
+        p_dict['bar'] = 5
+
+        assert id(p_dict._heap) == old_heap_id
+
+        # this action resets the heap
+        p_dict['foo'] = 10
+        assert id(p_dict._heap) != old_heap_id
