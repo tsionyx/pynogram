@@ -186,6 +186,8 @@ class NonogramFSM(FiniteStateMachine):
 
     def __init__(self, clues, initial_state, state_map, final=None):
         self.clues = clues
+        if final is None:
+            final = state_map[-1][1]
         super(NonogramFSM, self).__init__(initial_state, state_map, final=final)
 
     @classmethod
@@ -202,6 +204,8 @@ class NonogramFSM(FiniteStateMachine):
 
     INITIAL_STATE = 1
 
+    _fsm_cache = Cache()
+
     @classmethod
     def from_clues(cls, *clues):
         """
@@ -212,6 +216,10 @@ class NonogramFSM(FiniteStateMachine):
             clues = clues[0]
         clues = normalize_clues(clues)
         LOG.debug('Clues: %s', clues)
+
+        state_map = cls._fsm_cache.get(clues)
+        if state_map is not None:
+            return cls(clues, cls.INITIAL_STATE, state_map)
 
         state_counter = cls.INITIAL_STATE
         state_map = []
@@ -235,7 +243,8 @@ class NonogramFSM(FiniteStateMachine):
             LOG.debug('Add transition: %s -> %s', trans, state_counter)
             state_map.append((trans, state_counter))
 
-        return cls(clues, cls.INITIAL_STATE, state_map, final=state_counter)
+        cls._fsm_cache.save(clues, state_map)
+        return cls(clues, cls.INITIAL_STATE, state_map)
 
     def partial_match(self, row):
         """
