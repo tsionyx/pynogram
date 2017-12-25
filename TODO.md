@@ -7,7 +7,9 @@ $ time python -m cProfile -o hot.prof pyngrm/__main__.py --pbn 2040 --draw-final
 ```
 
 ```
-p = pstats.Stats('non.prof')
+import pstats
+
+p = pstats.Stats('hot.prof')
 p.sort_stats('time').print_stats('fsm', 20)
 p.sort_stats('ncalls').print_stats('fsm', 20)
 ```
