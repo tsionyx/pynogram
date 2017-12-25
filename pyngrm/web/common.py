@@ -12,6 +12,7 @@ import traceback
 # noinspection PyCompatibility
 from concurrent.futures import ThreadPoolExecutor
 
+# import raven
 import tornado.web
 
 from pyngrm.utils.other import get_uptime
@@ -21,6 +22,7 @@ if _LOG_NAME == '__main__':  # pragma: no cover
     _LOG_NAME = os.path.basename(__file__)
 
 LOG = logging.getLogger(_LOG_NAME)
+SENTRY_DSN = 'https://user:password@sentry.io/project-id'
 
 
 class BaseHandler(tornado.web.RequestHandler):
@@ -47,6 +49,14 @@ class BaseHandler(tornado.web.RequestHandler):
 
         return super(BaseHandler, self).write(chunk)
 
+    # _raven_client = None
+    #
+    # @classmethod
+    # def raven_client(cls):
+    #     if cls._raven_client is None:
+    #         cls._raven_client = raven.Client(SENTRY_DSN)
+    #     return cls._raven_client
+
     def write_error(self, status_code, **kwargs):
         """
         Respond with JSON-formatted error instead of standard one
@@ -72,6 +82,8 @@ class BaseHandler(tornado.web.RequestHandler):
         if (status_code // 100) == 4:
             LOG.info("Client request problem")
         elif (status_code // 100) == 5:
+            # if exc_info:
+            #     self.raven_client().captureException(exc_info)
             LOG.error("Server problem", exc_info=exc_info)
 
         self.set_header(str("Content-Type"), "application/json")
