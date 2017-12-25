@@ -10,22 +10,26 @@ import os
 import time
 
 import numpy as np
-from six.moves import zip
+from six.moves import zip, range
 
-from pyngrm.base import UNSURE, normalize_clues, BOX, invert
+import pyngrm
+from pyngrm.base import UNSURE, normalize_clues, BOX, invert, SPACE
 from pyngrm.fsm import solve_row, NonogramError, SOLUTIONS_CACHE
 from pyngrm.renderer import (
     Renderer,
     StreamRenderer,
     AsciiRenderer,
 )
-from pyngrm.utils import avg, terminating_mp_pool
+from pyngrm.utils import avg, PriorityDict
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
     _LOG_NAME = os.path.basename(__file__)
 
 LOG = logging.getLogger(_LOG_NAME)
+
+pyngrm.fsm.LOG.setLevel(logging.WARNING)
+pyngrm.base.LOG.setLevel(logging.WARNING)
 
 
 class BaseBoard(object):
@@ -146,92 +150,107 @@ class BaseBoard(object):
         """How many cells in a row are known to be box or space"""
         return sum(1 for cell in row if cell != UNSURE) / len(row)
 
-    def solve_rows(self, horizontal=True, parallel=False):  # pylint: disable=too-many-locals
-        """Solve every row (or column) with FSM"""
+    # pylint: disable=too-many-arguments, too-many-locals
+    def solve_row(self, index, is_column, priority, jobs_queue,
+                  contradiction_mode=False):
+        """
+        Solve one line with FSM.
+        If line gets partially solved,
+        put the crossed lines into queue
+        """
+
         start = time.time()
 
-        if horizontal:
-            clue_cells_mapping = zip(self.horizontal_clues, self.cells)
-            desc = 'row'
-        else:
-            clue_cells_mapping = zip(self.vertical_clues, self.cells.T)
+        if is_column:
+            clue, row = self.vertical_clues[index], self.cells.T[index]
             desc = 'column'
-
-        rows_scores = []
-        rows_to_solve = []
-
-        for i, (clue, row) in enumerate(clue_cells_mapping):
-            pre_solution_rate = self.row_solution_rate(row)
-            if pre_solution_rate == 1:
-                continue  # already solved
-
-            rows_scores.append((i, pre_solution_rate))
-            LOG.debug('Solving %s %s: %s. Partial: %s',
-                      i, desc, clue, row)
-
-            rows_to_solve.append((clue, row))
-
-        if parallel:
-            with terminating_mp_pool() as pool:
-                solved_rows = pool.map(solve_row, rows_to_solve)
         else:
-            solved_rows = map(solve_row, rows_to_solve)
+            clue, row = self.horizontal_clues[index], self.cells[index]
+            desc = 'row'
 
-        for (i, pre_solution_rate), updated in zip(rows_scores, solved_rows):
-            if self.row_solution_rate(updated) > pre_solution_rate:
-                LOG.debug('New info on %s %s', desc, i)
+        pre_solution_rate = self.row_solution_rate(row)
 
-                if horizontal:
-                    self.cells[i] = updated
-                    self.row_updated(i)
-                else:
-                    self.cells[:, i] = updated
-                    self.column_updated(i)
+        # do not check solved lines in trusted mode
+        if not contradiction_mode and pre_solution_rate == 1:
+            return
 
-        LOG.info('%ss solution: %ss', desc.title(), time.time() - start)
+        LOG.debug('Solving %s %s: %s. Partial: %s. Priority: %s',
+                  index, desc, clue, row, priority)
 
-    def solve_round(self, rows_first=True, parallel=False):
-        """Solve every column and every row using FSM exactly one time"""
-        if rows_first:
-            order = [True, False]
-        else:
-            order = [False, True]
+        updated = solve_row(clue, row)
 
-        for horizontal in order:
-            self.solve_rows(horizontal=horizontal, parallel=parallel)
+        if self.row_solution_rate(updated) > pre_solution_rate:
+            LOG.debug('New info on %s %s: %s', desc, index, updated)
+            LOG.debug('Queue: %s', jobs_queue)
+
+            for i, (pre, post) in enumerate(zip(row, updated)):
+                if pre != post:
+                    assert pre == UNSURE
+                    assert post in (BOX, SPACE)
+
+                    jobs_queue[(not is_column, i)] = priority - 1
+            LOG.debug('Queue: %s', jobs_queue)
+
+            if is_column:
+                self.cells[:, index] = updated
+                self.column_updated(index)
+            else:
+                self.cells[index] = updated
+                self.row_updated(index)
+
+        LOG.debug('%ss solution: %.6f sec', desc.title(), time.time() - start)
 
     @property
     def solved(self):
         """Return whether the nonogram is completely solved"""
         return self._solved
 
-    def solve(self, rows_first=True, parallel=False):
-        """Solve the nonogram to the most with FSM using multiple rounds"""
-        solved = self.solution_rate
-        counter = 0
+    def solve(self, parallel=False, contradiction_mode=False):
+        """Solve the nonogram to the most with FSM using priority queue"""
+        if self.solution_rate == 1:
+            return
+
+        lines_solved = 0
 
         if parallel:
+            # TODO: add parallel logic here
             LOG.info("Using several processes to solve")
 
         start = time.time()
-        while True:
-            counter += 1
-            LOG.info('Round %s', counter)
 
-            self.solve_round(rows_first=rows_first, parallel=parallel)
+        # every job is a tuple (is_column, index)
+        #
+        # Why `is_column`, not `is_row`?
+        # To assign more priority to the rows:
+        # when adding row, `is_column = False = 0`
+        # when adding column, `is_column = True = 1`
+        # heap always pops the lowest item, so the rows will go first
 
-            if self.solution_rate > solved:
-                self.solution_round_completed()
+        line_jobs = PriorityDict()
 
-            if self.solution_rate == 1 or solved == self.solution_rate:
-                self._solved = True
-                break
+        for row_index in range(self.height):
+            line_jobs[(False, row_index)] = 0
 
-            solved = self.solution_rate
+        for column_index in range(self.width):
+            line_jobs[(True, column_index)] = 0
 
+        while line_jobs:
+            (is_column, index), priority = line_jobs.pop_smallest()
+            self.solve_row(index, is_column, priority, line_jobs,
+                           contradiction_mode=contradiction_mode)
+            lines_solved += 1
+
+        # all the following actions applied only to verified solving
+        if contradiction_mode:
+            return
+
+        self.solution_round_completed()
+
+        self._solved = True
         if self.solution_rate != 1:
-            LOG.warning('The nonogram is not solved full. The rate is %s', self.solution_rate)
-        LOG.info('Full solution: %ss', time.time() - start)
+            LOG.warning('The nonogram is not solved full. The rate is %.4f', self.solution_rate)
+        LOG.info('Full solution: %.6f sec', time.time() - start)
+        LOG.info('Lines solved: %i', lines_solved)
 
     def try_contradiction(self, row_index, column_index,
                           assumption=BOX, propagate=True):
@@ -249,8 +268,10 @@ class BaseBoard(object):
 
         try:
             try:
+                LOG.debug('Pretend that (%i, %i) is %s',
+                          row_index, column_index, assumption)
                 self.cells[row_index][column_index] = assumption
-                self.solve()
+                self.solve(contradiction_mode=True)
             except NonogramError:
                 contradiction = True
             else:
@@ -260,7 +281,7 @@ class BaseBoard(object):
             # rollback solved cells
             self.cells = save
             if contradiction:
-                LOG.info("Found contradiction at (%s, %s)",
+                LOG.info("Found contradiction at (%i, %i)",
                          row_index, column_index)
                 self.cells[row_index][column_index] = invert(assumption)
 
@@ -283,7 +304,10 @@ class BaseBoard(object):
 
         if by_rows:
             for solved_row in range(self.height):
-                LOG.info('Trying row %s', solved_row)
+                if self.row_solution_rate(self.cells[solved_row]) == 1:
+                    continue
+
+                LOG.info('Trying to assume on row %i', solved_row)
                 for solved_column in range(self.width):
                     self.try_contradiction(
                         solved_row, solved_column,
@@ -295,7 +319,10 @@ class BaseBoard(object):
                     self.solve()
         else:
             for solved_column in range(self.width):
-                LOG.info('Trying column %s', solved_column)
+                if self.row_solution_rate(self.cells.T[solved_column]) == 1:
+                    continue
+
+                LOG.info('Trying to assume on column %i', solved_column)
                 for solved_row in range(self.height):
                     self.try_contradiction(
                         solved_row, solved_column,
@@ -334,7 +361,7 @@ class BaseBoard(object):
 
         while True:
             counter += 1
-            LOG.warning('Contradiction round %s (assumption %s)', counter, assumption)
+            LOG.warning('Contradiction round %i (assumption %s)', counter, assumption)
 
             self._contradictions_round(
                 assumption,
@@ -353,9 +380,9 @@ class BaseBoard(object):
         self._solved = True
         if self.solution_rate != 1:
             LOG.warning('The nonogram is not solved full (with contradictions). '
-                        'The rate is %s', self.solution_rate)
-        LOG.info('Full solution: %ss', time.time() - start)
-        LOG.info('Cache hit rate: %s%%', SOLUTIONS_CACHE.hit_rate * 100.0)
+                        'The rate is %.4f', self.solution_rate)
+        LOG.info('Full solution: %.6f sec', time.time() - start)
+        LOG.info('Cache hit rate: %.4f%%', SOLUTIONS_CACHE.hit_rate * 100.0)
 
 
 class ConsoleBoard(BaseBoard):

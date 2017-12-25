@@ -136,7 +136,7 @@ class TestSolution(object):
         ]
 
         board = AsciiBoard(columns, rows, stream=stream)
-        board.solve(rows_first=False)
+        board.solve()
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
@@ -198,8 +198,13 @@ class TestSolution(object):
         board.on_solution_round_complete = lambda **kwargs: rounds.append(1)
         board.solve()
 
-        # draw the lower '_' in L
-        assert rows_updated == [2]
+        # the solution will go like following:
+        # 1. draw the lower '_' in L (row 2)
+        # 2. the column 0 updated
+        #   3. during that update the row 0 updated
+        #     4. during that update the column 1 updated
+
+        assert rows_updated == [2, 0]
         # draw the vertical '|' in L
         # and fill the spaces on the second column
         assert cols_updated == [0, 1]
@@ -212,13 +217,13 @@ class TestSolution(object):
         solutions = dict()
 
         for parallel in (False, True):
-            for rows_first in (False, True):
+            for contradiction_mode in (False, True):
                 stream = StringIO()
                 board = p_board(stream=stream)
                 start = time.time()
 
-                board.solve(rows_first=rows_first, parallel=parallel)
-                solutions[(rows_first, parallel)] = (
+                board.solve(parallel=parallel, contradiction_mode=contradiction_mode)
+                solutions[(parallel, contradiction_mode)] = (
                     stream.getvalue().rstrip(), time.time() - start)
 
         assert len(solutions) == 4
