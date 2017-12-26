@@ -16,18 +16,18 @@ import tornado.ioloop
 import tornado.options
 import tornado.web
 
-from pyngrm.demo import (
-    w_board,
-    p_board,
-    mlp_board,
-)
 from pyngrm.input.pbn import get_puzzle_desc
 from pyngrm.renderer import StreamRenderer, ConsoleBoard
-from pyngrm.web.common import (
+from .common import (
     BaseHandler,
     HelloHandler,
     ThreadedBaseHandler,
     LongPollNotifier,
+)
+from .demo import (
+    w_board,
+    p_board,
+    mlp_board,
 )
 
 # pylint: disable=arguments-differ
