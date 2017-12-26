@@ -1,0 +1,58 @@
+# Common example of a board
+# Found at the description of Haskell implementation:
+# https://jaspervdj.be/posts/2011-07-05-parallelizing-a-nonogram-solver.html
+#
+# The author says it takes 250 ms in sequential mode
+# and 155 ms in parallel mode, so there's a room
+# for improvements for my solution (see README.md for benchmarks)
+#
+# See the file format in hello.txt
+
+2
+1 2
+2 3
+2 3
+3 1 1
+
+2 1 1
+1 1 1 2 2
+1 1 3 1 3
+2 6 4
+3 3 9 1
+
+5 3 2
+3 1 2 2
+2 1 7
+3 3 2
+2 4
+
+2 1 2
+2 2 1
+2 2
+1
+1
+
+
+3
+5
+3 1
+2 1
+3 3 4
+
+2 2 7
+6 1 1
+4 2 2
+1 1
+3 1
+
+6
+2 7
+6 3 1
+1 2 2 1 1
+4 1 1 3
+
+4 2 2
+3 3 1
+3 3
+3
+2 1
