@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*
 """
-Defines a board of nonogram game
+Defines web routes and tornado application
+to demonstrate nonogram solutions
 """
 
 from __future__ import unicode_literals, print_function
@@ -13,7 +14,6 @@ from io import StringIO
 import tornado.gen
 import tornado.httpserver
 import tornado.ioloop
-import tornado.options
 import tornado.web
 
 from pyngrm.input.pbn import get_puzzle_desc
@@ -38,9 +38,6 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 
 LOG = logging.getLogger(_LOG_NAME)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-tornado.options.define("port", default=3145, help="run on the given port", type=int)
-tornado.options.define("debug", default=False, help="debug mode", type=bool)
 
 
 class BoardLiveHandler(ThreadedBaseHandler):
@@ -215,7 +212,7 @@ class Application(tornado.web.Application):
         return board_notifier
 
 
-def main(port, debug=False):
+def run(port, debug=False):
     """
     Starts the tornado application on a given port
     """
@@ -242,14 +239,3 @@ def main(port, debug=False):
             tornado.ioloop.IOLoop.current().start()
     except (KeyboardInterrupt, SystemExit):
         LOG.warning("Exit...")
-
-
-if __name__ == '__main__':
-    tornado.options.parse_command_line()
-    PORT, DEBUG = tornado.options.options.port, tornado.options.options.debug
-    if not DEBUG:
-        # FIXME
-        LOG.warning('Only debug mode supported for now. Switching.')
-        DEBUG = True
-
-    main(port=PORT, debug=DEBUG)

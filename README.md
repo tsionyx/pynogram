@@ -12,15 +12,20 @@ python setup.py install
 
 ### See the demo
 ```
-python pyngrm
+python -m pyngrm
 
-python pyngrm --board=winter --draw-final
+python -m pyngrm --board=winter --draw-final
 ```
 
 ### Demo web-server
 ```
-python pyngrm/web/app.py
+python -m pyngrm.web
 ```
+
+enjoy the solution process:
+
+_http://localhost:3145/board/2_
+_http://localhost:3145/board/2040_
 
 
 ## Tests
@@ -50,13 +55,13 @@ tox -e lint
 # http://webpbn.com/pbnsolve.html
 for i in 1611 1694 6739 4645 2040 2712 6574 8098 2556; do
     echo "Solving PBN's puzzle #$i (http://webpbn.com/$i) ..."
-    time python pyngrm --pbn $i --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
+    time python -m pyngrm --pbn $i --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
         grep -i contradict
 done
 
 for i in football intermediate MLP; do
     echo "Solving local puzzle $i ..."
-    time python pyngrm --board $i --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
+    time python -m pyngrm --board $i --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
         grep -i contradict
 done
 ```
