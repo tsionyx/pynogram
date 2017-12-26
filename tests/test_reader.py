@@ -35,7 +35,9 @@ class TestReader(object):
             '  1 1 1 1 1 1 1 1 X . . . X . X . . . . X . X . X . X . X . .',
             '    1 1 2 1 1 3 1 X . . . X . . X X . . X . X . . X X X . . X',
         ])
-        assert board.solved
+        assert board.solution_rate == 1
+        # currently simple `solve` method does not mark the board as solved
+        # assert board.solved
 
     def test_examples_dir(self):
         assert os.path.isdir(examples_file())

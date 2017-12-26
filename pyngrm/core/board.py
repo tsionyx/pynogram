@@ -318,7 +318,7 @@ class Board(object):
 
         self.solution_round_completed()
 
-        self._solved = True
+        # self._solved = True
         if self.solution_rate != 1:
             LOG.warning('The nonogram is not solved full. The rate is %.4f', self.solution_rate)
         LOG.info('Full solution: %.6f sec', time.time() - start)
