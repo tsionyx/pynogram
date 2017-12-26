@@ -7,17 +7,43 @@ e.g. manipulations with collections or streams.
 from __future__ import unicode_literals, print_function, division
 
 import multiprocessing
+import os
+import sys
 from contextlib import contextmanager
 from datetime import datetime
 
 from six import text_type
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 START_TIME = datetime.now()
 
 
 def get_uptime():  # pragma: no cover
     """Return the time program run in human-readable form"""
     return text_type(datetime.now() - START_TIME)
+
+
+def get_version():
+    """Return the program's version from distribution metadata"""
+
+    setup_py_dir = os.path.dirname(os.path.dirname(CURRENT_DIR))
+
+    if setup_py_dir not in sys.path:
+        sys.path.append(setup_py_dir)
+        remove = True
+    else:
+        remove = False
+
+    try:
+        from setup import VERSION
+    except ImportError:
+        # noinspection PyPep8Naming
+        VERSION = ()
+
+    if remove:
+        sys.path.remove(setup_py_dir)
+
+    return VERSION
 
 
 @contextmanager

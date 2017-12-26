@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals, print_function
 
+import os
 import sys
 
 import pytest
@@ -13,7 +14,10 @@ from pyngrm.utils.collections import (
     max_safe,
     avg,
 )
+from pyngrm.utils.other import get_version
 from pyngrm.utils.priority_dict import PriorityDict
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class TestMergeDicts(object):
@@ -213,3 +217,26 @@ class TestPriorityDict(object):
         # this action resets the heap
         p_dict['foo'] = 10
         assert id(p_dict._heap) != old_heap_id
+
+
+class TestVersion(object):
+    @pytest.fixture
+    def setup_py_path(self):
+        return os.path.dirname(CURRENT_DIR)
+
+    def test_simple(self, setup_py_path):
+        assert setup_py_path in sys.path
+        version = get_version()
+        assert setup_py_path in sys.path
+
+        assert len(version) == 3
+        assert all(isinstance(v, int) for v in version)
+
+    def test_setup_py_already_in_path(self, setup_py_path):
+        sys.path.remove(setup_py_path)
+        version = get_version()
+        assert setup_py_path not in sys.path
+        sys.path.append(setup_py_path)
+
+        assert len(version) == 3
+        assert all(isinstance(v, int) for v in version)

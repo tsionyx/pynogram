@@ -43,30 +43,31 @@ class ToxTest(Command):
         tox.cmdline()
 
 
-setup(
-    name=NAME,
-    version='.'.join(map(str, VERSION)),
-    packages=find_packages(),
-    install_requires=['six', 'numpy', 'futures', 'tornado', 'lxml'],
-    tests_require=['tox', 'coverage', 'pytest', 'flake8'],
+if __name__ == '__main__':
+    setup(
+        name=NAME,
+        version='.'.join(map(str, VERSION)),
+        packages=find_packages(),
+        install_requires=['six', 'numpy', 'futures', 'tornado', 'lxml'],
+        tests_require=['tox', 'coverage', 'pytest', 'flake8'],
 
-    # PyPI metadata
-    author="Tsionyx",
-    author_email="tsionyx@gmail.com",
-    description="Solve nonograms automatically",
-    license="MIT",
-    keywords="game nonogram",
-    url="https://gitlab.com/tsionyx/{}".format(NAME),
+        # PyPI metadata
+        author="Tsionyx",
+        author_email="tsionyx@gmail.com",
+        description="Solve nonograms automatically",
+        license="MIT",
+        keywords="game nonogram",
+        url="https://gitlab.com/tsionyx/{}".format(NAME),
 
-    long_description=read('README.md'),
-    classifiers=[
-        "Development Status :: 1 - Alpha",
-        "Topic :: Game",
-        "License :: OSI Approved :: MIT License",
-    ],
-    # TODO: force tests_require to install on test
-    # try to inherit ToxTest from setuptools.command.test
-    cmdclass={
-        'test': ToxTest
-    }
-)
+        long_description=read('README.md'),
+        classifiers=[
+            "Development Status :: 1 - Alpha",
+            "Topic :: Game",
+            "License :: OSI Approved :: MIT License",
+        ],
+        # TODO: force tests_require to install on test
+        # try to inherit ToxTest from setuptools.command.test
+        cmdclass={
+            'test': ToxTest
+        }
+    )
