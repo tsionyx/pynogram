@@ -141,6 +141,12 @@ class TestSolution(object):
         # currently simple `solve` method does not mark the board as solved
         # assert board.solved
 
+    def test_repeat_solutions(self, board):
+        board.solve()
+        assert board.solution_rate == 1
+        board.solve()
+        assert board.solution_rate == 1
+
     def test_several_solutions(self, stream):
         columns = [3, None, 1, 1]
         rows = [
@@ -273,6 +279,7 @@ class TestContradictions(object):
         board = tested_board()
         board.solve_with_contradictions()
         assert board.solution_rate == 1
+        assert board.solved
 
     def test_many_solutions(self):
         # source: https://en.wikipedia.org/wiki/Nonogram#Contradictions

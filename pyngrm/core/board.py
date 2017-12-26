@@ -432,6 +432,7 @@ class Board(object):
 
         self.solve()
         if self.solution_rate == 1:
+            self._solved = True
             LOG.info('No need to solve with contradictions')
             return
 
