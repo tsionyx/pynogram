@@ -4,28 +4,31 @@
 
 # Nonogram solver
 
-### Install
+## Install
+
 ```
 mkvirtualenv pyngrm --python /usr/bin/python3
 python setup.py install
 ```
 
-### See the demo
+## Usage
+
+### See the demo in terminal
+
 ```
 python -m pyngrm
 
 python -m pyngrm --board=winter --draw-final
 ```
 
-### Demo web-server
-```
-python -m pyngrm.web
-```
+### Web demo
 
-enjoy the solution process:
+- start the server: `python -m pyngrm.web`
+- enjoy the solutions:
 
-_http://localhost:3145/board/2_
-_http://localhost:3145/board/2040_
+  _http://localhost:3145/board/2_
+
+  _http://localhost:3145/board/2040_
 
 
 ## Tests
@@ -69,8 +72,9 @@ done
 Currently it gives these numbers on the fast (_Intel(R) Xeon(R) CPU E3-1275 v5 @ 3.60GHz_)
 and slower (_Intel(R) Core(TM) i5 CPU  M 560  @ 2.67GHz_) CPUs:
 
-| #         | Fast CPU, sec | Slow CPU, sec | Contradiction rounds | Solution rate, % |
+| Name      | Fast CPU, sec | Slow CPU, sec | Contradiction rounds | Solution rate, % |
 |-----------|--------------:|--------------:|:--------------------:|-----------------:|
+|-- webpbn.com --                                                                     |
 | 1611      | 3.6           | 6             | 1                    | 100              |
 | 1694      | 9.9           | 18            | 5                    | 100              |
 | **6739**  | 7.8           | 14            | 6                    | **98.56**        |
@@ -81,6 +85,6 @@ and slower (_Intel(R) Core(TM) i5 CPU  M 560  @ 2.67GHz_) CPUs:
 | **8098**  | 0.9           | 1.5           | 1                    | **0**            |
 | **2556**  | 1.7           | 2.9           | 2                    | **92.72**        |
 |-- Local --                                                                          |
-| football  | 0.7           | 1.1           | 1                    | 100              |
-| intermediate | 0.8        | 1.3           | 0                    | 100              |
-| MLP       | 24            | 47            | 3                    | 100              |
+| [football](examples/football.txt) | 0.7   | 1.1   | 1            | 100              |
+| [intermediate](examples/intermediate.txt) | 0.8   | 1.3   | 0    | 100              |
+| [MLP](examples/MLP.txt) | 24   | 47       | 3                    | 100              |
