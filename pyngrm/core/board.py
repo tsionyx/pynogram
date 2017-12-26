@@ -22,7 +22,7 @@ from pyngrm.core.solver import (
     solve_row,
     NonogramError,
     NonogramFSM,
-)
+    assert_match)
 from pyngrm.utils.collections import avg, max_safe
 from pyngrm.utils.priority_dict import PriorityDict
 
@@ -242,9 +242,12 @@ class Board(object):
 
         pre_solution_rate = self.row_solution_rate(row)
 
-        # do not check solved lines in trusted mode
-        if not contradiction_mode and pre_solution_rate == 1:
-            return
+        if pre_solution_rate == 1:
+            if contradiction_mode:
+                assert_match(row_desc, row)
+            else:
+                # do not check solved lines in trusted mode
+                return
 
         LOG.debug('Solving %s %s: %s. Partial: %s. Priority: %s',
                   index, desc, row_desc, row, priority)

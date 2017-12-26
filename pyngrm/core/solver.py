@@ -374,3 +374,12 @@ def solve_row(*args, **kwargs):
         raise AttributeError("Cannot find solving method '%s'" % method)
 
     return method_func(row)
+
+
+def assert_match(row_desc, row):
+    """
+    Verifies that the given row matches the description
+    """
+    nfsm = NonogramFSM.from_description(row_desc)
+    if not nfsm.match(row):
+        raise NonogramError("The row '{}' cannot fit".format(row))
