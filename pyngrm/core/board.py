@@ -18,7 +18,7 @@ from pyngrm.core import (
     normalize_description,
     invert,
 )
-from pyngrm.core.fsm import (
+from pyngrm.core.solver import (
     solve_row,
     NonogramError,
     NonogramFSM,
@@ -32,7 +32,7 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 
 LOG = logging.getLogger(_LOG_NAME)
 
-pyngrm.core.fsm.LOG.setLevel(logging.WARNING)
+pyngrm.core.solver.LOG.setLevel(logging.WARNING)
 
 
 class Renderer(object):

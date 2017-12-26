@@ -10,6 +10,8 @@ from pyngrm.core import UNKNOWN, BOX, SPACE
 from pyngrm.core.fsm import (
     StateMachineError,
     FiniteStateMachine,
+)
+from pyngrm.core.solver import (
     NonogramFSM,
     NonogramError,
     solve_row,
