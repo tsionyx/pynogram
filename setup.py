@@ -9,7 +9,7 @@ import sys
 from setuptools import setup, find_packages, Command
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-VERSION = (0, 0, 1)
+VERSION = (0, 0, 2)
 NAME = os.path.basename(CURRENT_DIR)
 
 

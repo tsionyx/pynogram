@@ -1,3 +1,5 @@
+- find contradictions points based on some score
+- refactor out solvers from board (LineSolver, ContradictionSolver)
 - pretty SVG and console (e.g. curses-based) renderers
 - tests for Web UI
 - profile and improve bottlenecks:
