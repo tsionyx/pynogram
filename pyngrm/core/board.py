@@ -277,7 +277,9 @@ class Board(object):
         """Return whether the nonogram is completely solved"""
         return self._solved
 
-    def solve(self, parallel=False, contradiction_mode=False):
+    def solve(self, parallel=False,
+              row_indexes=None, column_indexes=None,
+              contradiction_mode=False):
         """Solve the nonogram to the most with FSM using priority queue"""
         if self.solution_rate == 1:
             return
@@ -300,10 +302,16 @@ class Board(object):
 
         line_jobs = PriorityDict()
 
-        for row_index in range(self.height):
+        if row_indexes is None:
+            row_indexes = range(self.height)
+
+        for row_index in row_indexes:
             line_jobs[(False, row_index)] = 0
 
-        for column_index in range(self.width):
+        if column_indexes is None:
+            column_indexes = range(self.width)
+
+        for column_index in column_indexes:
             line_jobs[(True, column_index)] = 0
 
         while line_jobs:
@@ -343,7 +351,9 @@ class Board(object):
                 LOG.debug('Pretend that (%i, %i) is %s',
                           row_index, column_index, assumption)
                 self.cells[row_index][column_index] = assumption
-                self.solve(contradiction_mode=True)
+                self.solve(row_indexes=(row_index,),
+                           column_indexes=(column_index,),
+                           contradiction_mode=True)
             except NonogramError:
                 contradiction = True
             else:
@@ -359,7 +369,9 @@ class Board(object):
 
                 # try to solve with additional info
                 if propagate:
-                    self.solve()
+                    # solve with only one cell as new info
+                    self.solve(row_indexes=(row_index,),
+                               column_indexes=(column_index,))
 
     def _contradictions_round(
             self, assumption,
@@ -388,7 +400,8 @@ class Board(object):
                     )
 
                 if not propagate_on_cell:
-                    self.solve()
+                    # solve with only one row as new info
+                    self.solve(row_indexes=(solved_row,))
         else:
             for solved_column in range(self.width):
                 if self.row_solution_rate(self.cells.T[solved_column]) == 1:
@@ -403,7 +416,8 @@ class Board(object):
                     )
 
                 if propagate_on_cell:
-                    self.solve()
+                    # solve with only one column as new info
+                    self.solve(column_indexes=(solved_column,))
 
     def solve_with_contradictions(
             self, propagate_on_row=False, by_rows=True):
