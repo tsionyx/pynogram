@@ -45,10 +45,9 @@ class NonogramFSM(fsm.FiniteStateMachine):
     used to solve a nonogram
     """
 
-    def __init__(self, description, initial_state, state_map, final=None):
+    def __init__(self, description, initial_state, state_map):
         self.description = description
-        if final is None:
-            final = state_map[-1][1]
+        final = state_map[-1][1]
         super(NonogramFSM, self).__init__(initial_state, state_map, final=final)
 
     @classmethod

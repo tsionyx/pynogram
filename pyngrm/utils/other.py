@@ -36,7 +36,7 @@ def get_version():
 
     try:
         from setup import VERSION
-    except ImportError:
+    except ImportError:  # pragma: no cover
         # noinspection PyPep8Naming
         VERSION = ()
 
@@ -47,7 +47,7 @@ def get_version():
 
 
 @contextmanager
-def terminating_mp_pool(*args, **kwargs):
+def terminating_mp_pool(*args, **kwargs):  # pragma: no cover
     """
     Allows to use multiprocessing.Pool as a contextmanager in both PY2 and PY3
 
