@@ -269,14 +269,14 @@ class AsciiRendererWithBold(AsciiRenderer):
 class ConsoleBoard(Board):
     """A board that renders on stdout"""
 
-    def __init__(self, columns, rows, **renderer_params):
+    def __init__(self, columns, rows, renderer=StreamRenderer, **renderer_params):
         super(ConsoleBoard, self).__init__(
-            columns, rows, renderer=StreamRenderer, **renderer_params)
+            columns, rows, renderer=renderer, **renderer_params)
 
 
 class AsciiBoard(Board):
     """A board that renders on stdout with ASCII graphic"""
 
-    def __init__(self, columns, rows, **renderer_params):
+    def __init__(self, columns, rows, renderer=AsciiRenderer, **renderer_params):
         super(AsciiBoard, self).__init__(
-            columns, rows, renderer=AsciiRenderer, **renderer_params)
+            columns, rows, renderer=renderer, **renderer_params)

@@ -15,7 +15,6 @@ from six import PY2
 
 from input.pbn import get_puzzle_desc
 from input.reader import examples_file, read
-from pyngrm.demo import base_demo_board
 from pyngrm.renderer import ConsoleBoard
 
 
@@ -42,7 +41,7 @@ def main(board_file, draw_every_round=True, pbn_id=None):
         with open(examples_file(board_file)) as _file:
             columns, rows = read(_file)
 
-    d_board = base_demo_board(columns, rows, board_cls=ConsoleBoard)
+    d_board = ConsoleBoard(columns, rows)
     d_board.renderer.icons.update({True: '\u2B1B'})
     if draw_every_round:
         d_board.on_solution_round_complete = lambda board: board.draw()

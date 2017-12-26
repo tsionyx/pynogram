@@ -7,9 +7,8 @@ import os
 import pytest
 from six.moves import StringIO
 
-from pyngrm.demo import base_demo_board
 from pyngrm.input.reader import examples_file, read
-from pyngrm.renderer import StreamRenderer
+from pyngrm.renderer import ConsoleBoard
 
 
 class TestReader(object):
@@ -18,8 +17,7 @@ class TestReader(object):
             columns, rows = read(f)
 
         stream = StringIO()
-        board = base_demo_board(columns, rows,
-                                renderer=StreamRenderer, stream=stream)
+        board = ConsoleBoard(columns, rows, stream=stream)
         board.solve()
         board.draw()
 

@@ -1,0 +1,26 @@
+# very simple demonstration 'P' letter board
+# source: https://en.wikipedia.org/wiki/Nonogram#Example
+
+# See the file format in hello.txt
+
+0
+9
+9
+2 2
+2 2
+4
+4
+0
+
+
+0
+4
+6
+2 2
+2 2
+6
+4
+2
+2
+2
+0

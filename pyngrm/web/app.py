@@ -17,10 +17,9 @@ import tornado.options
 import tornado.web
 
 from pyngrm.demo import (
-    base_demo_board,
-    demo_board,
-    demo_board2,
-    more_complex_board,
+    w_board,
+    p_board,
+    mlp_board,
 )
 from pyngrm.input.pbn import get_puzzle_desc
 from pyngrm.renderer import StreamRenderer, ConsoleBoard
@@ -186,7 +185,7 @@ class Application(tornado.web.Application):
         from a database for example. By now it just returns
         one of hardcoded demo boards.
         """
-        predefined = [demo_board, demo_board2, more_complex_board]
+        predefined = [w_board, p_board, mlp_board]
 
         if _id >= len(predefined):
             # noinspection PyBroadException
@@ -195,7 +194,7 @@ class Application(tornado.web.Application):
             except Exception:  # pylint: disable=broad-except
                 pass
             else:
-                board = base_demo_board(columns, rows, board_cls=ConsoleBoard, **board_params)
+                board = ConsoleBoard(columns, rows, **board_params)
                 board.renderer.icons.update({True: '\u2B1B'})
                 return board
 
