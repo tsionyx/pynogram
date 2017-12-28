@@ -45,8 +45,9 @@ class NonogramFSM(fsm.FiniteStateMachine):
     used to solve a nonogram
     """
 
-    def __init__(self, description, initial_state, state_map):
+    def __init__(self, description, state_map):
         self.description = description
+        initial_state = state_map[0][1]
         final = state_map[-1][1]
         super(NonogramFSM, self).__init__(initial_state, state_map, final=final)
 
@@ -63,14 +64,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
         return (state, SPACE), state + 1
 
     INITIAL_STATE = 1
-
     _fsm_cache = Cache(1000)
-    _solutions_cache = Cache(10000)
-
-    @classmethod
-    def solutions_cache(cls):
-        """Line solutions cache"""
-        return cls._solutions_cache
 
     @classmethod
     def from_description(cls, *description):
@@ -85,7 +79,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
 
         state_map = cls._fsm_cache.get(description)
         if state_map is not None:
-            return cls(description, cls.INITIAL_STATE, state_map)
+            return cls(description, state_map)
 
         state_counter = cls.INITIAL_STATE
         state_map = []
@@ -110,7 +104,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
             state_map.append((trans, state_counter))
 
         cls._fsm_cache.save(description, state_map)
-        return cls(description, cls.INITIAL_STATE, state_map)
+        return cls(description, state_map)
 
     def partial_match(self, row):
         """
@@ -200,7 +194,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
         # for each read cell store a list of StepState
         # plus O-th for the state before any read cells
         transition_table = TransitionTable.with_capacity(len(row) + 1)
-        transition_table.append_transition(0, self.INITIAL_STATE)
+        transition_table.append_transition(0, self.initial_state)
 
         def _shift_one_cell(cell_type, trans_index,
                             previous_step_state, previous_state, desc_cell=None):
@@ -228,6 +222,13 @@ class NonogramFSM(fsm.FiniteStateMachine):
                                     prev, prev_state)
 
         return transition_table
+
+    _solutions_cache = Cache(10000)
+
+    @classmethod
+    def solutions_cache(cls):
+        """Line solutions cache"""
+        return cls._solutions_cache
 
     def solve_with_reverse_tracking(self, row):
         """

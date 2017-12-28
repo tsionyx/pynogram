@@ -65,15 +65,20 @@ INFORMAL_REPRESENTATIONS = {
     BOX: ('X', '+'),
 }
 
+FORMAL_ALPHABET = set(INFORMAL_REPRESENTATIONS)
+
 
 def normalize_row(row):
     """
     Normalize an easy-to write row representation with a formal one
     """
-    original = row
     alphabet = set(row)
-    row = list(row)
+    if alphabet.issubset(FORMAL_ALPHABET):
+        return tuple(row)
+
     LOG.debug('All row symbols: %s', alphabet)
+    # save original for logs and debug
+    original, row = row, list(row)
 
     for formal, informal in iteritems(INFORMAL_REPRESENTATIONS):
         informal = set(informal) & alphabet
@@ -91,5 +96,5 @@ def normalize_row(row):
         LOG.debug("Replace '%s' with a '%s'", informal, formal)
         list_replace(row, informal, formal)
 
-    assert set(row) <= {BOX, SPACE, UNKNOWN}
+    assert set(row).issubset(FORMAL_ALPHABET)
     return tuple(row)
