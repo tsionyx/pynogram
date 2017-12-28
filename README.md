@@ -62,7 +62,7 @@ for i in 1611 1694 6739 4645 2040 2712 6574 8098 2556; do
         grep -i contradict
 done
 
-for i in football intermediate MLP; do
+for i in football einstein MLP; do
     echo "Solving local puzzle $i ..."
     time python -m pyngrm --board $i --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
         grep -i contradict
@@ -86,5 +86,5 @@ and slower (_Intel(R) Core(TM) i5 CPU  M 560  @ 2.67GHz_) CPUs:
 | **2556**  | 1.7           | 2.9           | 2                    | **92.72**        |
 |-- Local --                                                                          |
 | [football](examples/football.txt) | 0.7   | 1.1   | 1            | 100              |
-| [intermediate](examples/intermediate.txt) | 0.8   | 1.3   | 0    | 100              |
-| [MLP](examples/MLP.txt) | 24   | 47       | 3                    | 100              |
+| [einstein](examples/einstein.txt) | 2.9   | 5.0   | 0            | 100              |
+| [MLP](examples/MLP.txt)           | 24    | 47    | 3            | 100              |
