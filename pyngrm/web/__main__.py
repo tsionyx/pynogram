@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 import tornado.options
 
-from .app import LOG, run
+from pyngrm.web.app import LOG, run
 
 tornado.options.define('port', default=3145, help='run on the given port', type=int)
 tornado.options.define('debug', default=False, help='debug mode', type=bool)
