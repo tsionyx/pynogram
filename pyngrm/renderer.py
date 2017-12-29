@@ -26,9 +26,11 @@ _NOT_SET = 'E'  # empty cell, e.g. in the headers
 _THUMBNAIL = 'T'
 
 
+# noinspection PyAbstractClass
+# pylint: disable=abstract-method
 class StreamRenderer(Renderer):
     """
-    Renders a board as a simple text table to a stream (stdout by default)
+    Simplify textual rendering of a board to a stream (stdout by default)
     """
 
     def __init__(self, board=None, stream=sys.stdout):
@@ -42,14 +44,32 @@ class StreamRenderer(Renderer):
         }
         super(StreamRenderer, self).__init__(board)
 
+    def _print(self, *args):
+        return print(*args, file=self.stream)
+
+    def cell_icon(self, state):
+        """
+        Gets a symbolic representation of a cell given its state
+        and predefined table `icons`
+        """
+        types = tuple(map(type, self.icons))
+        # why not just `isinstance(state, int)`?
+        # because `isinstance(True, int) == True`
+        if isinstance(state, integer_types) and not isinstance(state, types):
+            return text_type(state)
+        return self.icons[state]
+
+
+class BaseAsciiRenderer(StreamRenderer):
+    """
+    Renders a board as a simple text table (without grid)
+    """
+
     def board_init(self, board=None):
-        super(StreamRenderer, self).board_init(board)
+        super(BaseAsciiRenderer, self).board_init(board)
         LOG.info('init cells: %sx%s', self.full_width, self.full_width)
         self.cells = [[self.cell_icon(_NOT_SET)] * self.full_width
                       for _ in range(self.full_height)]
-
-    def _print(self, *args):
-        return print(*args, file=self.stream)
 
     def render(self):
         for row in self.cells:
@@ -96,20 +116,8 @@ class StreamRenderer(Renderer):
                 rend_j = j + self.side_width
                 self.cells[rend_i][rend_j] = cell
 
-    def cell_icon(self, state):
-        """
-        Gets a symbolic representation of a cell given its state
-        and predefined table `icons`
-        """
-        types = tuple(map(type, self.icons))
-        # why not just `isinstance(state, int)`?
-        # because `isinstance(True, int) == True`
-        if isinstance(state, integer_types) and not isinstance(state, types):
-            return text_type(state)
-        return self.icons[state]
 
-
-class AsciiRenderer(StreamRenderer):
+class AsciiRenderer(BaseAsciiRenderer):
     """
     Renders the board as a full-blown ASCII table
     with headers, grid and borders
@@ -269,7 +277,7 @@ class AsciiRendererWithBold(AsciiRenderer):
 class ConsoleBoard(Board):
     """A board that renders on stdout"""
 
-    def __init__(self, columns, rows, renderer=StreamRenderer, **renderer_params):
+    def __init__(self, columns, rows, renderer=BaseAsciiRenderer, **renderer_params):
         super(ConsoleBoard, self).__init__(
             columns, rows, renderer=renderer, **renderer_params)
 
