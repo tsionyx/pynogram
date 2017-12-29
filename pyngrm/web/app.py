@@ -17,7 +17,7 @@ import tornado.ioloop
 import tornado.web
 
 from pyngrm.input.pbn import get_puzzle_desc
-from pyngrm.renderer import StreamRenderer, ConsoleBoard
+from pyngrm.renderer import StreamRenderer, SvgBoard
 from .common import (
     BaseHandler,
     HelloHandler,
@@ -191,9 +191,7 @@ class Application(tornado.web.Application):
             except Exception:  # pylint: disable=broad-except
                 pass
             else:
-                board = ConsoleBoard(columns, rows, **board_params)
-                board.renderer.icons.update({True: '\u2B1B'})
-                return board
+                return SvgBoard(columns, rows, **board_params)
 
         board_factory = predefined[_id % len(predefined)]
         return board_factory(**board_params)

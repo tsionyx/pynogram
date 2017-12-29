@@ -278,28 +278,192 @@ class SvgRenderer(StreamRenderer):
     Draws the board like an SVG image (best representation for web)
     """
 
-    def draw_grid(self):
-        pass
+    DEFAULT_CELL_SIZE_IN_PIXELS = 15
+
+    GRID_STROKE_WIDTH = 1
+    GRID_BOLD_STROKE_WIDTH = 2
+    BOLD_EVERY = 5
+
+    LINE_STYLE = 'stroke:black'
+
+    def __init__(self, board=None, stream=sys.stdout, size=DEFAULT_CELL_SIZE_IN_PIXELS):
+        super(SvgRenderer, self).__init__(board, stream)
+
+        self.cell_size = size
+        self.drawing = svg.Drawing(size=(
+            self.full_width + self.cell_size,
+            self.full_height + self.cell_size))
+
+    @property
+    def pixel_side_width(self):
+        """Horizontal clues side width in pixels"""
+        return self.side_width * self.cell_size
+
+    @property
+    def pixel_header_height(self):
+        """Vertical clues header height in pixels"""
+        return self.header_height * self.cell_size
+
+    @property
+    def pixel_board_width(self):
+        """The width of the main area in pixels"""
+        return self.board.width * self.cell_size
+
+    @property
+    def pixel_board_height(self):
+        """The height of the main area in pixels"""
+        return self.board.height * self.cell_size
+
+    @property
+    def full_width(self):
+        """Full width of the SVG board representation"""
+        return self.pixel_side_width + self.pixel_board_width
+
+    @property
+    def full_height(self):
+        """Full height of the SVG board representation"""
+        return self.pixel_header_height + self.pixel_board_height
+
+    @property
+    def clues_style(self):
+        """The CSS style of description text"""
+        return 'font-size:{};'.format(self.cell_size * 0.6)
 
     def draw_header(self):
-        pass
+        drawing = self.drawing
+
+        thumbnail_rect = drawing.rect(
+            size=(self.pixel_side_width, self.pixel_header_height),
+            fill='white')
+
+        header_rect = drawing.rect(
+            insert=(self.pixel_side_width, 0),
+            size=(self.pixel_board_width, self.pixel_header_height),
+            fill='gray')
+
+        drawing.add(thumbnail_rect)
+        drawing.add(header_rect)
+
+        for i, col_desc in enumerate(self.board.columns_descriptions):
+            style = {
+                'style': self.clues_style,
+                'text-anchor': 'end',
+            }
+
+            if Board.row_solution_rate(self.board.cells.T[i]) == 1:
+                style['text-decoration'] = 'line-through'
+
+            for j, desc_item in enumerate(reversed(col_desc)):
+                drawing.add(drawing.text(
+                    str(desc_item),
+                    insert=(
+                        self.pixel_side_width + (i + 0.85) * self.cell_size,
+                        self.pixel_header_height - (j + 0.2) * self.cell_size,
+                    ),
+                    **style
+                ))
 
     def draw_side(self):
-        pass
+        drawing = self.drawing
+
+        side_rect = drawing.rect(
+            insert=(0, self.pixel_header_height),
+            size=(self.pixel_side_width, self.pixel_board_height),
+            fill='gray')
+
+        drawing.add(side_rect)
+
+        for j, row_desc in enumerate(self.board.rows_descriptions):
+            style = {
+                'style': self.clues_style,
+                'text-anchor': 'end',
+            }
+
+            if Board.row_solution_rate(self.board.cells[j]) == 1:
+                style['text-decoration'] = 'line-through'
+
+            for i, desc_item in enumerate(reversed(row_desc)):
+                drawing.add(drawing.text(
+                    str(desc_item),
+                    insert=(
+                        self.pixel_side_width - (i + 0.5) * self.cell_size,
+                        self.pixel_header_height + (j + 0.8) * self.cell_size
+                    ),
+                    **style
+                ))
+
+    def draw_grid(self):
+        drawing = self.drawing
+
+        grid_rect = drawing.rect(
+            insert=(self.pixel_side_width, self.pixel_header_height),
+            size=(self.pixel_board_width, self.pixel_board_height),
+            fill='white')
+
+        drawing.add(grid_rect)
+
+        # draw horizontal lines
+        for i in range(self.board.height + 1):
+            style = self.LINE_STYLE + ';stroke-width:{}'
+            if i % self.BOLD_EVERY == 0 or i == self.board.height:
+                style = style.format(self.GRID_BOLD_STROKE_WIDTH)
+            else:
+                style = style.format(self.GRID_STROKE_WIDTH)
+
+            y_pos = self.pixel_header_height + (i * self.cell_size)
+            drawing.add(drawing.line(
+                start=(0, y_pos),
+                end=(self.full_width, y_pos),
+                style=style
+            ))
+
+        # draw vertical lines
+        for i in range(self.board.width + 1):
+            style = self.LINE_STYLE + ';stroke-width:{}'
+            if i % self.BOLD_EVERY == 0 or i == self.board.width:
+                style = style.format(self.GRID_BOLD_STROKE_WIDTH)
+            else:
+                style = style.format(self.GRID_STROKE_WIDTH)
+
+            x_pos = self.pixel_side_width + (i * self.cell_size)
+            drawing.add(drawing.line(
+                start=(x_pos, 0),
+                end=(x_pos, self.full_height),
+                style=style
+            ))
+
+        for i, column in enumerate(self.board.cells.T):
+            for j, cell in enumerate(column):
+                icon = None
+
+                if cell == BOX:
+                    icon = drawing.rect(
+                        insert=(
+                            self.pixel_side_width + i * self.cell_size,
+                            self.pixel_header_height + j * self.cell_size),
+                        size=(self.cell_size, self.cell_size)
+                    )
+                elif cell == SPACE:
+                    icon = drawing.circle(
+                        center=(
+                            self.pixel_side_width + (i + 0.5) * self.cell_size,
+                            self.pixel_header_height + (j + 0.5) * self.cell_size),
+                        r=self.cell_size / 20
+                    )
+
+                if icon is not None:
+                    drawing.add(icon)
 
     def render(self):
-        # TODO: pull request
-        # explicitly reset size to enable custom width
-        draw = svg.Drawing(size=None, width=500)
-        draw.add(draw.text(
-            'Here is the SVG representation of a board',
-            (0, 15), fill='red',
-        ))
+        self.drawing.write(self.stream)
+        # self._print(self.drawing.tostring())
 
-        self._print(draw.tostring())
-
+    def draw(self):
+        self.drawing.elements.clear()
+        super(SvgRenderer, self).draw()
 
 # ============================= BOARDS ============================= #
+
 
 class ConsoleBoard(Board):
     """A board that renders on stdout"""
@@ -314,4 +478,12 @@ class AsciiBoard(Board):
 
     def __init__(self, columns, rows, renderer=AsciiRenderer, **renderer_params):
         super(AsciiBoard, self).__init__(
+            columns, rows, renderer=renderer, **renderer_params)
+
+
+class SvgBoard(Board):
+    """A board that renders as SVG image"""
+
+    def __init__(self, columns, rows, renderer=SvgRenderer, **renderer_params):
+        super(SvgBoard, self).__init__(
             columns, rows, renderer=renderer, **renderer_params)
