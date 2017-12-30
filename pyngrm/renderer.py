@@ -357,7 +357,12 @@ class SvgRenderer(StreamRenderer):
             extra = {'class': 'clues'}
 
             if Board.row_solution_rate(self.board.cells.T[i]) == 1:
-                extra['class'] += ' solved-clues'
+                x_pos = self.pixel_side_width + (i * self.cell_size)
+                drawing.add(drawing.rect(
+                    insert=(x_pos, 0),
+                    size=(self.cell_size, self.pixel_header_height),
+                    class_='solved'
+                ))
 
             for j, desc_item in enumerate(reversed(col_desc)):
                 drawing.add(drawing.text(
@@ -383,7 +388,12 @@ class SvgRenderer(StreamRenderer):
             extra = {'class': 'clues'}
 
             if Board.row_solution_rate(self.board.cells[j]) == 1:
-                extra['class'] += ' solved-clues'
+                y_pos = self.pixel_header_height + (j * self.cell_size)
+                drawing.add(drawing.rect(
+                    insert=(0, y_pos),
+                    size=(self.pixel_side_width, self.cell_size),
+                    class_='solved'
+                ))
 
             for i, desc_item in enumerate(reversed(row_desc)):
                 drawing.add(drawing.text(

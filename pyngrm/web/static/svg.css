@@ -3,7 +3,7 @@ rect.nonogram-thumbnail {
 }
 
 rect.nonogram-header, rect.nonogram-side {
-    fill: grey
+    fill: white
 }
 
 rect.nonogram-grid {
@@ -25,4 +25,9 @@ line.grid {
 
 line.bold {
     //stroke-width: 2
+}
+
+rect.solved {
+    //stroke: green;
+    fill: gray
 }
