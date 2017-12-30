@@ -279,12 +279,15 @@ class SvgRenderer(StreamRenderer):
     """
 
     DEFAULT_CELL_SIZE_IN_PIXELS = 15
+    BOLD_EVERY = 5
 
     GRID_STROKE_WIDTH = 1
     GRID_BOLD_STROKE_WIDTH = 2
-    BOLD_EVERY = 5
 
-    LINE_STYLE = 'stroke:black'
+    @property
+    def clues_font_size(self):
+        """The size of the descriptions text"""
+        return self.cell_size * 0.6
 
     def __init__(self, board=None, stream=sys.stdout, size=DEFAULT_CELL_SIZE_IN_PIXELS):
         super(SvgRenderer, self).__init__(board, stream)
@@ -293,6 +296,17 @@ class SvgRenderer(StreamRenderer):
         self.drawing = svg.Drawing(size=(
             self.full_width + self.cell_size,
             self.full_height + self.cell_size))
+
+        # dynamic style rules
+        self.drawing.defs.add(self.drawing.style(
+            'line.grid {stroke-width: %i} '
+            'line.bold {stroke-width: %i} '
+            'text.clues {font-size: %f} ' % (
+                self.GRID_STROKE_WIDTH,
+                self.GRID_BOLD_STROKE_WIDTH,
+                self.clues_font_size,
+            )
+        ))
 
     @property
     def pixel_side_width(self):
@@ -324,34 +338,26 @@ class SvgRenderer(StreamRenderer):
         """Full height of the SVG board representation"""
         return self.pixel_header_height + self.pixel_board_height
 
-    @property
-    def clues_style(self):
-        """The CSS style of description text"""
-        return 'font-size:{};'.format(self.cell_size * 0.6)
-
     def draw_header(self):
         drawing = self.drawing
 
         thumbnail_rect = drawing.rect(
             size=(self.pixel_side_width, self.pixel_header_height),
-            fill='white')
+            class_='nonogram-thumbnail')
 
         header_rect = drawing.rect(
             insert=(self.pixel_side_width, 0),
             size=(self.pixel_board_width, self.pixel_header_height),
-            fill='gray')
+            class_='nonogram-header')
 
         drawing.add(thumbnail_rect)
         drawing.add(header_rect)
 
         for i, col_desc in enumerate(self.board.columns_descriptions):
-            style = {
-                'style': self.clues_style,
-                'text-anchor': 'end',
-            }
+            extra = {'class': 'clues'}
 
             if Board.row_solution_rate(self.board.cells.T[i]) == 1:
-                style['text-decoration'] = 'line-through'
+                extra['class'] += ' solved-clues'
 
             for j, desc_item in enumerate(reversed(col_desc)):
                 drawing.add(drawing.text(
@@ -360,7 +366,7 @@ class SvgRenderer(StreamRenderer):
                         self.pixel_side_width + (i + 0.85) * self.cell_size,
                         self.pixel_header_height - (j + 0.2) * self.cell_size,
                     ),
-                    **style
+                    **extra
                 ))
 
     def draw_side(self):
@@ -369,27 +375,24 @@ class SvgRenderer(StreamRenderer):
         side_rect = drawing.rect(
             insert=(0, self.pixel_header_height),
             size=(self.pixel_side_width, self.pixel_board_height),
-            fill='gray')
+            class_='nonogram-side')
 
         drawing.add(side_rect)
 
         for j, row_desc in enumerate(self.board.rows_descriptions):
-            style = {
-                'style': self.clues_style,
-                'text-anchor': 'end',
-            }
+            extra = {'class': 'clues'}
 
             if Board.row_solution_rate(self.board.cells[j]) == 1:
-                style['text-decoration'] = 'line-through'
+                extra['class'] += ' solved-clues'
 
             for i, desc_item in enumerate(reversed(row_desc)):
                 drawing.add(drawing.text(
                     str(desc_item),
                     insert=(
-                        self.pixel_side_width - (i + 0.5) * self.cell_size,
+                        self.pixel_side_width - (i + 0.2) * self.cell_size,
                         self.pixel_header_height + (j + 0.8) * self.cell_size
                     ),
-                    **style
+                    **extra
                 ))
 
     def draw_grid(self):
@@ -398,38 +401,36 @@ class SvgRenderer(StreamRenderer):
         grid_rect = drawing.rect(
             insert=(self.pixel_side_width, self.pixel_header_height),
             size=(self.pixel_board_width, self.pixel_board_height),
-            fill='white')
+            class_='nonogram-grid')
 
         drawing.add(grid_rect)
 
         # draw horizontal lines
         for i in range(self.board.height + 1):
-            style = self.LINE_STYLE + ';stroke-width:{}'
+            extra = {'class': 'grid'}
+
             if i % self.BOLD_EVERY == 0 or i == self.board.height:
-                style = style.format(self.GRID_BOLD_STROKE_WIDTH)
-            else:
-                style = style.format(self.GRID_STROKE_WIDTH)
+                extra['class'] += ' bold'
 
             y_pos = self.pixel_header_height + (i * self.cell_size)
             drawing.add(drawing.line(
                 start=(0, y_pos),
                 end=(self.full_width, y_pos),
-                style=style
+                **extra
             ))
 
         # draw vertical lines
         for i in range(self.board.width + 1):
-            style = self.LINE_STYLE + ';stroke-width:{}'
+            extra = {'class': 'grid'}
+
             if i % self.BOLD_EVERY == 0 or i == self.board.width:
-                style = style.format(self.GRID_BOLD_STROKE_WIDTH)
-            else:
-                style = style.format(self.GRID_STROKE_WIDTH)
+                extra['class'] += ' bold'
 
             x_pos = self.pixel_side_width + (i * self.cell_size)
             drawing.add(drawing.line(
                 start=(x_pos, 0),
                 end=(x_pos, self.full_height),
-                style=style
+                **extra
             ))
 
         for i, column in enumerate(self.board.cells.T):
@@ -441,14 +442,16 @@ class SvgRenderer(StreamRenderer):
                         insert=(
                             self.pixel_side_width + i * self.cell_size,
                             self.pixel_header_height + j * self.cell_size),
-                        size=(self.cell_size, self.cell_size)
+                        size=(self.cell_size, self.cell_size),
+                        class_='box',
                     )
                 elif cell == SPACE:
                     icon = drawing.circle(
                         center=(
                             self.pixel_side_width + (i + 0.5) * self.cell_size,
                             self.pixel_header_height + (j + 0.5) * self.cell_size),
-                        r=self.cell_size / 20
+                        r=self.cell_size / 20,
+                        class_='space',
                     )
 
                 if icon is not None:
@@ -460,6 +463,8 @@ class SvgRenderer(StreamRenderer):
 
     def draw(self):
         self.drawing.elements.clear()
+        self.drawing.add(self.drawing.defs)
+
         super(SvgRenderer, self).draw()
 
 # ============================= BOARDS ============================= #

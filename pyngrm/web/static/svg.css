@@ -1,0 +1,28 @@
+rect.nonogram-thumbnail {
+    fill: white
+}
+
+rect.nonogram-header, rect.nonogram-side {
+    fill: grey
+}
+
+rect.nonogram-grid {
+    fill: white
+}
+
+text.clues {
+    text-anchor: end
+}
+
+text.solved-clues {
+    text-decoration: line-through
+}
+
+line.grid {
+    stroke: black;
+    //stroke-width: 1
+}
+
+line.bold {
+    //stroke-width: 2
+}
