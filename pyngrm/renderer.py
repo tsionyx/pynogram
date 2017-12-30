@@ -299,9 +299,9 @@ class SvgRenderer(StreamRenderer):
 
         # dynamic style rules
         self.drawing.defs.add(self.drawing.style(
-            'line.grid {stroke-width: %i} '
-            'line.bold {stroke-width: %i} '
-            'text.clues {font-size: %f} ' % (
+            'g.grid-lines line {stroke-width: %i} '
+            'g.grid-lines line.bold {stroke-width: %i} '
+            'g.header-clues text, g.side-clues text {font-size: %f} ' % (
                 self.GRID_STROKE_WIDTH,
                 self.GRID_BOLD_STROKE_WIDTH,
                 self.clues_font_size,
@@ -353,26 +353,26 @@ class SvgRenderer(StreamRenderer):
         drawing.add(thumbnail_rect)
         drawing.add(header_rect)
 
+        header_group = drawing.g(class_='header-clues')
         for i, col_desc in enumerate(self.board.columns_descriptions):
-            extra = {'class': 'clues'}
-
             if Board.row_solution_rate(self.board.cells.T[i]) == 1:
                 x_pos = self.pixel_side_width + (i * self.cell_size)
-                drawing.add(drawing.rect(
+                header_group.add(drawing.rect(
                     insert=(x_pos, 0),
                     size=(self.cell_size, self.pixel_header_height),
                     class_='solved'
                 ))
 
             for j, desc_item in enumerate(reversed(col_desc)):
-                drawing.add(drawing.text(
+                header_group.add(drawing.text(
                     str(desc_item),
                     insert=(
                         self.pixel_side_width + (i + 0.85) * self.cell_size,
                         self.pixel_header_height - (j + 0.2) * self.cell_size,
-                    ),
-                    **extra
+                    )
                 ))
+
+        drawing.add(header_group)
 
     def draw_side(self):
         drawing = self.drawing
@@ -384,26 +384,26 @@ class SvgRenderer(StreamRenderer):
 
         drawing.add(side_rect)
 
+        side_group = drawing.g(class_='side-clues')
         for j, row_desc in enumerate(self.board.rows_descriptions):
-            extra = {'class': 'clues'}
-
             if Board.row_solution_rate(self.board.cells[j]) == 1:
                 y_pos = self.pixel_header_height + (j * self.cell_size)
-                drawing.add(drawing.rect(
+                side_group.add(drawing.rect(
                     insert=(0, y_pos),
                     size=(self.pixel_side_width, self.cell_size),
                     class_='solved'
                 ))
 
             for i, desc_item in enumerate(reversed(row_desc)):
-                drawing.add(drawing.text(
+                side_group.add(drawing.text(
                     str(desc_item),
                     insert=(
                         self.pixel_side_width - (i + 0.2) * self.cell_size,
                         self.pixel_header_height + (j + 0.8) * self.cell_size
-                    ),
-                    **extra
+                    )
                 ))
+
+        drawing.add(side_group)
 
     def draw_grid(self):
         drawing = self.drawing
@@ -415,15 +415,17 @@ class SvgRenderer(StreamRenderer):
 
         drawing.add(grid_rect)
 
+        grid_lines = drawing.g(class_='grid-lines')
+
         # draw horizontal lines
         for i in range(self.board.height + 1):
-            extra = {'class': 'grid'}
+            extra = dict()
 
             if i % self.BOLD_EVERY == 0 or i == self.board.height:
-                extra['class'] += ' bold'
+                extra['class'] = 'bold'
 
             y_pos = self.pixel_header_height + (i * self.cell_size)
-            drawing.add(drawing.line(
+            grid_lines.add(drawing.line(
                 start=(0, y_pos),
                 end=(self.full_width, y_pos),
                 **extra
@@ -431,41 +433,44 @@ class SvgRenderer(StreamRenderer):
 
         # draw vertical lines
         for i in range(self.board.width + 1):
-            extra = {'class': 'grid'}
+            extra = dict()
 
             if i % self.BOLD_EVERY == 0 or i == self.board.width:
-                extra['class'] += ' bold'
+                extra['class'] = 'bold'
 
             x_pos = self.pixel_side_width + (i * self.cell_size)
-            drawing.add(drawing.line(
+            grid_lines.add(drawing.line(
                 start=(x_pos, 0),
                 end=(x_pos, self.full_height),
                 **extra
             ))
 
+        drawing.add(grid_lines)
+
+        boxes = drawing.g(class_='box')
+        spaces = drawing.g(class_='space')
+
         for i, column in enumerate(self.board.cells.T):
             for j, cell in enumerate(column):
-                icon = None
-
                 if cell == BOX:
                     icon = drawing.rect(
                         insert=(
                             self.pixel_side_width + i * self.cell_size,
                             self.pixel_header_height + j * self.cell_size),
                         size=(self.cell_size, self.cell_size),
-                        class_='box',
                     )
+                    boxes.add(icon)
                 elif cell == SPACE:
                     icon = drawing.circle(
                         center=(
                             self.pixel_side_width + (i + 0.5) * self.cell_size,
                             self.pixel_header_height + (j + 0.5) * self.cell_size),
-                        r=self.cell_size / 20,
-                        class_='space',
+                        r=self.cell_size / 20
                     )
+                    spaces.add(icon)
 
-                if icon is not None:
-                    drawing.add(icon)
+        drawing.add(boxes)
+        drawing.add(spaces)
 
     def render(self):
         self.drawing.write(self.stream)

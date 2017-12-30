@@ -10,7 +10,7 @@ rect.nonogram-grid {
     fill: white
 }
 
-text.clues {
+g.header-clues text, g.side-clues text {
     text-anchor: end
 }
 
@@ -18,16 +18,24 @@ text.solved-clues {
     text-decoration: line-through
 }
 
-line.grid {
+g.grid-lines line {
     stroke: black;
     //stroke-width: 1
 }
 
-line.bold {
+g.grid-lines line.bold {
     //stroke-width: 2
 }
 
-rect.solved {
+g.header-clues rect.solved, g.side-clues rect.solved {
     //stroke: green;
     fill: gray
+}
+
+g.box rect {
+    // fill: red
+}
+
+g.space circle {
+    // fill: blue
 }
