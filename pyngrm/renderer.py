@@ -296,9 +296,13 @@ class SvgRenderer(StreamRenderer):
         self.drawing = svg.Drawing(size=(
             self.full_width + self.cell_size,
             self.full_height + self.cell_size))
+        self._add_defs()
+
+    def _add_defs(self):
+        drawing = self.drawing
 
         # dynamic style rules
-        self.drawing.defs.add(self.drawing.style(
+        drawing.defs.add(drawing.style(
             'g.grid-lines line {stroke-width: %i} '
             'g.grid-lines line.bold {stroke-width: %i} '
             'g.header-clues text, g.side-clues text {font-size: %f} ' % (
@@ -307,6 +311,32 @@ class SvgRenderer(StreamRenderer):
                 self.clues_font_size,
             )
         ))
+
+        box_symbol = drawing.symbol(id_='box')
+        box_symbol.add(drawing.rect(
+            size=(self.cell_size, self.cell_size),
+        ))
+
+        space_symbol = drawing.symbol(id_='space')
+        space_symbol.add(drawing.circle(
+            r=self.cell_size / 20
+        ))
+
+        solved_symbol = drawing.symbol(id_='check', stroke='green', fill='none')
+        solved_symbol.add(drawing.circle(
+            r=40, stroke_width=10, center=(50, 50)
+        ))
+        solved_symbol.add(drawing.polyline(
+            stroke_width=12,
+            points=[(35, 35), (35, 55), (75, 55)],
+            transform='rotate(-45 50 50)'
+        ))
+
+        self.check_icon_size = 100
+
+        drawing.defs.add(box_symbol)
+        drawing.defs.add(space_symbol)
+        drawing.defs.add(solved_symbol)
 
     @property
     def pixel_side_width(self):
@@ -453,24 +483,35 @@ class SvgRenderer(StreamRenderer):
         for i, column in enumerate(self.board.cells.T):
             for j, cell in enumerate(column):
                 if cell == BOX:
-                    icon = drawing.rect(
+                    icon = drawing.use(
+                        href='#box',
                         insert=(
-                            self.pixel_side_width + i * self.cell_size,
-                            self.pixel_header_height + j * self.cell_size),
-                        size=(self.cell_size, self.cell_size),
+                            self.pixel_side_width + (i * self.cell_size),
+                            self.pixel_header_height + (j * self.cell_size))
                     )
                     boxes.add(icon)
                 elif cell == SPACE:
-                    icon = drawing.circle(
-                        center=(
+                    icon = drawing.use(
+                        href='#space',
+                        insert=(
                             self.pixel_side_width + (i + 0.5) * self.cell_size,
-                            self.pixel_header_height + (j + 0.5) * self.cell_size),
-                        r=self.cell_size / 20
+                            self.pixel_header_height + (j + 0.5) * self.cell_size)
                     )
                     spaces.add(icon)
 
         drawing.add(boxes)
         drawing.add(spaces)
+
+        if self.board.solution_rate == 1:
+            check_icon_size = self.check_icon_size
+            left_padding = (self.pixel_side_width - check_icon_size) / 2
+            top_padding = (self.pixel_header_height - check_icon_size) / 2
+            left_padding = max(left_padding, 0)
+            top_padding = max(top_padding, 0)
+
+            drawing.add(drawing.use('#check', insert=(
+                left_padding, top_padding
+            )))
 
     def render(self):
         self.drawing.write(self.stream)
@@ -481,6 +522,7 @@ class SvgRenderer(StreamRenderer):
         self.drawing.add(self.drawing.defs)
 
         super(SvgRenderer, self).draw()
+
 
 # ============================= BOARDS ============================= #
 
