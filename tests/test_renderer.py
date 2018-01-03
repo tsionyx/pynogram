@@ -7,7 +7,12 @@ from io import StringIO
 import pytest
 
 from pyngrm.core import BOX, SPACE
-from pyngrm.renderer import Renderer, ConsoleBoard, AsciiBoard
+from pyngrm.core.board import Board
+from pyngrm.renderer import (
+    Renderer,
+    BaseAsciiRenderer,
+    AsciiRenderer,
+)
 from .test_board import tested_board
 
 
@@ -26,7 +31,7 @@ class TestRenderer(object):
 
     def test_board_changed(self, renderer):
         prev_board = id(renderer.board)
-        renderer.board_init(ConsoleBoard([], []))
+        renderer.board_init(Board([], []))
         assert prev_board != id(renderer.board)
 
 
@@ -38,7 +43,7 @@ class TestConsoleBoard(object):
 
     @pytest.fixture
     def board(self, stream):
-        return tested_board(ConsoleBoard, stream=stream)
+        return tested_board(stream=stream)
 
     def test_draw_empty(self, board, stream):
         board.draw()
@@ -91,7 +96,7 @@ class TestConsoleBoard(object):
         cols = [1] * width + [0, 1]
         rows = [[width, 1]]
 
-        b = ConsoleBoard(cols, rows, stream=stream)
+        b = Board(cols, rows, renderer=BaseAsciiRenderer, stream=stream)
         b.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
@@ -114,7 +119,7 @@ def clear_stream(s):
 class TestAsciiBoard(TestConsoleBoard):
     @pytest.fixture
     def board(self, stream):
-        return tested_board(AsciiBoard, stream=stream)
+        return tested_board(renderer=AsciiRenderer, stream=stream)
 
     def test_draw_empty(self, board, stream):
         board.draw()
@@ -187,7 +192,7 @@ class TestAsciiBoard(TestConsoleBoard):
     def one_row_table(cls, width, stream):
         cols = [1] * width
         rows = [width]
-        return AsciiBoard(cols, rows, stream=stream)
+        return Board(cols, rows, renderer=AsciiRenderer, stream=stream)
 
     def test_draw_two_digits(self, stream):
         b = self.one_row_table(13, stream)

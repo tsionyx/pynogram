@@ -522,30 +522,3 @@ class SvgRenderer(StreamRenderer):
         self.drawing.add(self.drawing.defs)
 
         super(SvgRenderer, self).draw()
-
-
-# ============================= BOARDS ============================= #
-
-
-class ConsoleBoard(Board):
-    """A board that renders on stdout"""
-
-    def __init__(self, columns, rows, renderer=BaseAsciiRenderer, **renderer_params):
-        super(ConsoleBoard, self).__init__(
-            columns, rows, renderer=renderer, **renderer_params)
-
-
-class AsciiBoard(Board):
-    """A board that renders on stdout with ASCII graphic"""
-
-    def __init__(self, columns, rows, renderer=AsciiRenderer, **renderer_params):
-        super(AsciiBoard, self).__init__(
-            columns, rows, renderer=renderer, **renderer_params)
-
-
-class SvgBoard(Board):
-    """A board that renders as SVG image"""
-
-    def __init__(self, columns, rows, renderer=SvgRenderer, **renderer_params):
-        super(SvgBoard, self).__init__(
-            columns, rows, renderer=renderer, **renderer_params)

@@ -10,12 +10,16 @@ import pytest
 from pyngrm.core.board import Board
 from pyngrm.core.solve import line_solver, contradiction_solver
 from pyngrm.input.reader import examples_file, read
-from pyngrm.renderer import AsciiRendererWithBold, AsciiBoard
+from pyngrm.renderer import (
+    BaseAsciiRenderer,
+    AsciiRenderer,
+    AsciiRendererWithBold,
+)
 from pyngrm.utils.other import is_close
 
 
 @pytest.fixture
-def tested_board(board_cls=Board, **kwargs):
+def tested_board(renderer=BaseAsciiRenderer, **kwargs):
     """
     Very simple demonstration board with the 'P' letter
 
@@ -35,7 +39,7 @@ def tested_board(board_cls=Board, **kwargs):
         2,
         0,
     ]
-    return board_cls(columns, rows, **kwargs)
+    return Board(columns, rows, renderer=renderer, **kwargs)
 
 
 class TestBoard(object):
@@ -72,6 +76,7 @@ class TestBoard(object):
 
     def test_bad_renderer(self):
         with pytest.raises(TypeError) as ei:
+            # noinspection PyTypeChecker
             tested_board(renderer=True)
 
         assert str(ei.value) == 'Bad renderer: True'
@@ -104,7 +109,7 @@ class TestSolution(object):
 
     @pytest.fixture
     def board(self, stream):
-        return tested_board(AsciiBoard, stream=stream)
+        return tested_board(AsciiRenderer, stream=stream)
 
     def test_solve(self, board, stream):
         line_solver.solve(board)
@@ -156,7 +161,7 @@ class TestSolution(object):
             '1 1',
         ]
 
-        board = AsciiBoard(columns, rows, stream=stream)
+        board = Board(columns, rows, renderer=AsciiRenderer, stream=stream)
         line_solver.solve(board)
         board.draw()
 
