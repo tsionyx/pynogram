@@ -24,11 +24,7 @@ from .common import (
     ThreadedBaseHandler,
     LongPollNotifier,
 )
-from .demo import (
-    w_board,
-    p_board,
-    mlp_board,
-)
+from .demo import local_boards
 
 # pylint: disable=arguments-differ
 
@@ -182,7 +178,7 @@ class Application(tornado.web.Application):
         from a database for example. By now it just returns
         one of hardcoded demo boards.
         """
-        predefined = [w_board, p_board, mlp_board]
+        predefined = local_boards()
 
         if _id >= len(predefined):
             # noinspection PyBroadException

@@ -11,6 +11,7 @@ from pyngrm.input.reader import examples_file, read
 from pyngrm.renderer import (
     AsciiRenderer,
     AsciiRendererWithBold,
+    SvgRenderer,
 )
 
 
@@ -23,21 +24,18 @@ def _example_board(file_name, renderer, **kwargs):
 
 def w_board(**kwargs):
     """
-    The demonstration board with the 'W' letter
+    The demonstration 'W' letter board with customized cells icons
     source: https://en.wikipedia.org/wiki/Nonogram#/media/File:Nonogram.svg
-    """
-    return _example_board('w', AsciiRendererWithBold, **kwargs)
-
-
-def p_board(**kwargs):
-    """
-    Very simple demonstration 'P' letter board with customized cells icons
-    source: https://en.wikipedia.org/wiki/Nonogram#Example
     """
     renderer = AsciiRendererWithBold()
     renderer.icons.update({BOX: '\u2B1B', SPACE: '\u2022'})
 
-    return _example_board('p', renderer, **kwargs)
+    return _example_board('w', renderer, **kwargs)
+
+
+def einstein_board(**kwargs):
+    """Einstein's tongue"""
+    return _example_board('einstein', SvgRenderer, **kwargs)
 
 
 def mlp_board(**kwargs):
@@ -46,3 +44,8 @@ def mlp_board(**kwargs):
     renderer.icons[BOX] = '\u2B1B'
 
     return _example_board('MLP', renderer, **kwargs)
+
+
+def local_boards():
+    """Examples of local boards with various renderers"""
+    return [w_board, einstein_board, mlp_board]
