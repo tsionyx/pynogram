@@ -53,12 +53,24 @@ class StreamRenderer(Renderer):
         Gets a symbolic representation of a cell given its state
         and predefined table `icons`
         """
+        color_name = None
+        if isinstance(state, (list, tuple)):
+            state, color_name = state[:2]
+
         types = tuple(map(type, self.icons))
         # why not just `isinstance(state, int)`?
         # because `isinstance(True, int) == True`
         if isinstance(state, integer_types) and not isinstance(state, types):
             return text_type(state)
-        return self.icons[state]
+
+        if color_name is None:
+            return self.icons[state]
+
+        ico = self.icons.get(state, None)
+        if ico is not None:
+            return ico
+
+        return self.board.char_for_color(color_name)
 
 
 class BaseAsciiRenderer(StreamRenderer):

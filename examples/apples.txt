@@ -1,0 +1,40 @@
+# http://webpbn.com/898
+#
+# See the file format in hello.txt
+
+color: g(0, 255, 0) *
+color: r(255, 0, 0) %
+
+
+2g 1r 2g
+7g
+2g 1r 3g 1r 1g
+4g 1 3g 1
+5g 1 2g 1 2
+
+6g 1 2 2
+1g 1r 2g 1r 1g 9
+6g 8
+6g 7
+1g 1r 1g 1r 2g 3 2
+
+5g 1 2g 2
+4g 1 3g 1
+1g 1r 3g 1r 2g
+7g,5g
+
+
+
+11g
+5g 1r 2g 1r 2g 1r 1g
+2g 1r 12g
+9g 1r 5g
+1r 2g 1 2g 1r 4g 1 3g
+
+4g 1 5g 1 1g 1r 2g
+2g 1r 2g 2 1 5g
+4g 2 1 4g
+6
+4
+
+3,3,3,7,9

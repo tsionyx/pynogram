@@ -6,6 +6,7 @@ Defines methods to parse data file with the board defined
 from __future__ import unicode_literals, print_function
 
 import os
+import re
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,23 +26,26 @@ def _append_line_to_list(description_line, descriptions_list):
 
 _ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK = 1
 
+_NOT_READ = 0
+_READ_COLORS = 1
+_READ_COLUMNS = 2
+_READ_ROWS = 3
+_COMPLETE = 4
+
+_STATES = (_NOT_READ, _READ_COLORS, _READ_COLUMNS, _READ_ROWS, _COMPLETE)
+_COLOR_RE = re.compile(r'color:[ \t]*(.+)\(([0-9]+),[ \t]*([0-9]+),[ \t]*([0-9]+)\) (.+)')
+
 
 def read(stream):
     """
     Read and parse lines from a stream to create a nonogram board
     """
-    # set when the appropriate text appears
-    columns_appears = False
-    rows_appears = False
-
-    # signifies which collection to fill now
-    fill_rows = False
-    # shows that the columns and rows already filled up
-    read_complete = False
-
+    colors = dict()
     columns = []
     rows = []
 
+    state = _NOT_READ
+    next_block = False
     empty_lines_counter = 0
 
     for i, line in enumerate(stream):
@@ -60,32 +64,36 @@ def read(stream):
             # if already start to read columns
             # and the empty line appeared
             # then the following info is about rows
-            if columns_appears:
-                if empty_lines_counter > _ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK:
-                    fill_rows = True
-
-            # if already start to read rows
-            # and the empty line appeared
-            # then all the info already had read
-            if rows_appears:
-                if empty_lines_counter > _ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK:
-                    read_complete = True
+            if empty_lines_counter > _ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK:
+                next_block = True
 
             continue  # pragma: no cover
 
-        empty_lines_counter = 0
-        # the first non-empty line should contains column(s) info
-        if fill_rows:  # pylint: disable=simplifiable-if-statement
-            rows_appears = True
-        else:
-            columns_appears = True
+        if state == _NOT_READ or next_block:
+            state += 1
+            next_block = False
 
-        if read_complete:
+        empty_lines_counter = 0
+
+        if state == _READ_COLORS:
+            match = _COLOR_RE.match(line)
+            if match:
+                colors[match.group(1)] = (match.groups()[1:-1], match.groups()[-1])
+                continue
+            else:
+                # black and white nonogram
+                state += 1
+
+        if state == _COMPLETE:
             raise ValueError("Found excess info on the line {} "
                              "while EOF expected: '{}'".format(i, line))
 
-        current = rows if fill_rows else columns
+        assert state in (_READ_ROWS, _READ_COLUMNS)
+        current = rows if state == _READ_ROWS else columns
         _append_line_to_list(line, current)
+
+    if colors:
+        return columns, rows, colors
 
     return columns, rows
 

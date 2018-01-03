@@ -6,7 +6,7 @@ Demos and examples
 from __future__ import unicode_literals, print_function
 
 from pyngrm.core import BOX, SPACE
-from pyngrm.core.board import Board
+from pyngrm.core.board import make_board
 from pyngrm.input.reader import examples_file, read
 from pyngrm.renderer import (
     AsciiRenderer,
@@ -17,9 +17,9 @@ from pyngrm.renderer import (
 
 def _example_board(file_name, renderer, **kwargs):
     with open(examples_file(file_name)) as _file:
-        columns, rows = read(_file)
+        board_def = read(_file)
 
-    return Board(columns, rows, renderer=renderer, **kwargs)
+    return make_board(*board_def, renderer=renderer, **kwargs)
 
 
 def w_board(**kwargs):

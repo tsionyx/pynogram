@@ -7,6 +7,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
+import re
 
 from six import integer_types, string_types, iteritems
 
@@ -21,6 +22,10 @@ LOG = logging.getLogger(_LOG_NAME)
 UNKNOWN = None  # this cell have to be solved
 BOX = True
 SPACE = False
+
+DEFAULT_COLOR_NAME = 'black'
+# RGB black
+DEFAULT_COLOR = ((0, 0, 0), 'X')
 
 
 def invert(cell_state):
@@ -39,7 +44,7 @@ def invert(cell_state):
     return cell_state
 
 
-def normalize_description(row):
+def normalize_description(row, color=False):
     """
     Normalize a nonogram description for a row to the standard tuple format:
     - empty value (None, 0, '', [], ()) becomes an empty tuple
@@ -54,9 +59,41 @@ def normalize_description(row):
     elif isinstance(row, integer_types):
         return row,  # it's a tuple!
     elif isinstance(row, string_types):
-        return tuple(map(int, row.split(' ')))
+        blocks = row.split(' ')
+        if color:
+            return tuple(blocks)
+        return tuple(map(int, blocks))
     else:
         raise ValueError('Bad row: %s' % row)
+
+
+_COLOR_DESCRIPTION_RE = re.compile('([0-9]+)(.+)')
+
+
+def normalize_description_colored(row):
+    """Normalize a colored nonogram description"""
+    row = normalize_description(row, color=True)
+
+    res = []
+    for block in row:
+        item = None
+        if isinstance(block, integer_types):
+            item = (block, DEFAULT_COLOR_NAME)
+        elif isinstance(block, string_types):
+            match = _COLOR_DESCRIPTION_RE.match(block)
+            if match:
+                item = (int(match.group(1)), match.group(2))
+            else:
+                item = (int(block), DEFAULT_COLOR_NAME)
+        elif isinstance(block, (tuple, list)) and len(block) == 2:
+            item = (int(block[0]), block[1])
+
+        if item is None:
+            raise ValueError('Bad description block: {}'.format(block))
+        else:
+            res.append(item)
+
+    return tuple(res)
 
 
 INFORMAL_REPRESENTATIONS = {

@@ -16,7 +16,7 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 
-from pyngrm.core.board import Board
+from pyngrm.core.board import make_board
 from pyngrm.core.solve.contradiction_solver import solve
 from pyngrm.input.pbn import get_puzzle_desc
 from pyngrm.renderer import StreamRenderer, SvgRenderer
@@ -185,11 +185,11 @@ class Application(tornado.web.Application):
         if _id >= len(predefined):
             # noinspection PyBroadException
             try:
-                columns, rows = get_puzzle_desc(_id)
+                board_def = get_puzzle_desc(_id)
             except Exception:  # pylint: disable=broad-except
                 pass
             else:
-                return Board(columns, rows, renderer=SvgRenderer, **board_params)
+                return make_board(*board_def, renderer=SvgRenderer, **board_params)
 
         board_factory = predefined[_id % len(predefined)]
         return board_factory(**board_params)

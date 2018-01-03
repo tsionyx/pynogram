@@ -7,6 +7,7 @@ from __future__ import unicode_literals, print_function, division
 
 import logging
 import os
+from collections import defaultdict
 
 import numpy as np
 from six.moves import zip, range
@@ -14,6 +15,8 @@ from six.moves import zip, range
 from pyngrm.core import (
     UNKNOWN, BOX, SPACE,
     normalize_description,
+    normalize_description_colored,
+    DEFAULT_COLOR, DEFAULT_COLOR_NAME,
 )
 from pyngrm.utils.collections import avg, max_safe
 
@@ -221,6 +224,98 @@ class Board(object):
         self._solved = solved
 
 
+class ColoredBoard(Board):
+    """
+    The board with three or more colors (not simple black and white)
+    """
+
+    def __init__(self, columns, rows, color_map, renderer=Renderer, **renderer_params):
+        self.color_map = color_map
+        self.color_map[DEFAULT_COLOR_NAME] = DEFAULT_COLOR
+        super(ColoredBoard, self).__init__(columns, rows, renderer=renderer, **renderer_params)
+
+    def colors(self, horizontal):
+        """
+        All the different colors appeared
+        in the descriptions (rows or columns)
+        """
+        if horizontal:
+            descriptions = self.rows_descriptions
+        else:
+            descriptions = self.columns_descriptions
+
+        colors = set()
+        for block in descriptions:
+            for __, block_color in block:
+                colors.add(block_color)
+        return tuple(colors)
+
+    @classmethod
+    def normalize(cls, rows):
+        """
+        Presents given rows in standard format
+        """
+        return tuple(map(normalize_description_colored, rows))
+
+    def validate(self):
+        self.validate_headers(self.columns_descriptions, self.height)
+        self.validate_headers(self.rows_descriptions, self.width)
+
+        horizontal_colors = self.colors(True)
+        vertical_colors = self.colors(False)
+
+        if horizontal_colors != vertical_colors:
+            raise ValueError('Colors differ: {} (rows) and {} (columns)'.format(
+                horizontal_colors, vertical_colors))
+
+        not_defined_colors = set(horizontal_colors) - set(self.color_map)
+        if not_defined_colors:
+            raise ValueError('Some colors not defined: {}'.format(
+                tuple(not_defined_colors)))
+
+        horizontal_colors = defaultdict(int)
+        for block in self.rows_descriptions:
+            for block_len, block_color in block:
+                horizontal_colors[block_color] += block_len
+
+        vertical_colors = defaultdict(int)
+        for block in self.columns_descriptions:
+            for block_len, block_color in block:
+                vertical_colors[block_color] += block_len
+
+        if horizontal_colors != vertical_colors:
+            raise ValueError('Colo boxes differ: {} (rows) and {} (columns)'.format(
+                horizontal_colors, vertical_colors))
+
+    @classmethod
+    def validate_headers(cls, rows, max_size):
+        for row in rows:
+            need_cells = 0
+
+            prev_color = None
+            for number, color in row:
+                if prev_color == color:
+                    need_cells += 1
+                need_cells += number
+
+            LOG.debug('Row: %s; Need: %s; Available: %s.',
+                      row, need_cells, max_size)
+            if need_cells > max_size:
+                raise ValueError('Cannot allocate row {} in just {} cells'.format(
+                    list(row), max_size))
+
+    def char_for_color(self, color_name):
+        """
+        Return the ASCII character to draw
+        for given color based on color map
+        """
+        return self.color_map[color_name][1]
+
+    def rgb_for_color(self, color_name):
+        """Return the RGB triplet for given color based on color map"""
+        return self.color_map[color_name][0]
+
+
 class _DummyBoard(object):  # pylint: disable=too-few-public-methods
     """
     Stub for renderer init in case of it created before the board.
@@ -244,3 +339,14 @@ def _solve_on_space_hints(board, hints):
         # pad with spaces
         solution = cells + ([SPACE] * (board.width - len(cells)))
         board.cells[i] = solution
+
+
+def make_board(*args, **kwargs):
+    """Produce the black-and-white or colored nonogram"""
+    if len(args) == 2:
+        return Board(*args, **kwargs)
+
+    elif len(args) == 3:
+        return ColoredBoard(*args, **kwargs)
+
+    raise ValueError('Bad number of *args')

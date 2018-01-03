@@ -4,7 +4,14 @@
 # Also if the '#' becomes at the middle of the line,
 # the rest of the line is also becomes a comment.
 #
-# At first goes the list of columns (vertical descriptions)
+# At first the colors definitions are listed
+# (skipped in black-and-white nonograms) in the following format:
+# color: <COLOR NAME>(<RGB TRIPLET>) <ASCII CHARACTER>
+# e.g:
+# color: g(0, 255, 0) *
+#
+#
+# Then the list of columns (vertical descriptions)
 # on one or more lines, separated by commas and/or newline.
 # Then two or more empty lines (that separates columns from rows).
 # And finally the list of rows (horizontal descriptions) formatted the same way.
@@ -18,9 +25,17 @@
 #
 # If the description for a row have two or more blocks
 # then you could enclose that description in a single or double quotes.
-# However you could safely skip the quotes:
+# However you could safely skip the quotes.
 #
-# EXAMPLE:
+# For the colored puzzles you can prefix the block length with the
+# color name defined above like that:
+# '2g 1r 2' stands for the row of
+# 1) 2-block of 'g' color
+# 2) 1-block of 'r' color
+# 3) 2-block of default color (black)
+#
+#
+# FULL EXAMPLE:
 #
 # # # # # # # # 5.txt # # # # # # #
 # 3 1, 1 1 1, 1 1 1, 1 3          #
