@@ -7,6 +7,7 @@ import os
 import pytest
 from six.moves import StringIO
 
+from pyngrm.core.solve import line_solver
 from pyngrm.input.reader import examples_file, read
 from pyngrm.renderer import ConsoleBoard
 
@@ -18,7 +19,7 @@ class TestReader(object):
 
         stream = StringIO()
         board = ConsoleBoard(columns, rows, stream=stream)
-        board.solve()
+        line_solver.solve(board)
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([

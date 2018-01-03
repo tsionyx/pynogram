@@ -11,10 +11,10 @@ from pyngrm.core.fsm import (
     StateMachineError,
     FiniteStateMachine,
 )
-from pyngrm.core.solver import (
+from pyngrm.core.solve import (
     NonogramFSM,
     NonogramError,
-    solve_row,
+    solve_line,
 )
 
 
@@ -229,7 +229,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
     def test_solve(self, description, input_row, expected):
         # both arguments passes work
         # assert solve_row((description, input_row)) == expected
-        assert solve_row(description, input_row, method='partial_match') == expected
+        assert solve_line(description, input_row, method='partial_match') == expected
 
 
 class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
@@ -237,8 +237,8 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
                              TestNonogramFSMPartialMatch.SOLVED_ROWS)
     def test_solve(self, description, input_row, expected):
         # both arguments passes work
-        assert solve_row((description, input_row)) == expected
-        assert solve_row(description, input_row, method='reverse_tracking') == expected
+        assert solve_line((description, input_row)) == expected
+        assert solve_line(description, input_row, method='reverse_tracking') == expected
 
     def test_transition_table(self):
         description, row = '2 2', '___0X_____'
@@ -299,12 +299,12 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
 
     def test_solve_bad_row(self):
         with pytest.raises(NonogramError) as ie:
-            solve_row('1 1', '__.', method='reverse_tracking')
+            solve_line('1 1', '__.', method='reverse_tracking')
 
         assert str(ie.value) == "The row '__.' cannot fit"
 
     def test_solve_bad_method(self):
         with pytest.raises(AttributeError) as ie:
-            solve_row('1 1', '___', method='brute_force')
+            solve_line('1 1', '___', method='brute_force')
 
         assert str(ie.value) == "Cannot find solving method 'brute_force'"

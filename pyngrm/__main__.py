@@ -13,6 +13,7 @@ from argparse import ArgumentParser
 
 from six import PY2
 
+from .core.solve.contradiction_solver import solve
 from .input.pbn import get_puzzle_desc
 from .input.reader import examples_file, read
 from .renderer import ConsoleBoard
@@ -47,7 +48,7 @@ def main(board_file, draw_every_round=True, pbn_id=None):
         d_board.on_solution_round_complete = lambda board: board.draw()
 
     try:
-        d_board.solve_with_contradictions(by_rows=False)
+        solve(d_board, by_rows=False)
         if not draw_every_round:
             d_board.draw()
     except Exception:

@@ -20,6 +20,7 @@ from pyngrm.core import (
     normalize_row,
 )
 from pyngrm.core import fsm
+from pyngrm.core.solve.common import NonogramError
 from pyngrm.utils.cache import Cache
 
 _LOG_NAME = __name__
@@ -29,14 +30,6 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 LOG = logging.getLogger(_LOG_NAME)
 
 fsm.LOG.setLevel(logging.WARNING)
-
-
-class NonogramError(ValueError):
-    """
-    Represents an error occurred when trying
-    to solve a nonogram which has an internal contradiction.
-    """
-    pass
 
 
 class NonogramFSM(fsm.FiniteStateMachine):
@@ -355,32 +348,3 @@ class TransitionTable(list):
 
             possible_states = step_possible_states
             yield tuple(step_possible_cell_types)
-
-
-def solve_row(*args, **kwargs):
-    """
-    Utility for row solving that can be used in multiprocessing map
-    """
-    method = kwargs.pop('method', 'reverse_tracking')
-
-    if len(args) == 1:
-        # mp's map supports only one iterable, so this weird syntax
-        args = args[0]
-
-    row_desc, row = args
-    nfsm = NonogramFSM.from_description(row_desc)
-
-    method_func = getattr(nfsm, 'solve_with_' + method, None)
-    if not method_func:
-        raise AttributeError("Cannot find solving method '%s'" % method)
-
-    return method_func(row)
-
-
-def assert_match(row_desc, row):
-    """
-    Verifies that the given row matches the description
-    """
-    nfsm = NonogramFSM.from_description(row_desc)
-    if not nfsm.match(row):
-        raise NonogramError("The row '{}' cannot fit".format(row))

@@ -8,6 +8,7 @@ from io import StringIO
 import pytest
 
 from pyngrm.core.board import Board
+from pyngrm.core.solve import line_solver, contradiction_solver
 from pyngrm.input.reader import examples_file, read
 from pyngrm.renderer import AsciiRendererWithBold, AsciiBoard
 from pyngrm.utils.other import is_close
@@ -106,7 +107,7 @@ class TestSolution(object):
         return tested_board(AsciiBoard, stream=stream)
 
     def test_solve(self, board, stream):
-        board.solve()
+        line_solver.solve(board)
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
@@ -142,9 +143,9 @@ class TestSolution(object):
         # assert board.solved
 
     def test_repeat_solutions(self, board):
-        board.solve()
+        line_solver.solve(board)
         assert board.solution_rate == 1
-        board.solve()
+        line_solver.solve(board)
         assert board.solution_rate == 1
 
     def test_several_solutions(self, stream):
@@ -156,7 +157,7 @@ class TestSolution(object):
         ]
 
         board = AsciiBoard(columns, rows, stream=stream)
-        board.solve()
+        line_solver.solve(board)
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
@@ -185,7 +186,7 @@ class TestSolution(object):
         renderer = AsciiRendererWithBold(stream=stream)
         renderer.BOLD_LINE_EVERY = 2
         board = Board(columns, rows, renderer=renderer)
-        board.solve()
+        line_solver.solve(board)
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
@@ -217,7 +218,7 @@ class TestSolution(object):
         board.on_row_update = lambda **kwargs: rows_updated.append(kwargs['row_index'])
         board.on_column_update = lambda **kwargs: cols_updated.append(kwargs['column_index'])
         board.on_solution_round_complete = lambda **kwargs: rounds.append(1)
-        board.solve()
+        line_solver.solve(board)
 
         # the solution will go like following:
         # 1. draw the lower '_' in L (row 2)
@@ -243,7 +244,8 @@ class TestSolution(object):
                 board = self.board(stream=stream)
                 start = time.time()
 
-                board.solve(parallel=parallel, contradiction_mode=contradiction_mode)
+                line_solver.solve(board, parallel=parallel,
+                                  contradiction_mode=contradiction_mode)
                 solutions[(parallel, contradiction_mode)] = (
                     stream.getvalue().rstrip(), time.time() - start)
 
@@ -268,16 +270,16 @@ class TestContradictions(object):
 
         board = Board(columns, rows)
 
-        board.solve()
+        line_solver.solve(board)
         assert is_close(board.solution_rate, 0.6)
         # assert is_close(board.solution_rate, 407.0 / 625)
 
-        board.solve_with_contradictions(propagate_on_row=True)
+        contradiction_solver.solve(board, propagate_on_row=True)
         assert board.solution_rate == 1
 
     def test_simple(self):
         board = tested_board()
-        board.solve_with_contradictions()
+        contradiction_solver.solve(board)
         assert board.solution_rate == 1
         assert board.solved
 
@@ -288,10 +290,10 @@ class TestContradictions(object):
 
         board = Board(columns, rows)
 
-        board.solve()
+        line_solver.solve(board)
         assert board.solution_rate == 0
 
-        board.solve_with_contradictions()
+        contradiction_solver.solve(board)
         assert is_close(board.solution_rate, 7.0 / 9)
 
     def test_chessboard(self):
@@ -309,14 +311,14 @@ class TestContradictions(object):
         columns = rows = [1, 1]
         board = Board(columns, rows)
 
-        board.solve()
+        line_solver.solve(board)
         assert board.solution_rate == 0
 
-        board.solve_with_contradictions(by_rows=False)
+        contradiction_solver.solve(board, by_rows=False)
         assert board.solution_rate == 0
 
-        board.solve_with_contradictions(propagate_on_row=True)
+        contradiction_solver.solve(board, propagate_on_row=True)
         assert board.solution_rate == 0
 
-        board.solve_with_contradictions(by_rows=False, propagate_on_row=True)
+        contradiction_solver.solve(board, by_rows=False, propagate_on_row=True)
         assert board.solution_rate == 0

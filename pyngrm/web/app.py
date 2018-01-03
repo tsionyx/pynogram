@@ -16,6 +16,7 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 
+from pyngrm.core.solve.contradiction_solver import solve
 from pyngrm.input.pbn import get_puzzle_desc
 from pyngrm.renderer import StreamRenderer, SvgBoard
 from .common import (
@@ -61,7 +62,7 @@ class BoardLiveHandler(ThreadedBaseHandler):
         LOG.info('Solving board #%s', _id)
         LOG.debug('Callbacks: %s', board_notifier.callbacks)
 
-        yield self.executor.submit(board_notifier.board.solve_with_contradictions,
+        yield self.executor.submit(solve, board_notifier.board,
                                    by_rows=rows_first)
 
         # force callbacks to execute

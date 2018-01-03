@@ -435,7 +435,7 @@ class SvgRenderer(StreamRenderer):
 
         drawing.add(side_group)
 
-    def draw_grid(self):
+    def draw_grid(self):  # pylint: disable=too-many-locals
         drawing = self.drawing
 
         grid_rect = drawing.rect(
