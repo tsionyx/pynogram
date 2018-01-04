@@ -7,10 +7,11 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
+import re
 import sys
 
 import svgwrite as svg
-from six import integer_types, text_type
+from six import integer_types, text_type, string_types
 
 from pyngrm.core import UNKNOWN, BOX, SPACE
 from pyngrm.core.board import Renderer, Board
@@ -381,15 +382,42 @@ class SvgRenderer(StreamRenderer):
         """Full height of the SVG board representation"""
         return self.pixel_header_height + self.pixel_board_height
 
+    RGB_TRIPLET_RE = re.compile(r'([0-9]+),[ \t]*([0-9]+),[ \t]*([0-9]+)')
+
+    def _color_from_name(self, color_name):
+        color = self.board.rgb_for_color(color_name)
+
+        if len(color) == 6:
+            return '#' + color
+
+        elif isinstance(color, string_types) and self.RGB_TRIPLET_RE.match(color):
+            return 'rgb({})'.format(color)
+
+        elif isinstance(color, (list, tuple)) and len(color) == 3:
+            return 'rgb({})'.format(','.join(map(str, color)))
+
+        return color
+
     def block_svg(self, value, is_column, clue_number, block_number):
+        """
+        Return the SVG element for the clue number (colored case included)
+        """
         # left to right, bottom to top
         block_number = -block_number
 
         shift = (0.85, -0.3) if is_column else (-0.3, 0.75)
         i, j = (clue_number, block_number) if is_column else (block_number, clue_number)
 
+        if isinstance(value, (list, tuple)):
+            # colored board
+            value, color_name = value[:2]
+            color = self._color_from_name(color_name)
+        else:
+            color = 'currentColor'
+
         return self.drawing.text(
             str(value),
+            fill=color,
             insert=(
                 self.pixel_side_width + (i + shift[0]) * self.cell_size,
                 self.pixel_header_height + (j + shift[1]) * self.cell_size,

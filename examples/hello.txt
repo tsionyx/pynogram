@@ -6,9 +6,16 @@
 #
 # At first the colors definitions are listed
 # (skipped in black-and-white nonograms) in the following format:
-# color: <COLOR NAME>(<RGB TRIPLET>) <ASCII CHARACTER>
+# color: <COLOR NAME>(<COLOR_DESC>) <ASCII CHARACTER>
+# COLOR_DESC should be one of the following:
+# 1) common color name, recognized by SVG like 'red'
+#    (http://www.december.com/html/spec/colorsvg.html)
+# 2) RGB-triplet like (89, 11, 255)
+# 3) hexadecimal color code like 88CC44
 # e.g:
+# color: p(pink) %
 # color: g(0, 255, 0) *
+# color: r(FF0000) &
 #
 #
 # Then the list of columns (vertical descriptions)

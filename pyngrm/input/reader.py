@@ -33,7 +33,7 @@ _READ_ROWS = 3
 _COMPLETE = 4
 
 _STATES = (_NOT_READ, _READ_COLORS, _READ_COLUMNS, _READ_ROWS, _COMPLETE)
-_COLOR_RE = re.compile(r'color:[ \t]*(.+)\(([0-9]+),[ \t]*([0-9]+),[ \t]*([0-9]+)\) (.+)')
+_COLOR_RE = re.compile(r'color:[ \t]*(.+)\((.+)\) (.+)')
 
 
 def read(stream):
@@ -78,7 +78,7 @@ def read(stream):
         if state == _READ_COLORS:
             match = _COLOR_RE.match(line)
             if match:
-                colors[match.group(1)] = (match.groups()[1:-1], match.groups()[-1])
+                colors[match.group(1)] = match.groups()[1:]
                 continue
             else:
                 # black and white nonogram

@@ -2,8 +2,8 @@
 #
 # See the file format in hello.txt
 
-color: g(0, 255, 0) *
-color: r(255, 0, 0) %
+color: g(0, 204, 0) *
+color: r(red) %
 
 
 2g 1r 2g
