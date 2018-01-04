@@ -6,15 +6,18 @@ Grab the examples from http://webpbn.com/
 from __future__ import unicode_literals, print_function
 
 from lxml import etree
-from six.moves.urllib.request import urlopen
 
 URL = 'http://webpbn.com'
 
 
-def _get_puzzle_xml(_id):
+class PbnNotFoundError(Exception):
+    """Raised when trying to reach webpbn puzzle by non-existing id"""
+    pass
+
+
+def _get_puzzle_url(_id):
     # noinspection SpellCheckingInspection
-    full_url = '{}/XMLpuz.cgi?id={}'.format(URL, _id)
-    return urlopen(full_url)
+    return '{}/XMLpuz.cgi?id={}'.format(URL, _id)
 
 
 def _parse_clue(clue, default_color=None):
@@ -27,7 +30,14 @@ def _parse_clue(clue, default_color=None):
 
 def get_puzzle_desc(_id):
     """Find and parse the columns and rows of a webpbn nonogram by id"""
-    tree = etree.parse(_get_puzzle_xml(_id))
+    url = _get_puzzle_url(_id)
+    try:
+        tree = etree.parse(url)
+    except etree.XMLSyntaxError as exc:
+        str_e = str(exc)
+        if str_e.startswith('Document is empty') or str_e.startswith('Start tag expected'):
+            raise PbnNotFoundError(_id)
+        raise
 
     colors = {color.attrib['name']: (color.text, color.attrib['char'])
               for color in tree.xpath('//color')}

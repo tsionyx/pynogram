@@ -18,8 +18,13 @@ import tornado.web
 
 from pyngrm.core.board import make_board
 from pyngrm.core.solve.contradiction_solver import solve
-from pyngrm.input.pbn import get_puzzle_desc
-from pyngrm.renderer import StreamRenderer, SvgRenderer
+from pyngrm.input.pbn import get_puzzle_desc, PbnNotFoundError
+from pyngrm.input.reader import examples_file, read
+from pyngrm.renderer import (
+    StreamRenderer,
+    BaseAsciiRenderer,
+    SvgRenderer,
+)
 from .common import (
     BaseHandler,
     HelloHandler,
@@ -38,15 +43,20 @@ LOG = logging.getLogger(_LOG_NAME)
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class BoardLiveHandler(ThreadedBaseHandler):
+class BoardHandler(ThreadedBaseHandler):
     """Actually renders a board to an HTML-page"""
 
-    def get(self, _id):
-        _id = int(_id)
-        board_notifier = self.application.get_board_notifier(_id, create=True)
+    @property
+    def board_mode(self):
+        """The sting that identifies board's source (demo, local, pbn)"""
+        raise NotImplementedError()
 
-        self.render("index.html",
-                    _id=_id,
+    def get(self, _id):
+        board_notifier = self.application.get_board_notifier(_id, self.board_mode)
+
+        self.render('index.html',
+                    board_mode=self.board_mode,
+                    board_id=_id,
                     board_image=board_notifier.get_board_image())
 
     @tornado.gen.coroutine
@@ -54,8 +64,7 @@ class BoardLiveHandler(ThreadedBaseHandler):
         rows_first = 'columns_first' not in self.request.arguments
         # parallel = 'parallel' in self.request.arguments
 
-        _id = int(_id)
-        board_notifier = self.application.get_board_notifier(_id, create=True)
+        board_notifier = self.application.get_board_notifier(_id, self.board_mode)
 
         if not board_notifier:
             raise tornado.web.HTTPError(404, 'Not found board %s', _id)
@@ -70,6 +79,30 @@ class BoardLiveHandler(ThreadedBaseHandler):
         board_notifier.board.solution_round_completed()
 
 
+class BoardDemoHandler(BoardHandler):
+    """Renders demonstration boards"""
+
+    @property
+    def board_mode(self):
+        return 'demo'
+
+
+class BoardLocalHandler(BoardHandler):
+    """Renders local boards (bundled in distribution)"""
+
+    @property
+    def board_mode(self):
+        return 'local'
+
+
+class BoardPbnHandler(BoardHandler):
+    """Renders webpbn.com boards"""
+
+    @property
+    def board_mode(self):
+        return 'pbn'
+
+
 class BoardStatusHandler(BaseHandler):
     """
     Returns a status of a board given its ID.
@@ -78,12 +111,10 @@ class BoardStatusHandler(BaseHandler):
     """
 
     @tornado.web.asynchronous
-    def get(self, _id):
-        _id = int(_id)
-
-        board_notifier = self.application.get_board_notifier(_id)
+    def get(self, mode, _id):
+        board_notifier = self.application.get_board_notifier(_id, mode)
         if not board_notifier:
-            raise tornado.web.HTTPError(404, 'Not found board %s', _id)
+            raise tornado.web.HTTPError(404, 'Not found board %s', (_id, mode))
 
         board_notifier.register(self.on_update)
 
@@ -157,8 +188,10 @@ class Application(tornado.web.Application):
         self.board_notifiers = dict()
 
         handlers = [
-            (r"/board/([0-9]+)?", BoardLiveHandler),
-            (r"/board/status/([0-9]+)?", BoardStatusHandler),
+            (r'/demo/([0-9]+)/?', BoardDemoHandler),
+            (r'/board/local/(.+)/?', BoardLocalHandler),
+            (r'/board/pbn/([0-9]+)/?', BoardPbnHandler),
+            (r'/board/status/(.+)/(.+)/?', BoardStatusHandler),
         ]
         # noinspection PyTypeChecker
         handlers += [('/', HelloHandler, {
@@ -172,7 +205,7 @@ class Application(tornado.web.Application):
         super(Application, self).__init__(handlers, **settings)
 
     @classmethod
-    def get_board(cls, _id, **board_params):
+    def get_board(cls, _id, create_mode, **board_params):
         """
         Generates a board using given ID.
 
@@ -180,30 +213,42 @@ class Application(tornado.web.Application):
         from a database for example. By now it just returns
         one of hardcoded demo boards.
         """
-        predefined = local_boards()
 
-        if _id >= len(predefined):
-            # noinspection PyBroadException
-            try:
-                board_def = get_puzzle_desc(_id)
-            except Exception:  # pylint: disable=broad-except
-                pass
-            else:
-                return make_board(*board_def, renderer=SvgRenderer, **board_params)
+        if create_mode == 'demo':
+            _id = int(_id)
+            predefined = local_boards()
+            board_factory = predefined[_id % len(predefined)]
+            return board_factory(**board_params)
 
-        board_factory = predefined[_id % len(predefined)]
-        return board_factory(**board_params)
+        elif create_mode == 'local':
+            with open(examples_file(_id)) as _file:
+                board_def = read(_file)
+            return make_board(*board_def, renderer=BaseAsciiRenderer)
 
-    def get_board_notifier(self, _id, create=False):
+        elif create_mode == 'pbn':
+            board_def = get_puzzle_desc(_id)
+            return make_board(*board_def, renderer=SvgRenderer, **board_params)
+
+        raise tornado.web.HTTPError(400, 'Bad mode: %s', create_mode)
+
+    def get_board_notifier(self, _id, create_mode):
         """
         Get the notifier wrapper around the board
         and optionally creates it.
         """
-        board_notifier = self.board_notifiers.get(_id)
+        board_notifier = self.board_notifiers.get((_id, create_mode))
 
-        if not board_notifier and create:
-            board_notifier = BoardUpdateNotifier(_id, self.get_board(_id))
-            self.board_notifiers[_id] = board_notifier
+        if not board_notifier and create_mode:
+            try:
+                board_notifier = BoardUpdateNotifier(_id, self.get_board(_id, create_mode))
+            except IOError:
+                raise tornado.web.HTTPError(
+                    404, 'File not found: %s', _id)
+            except PbnNotFoundError:
+                raise tornado.web.HTTPError(
+                    404, "Webpbn's puzzle not found: %s", _id)
+
+            self.board_notifiers[(_id, create_mode)] = board_notifier
 
         return board_notifier
 
@@ -216,16 +261,16 @@ def run(port, debug=False):
 
     try:
         host = socket.gethostbyname(socket.gethostname())
-        full_address = "http://{}:{}".format(host, port)
+        full_address = 'http://{}:{}'.format(host, port)
 
         if debug:
             app.listen(port)
-            LOG.info("Server started on %s", full_address)
+            LOG.info('Server started on %s', full_address)
             tornado.ioloop.IOLoop.instance().start()
         else:
             server = tornado.httpserver.HTTPServer(app)
             server.bind(port)
-            LOG.info("Server started on %s", full_address)
+            LOG.info('Server started on %s', full_address)
             server.start(0)
 
             # if you want to setup some DB connections
@@ -234,4 +279,4 @@ def run(port, debug=False):
 
             tornado.ioloop.IOLoop.current().start()
     except (KeyboardInterrupt, SystemExit):
-        LOG.warning("Exit...")
+        LOG.warning('Exit...')

@@ -26,9 +26,11 @@ python -m pyngrm --board=winter --draw-final
 - start the server: `python -m pyngrm.web`
 - enjoy the solutions:
 
-  _http://localhost:3145/board/2_
+  _http://localhost:3145/demo/2_
 
-  _http://localhost:3145/board/2040_
+  _http://localhost:3145/board/local/einstein_
+
+  _http://localhost:3145/board/pbn/2040_
 
 
 ## Tests

@@ -1,5 +1,6 @@
 $(document).ready(function() {
-    document.session = $('#session').val();
+    document.board_id = $('#board_id').val();
+    document.board_mode = $('#board_mode').val();
     var loc = window.location;
     $(".button").on("click", function() {
         $.ajax({url: loc.pathname + loc.search, type: 'POST'});
@@ -14,9 +15,10 @@ $(document).ready(function() {
 
 
 function requestBoard() {
-    var session = document.session;
+    var board_id = document.board_id;
+    var board_mode = document.board_mode;
     $.ajax({
-        url: "/board/status/" + session,
+        url: "/board/status/" + board_mode + '/' + board_id,
         success: function(result){
             board = result["board"];
             delete result["board"];
