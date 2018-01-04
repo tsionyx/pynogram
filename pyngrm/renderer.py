@@ -55,6 +55,7 @@ class StreamRenderer(Renderer):
         """
         color_name = None
         if isinstance(state, (list, tuple)):
+            # colored board
             state, color_name = state[:2]
 
         types = tuple(map(type, self.icons))
@@ -380,6 +381,21 @@ class SvgRenderer(StreamRenderer):
         """Full height of the SVG board representation"""
         return self.pixel_header_height + self.pixel_board_height
 
+    def block_svg(self, value, is_column, clue_number, block_number):
+        # left to right, bottom to top
+        block_number = -block_number
+
+        shift = (0.85, -0.3) if is_column else (-0.3, 0.75)
+        i, j = (clue_number, block_number) if is_column else (block_number, clue_number)
+
+        return self.drawing.text(
+            str(value),
+            insert=(
+                self.pixel_side_width + (i + shift[0]) * self.cell_size,
+                self.pixel_header_height + (j + shift[1]) * self.cell_size,
+            )
+        )
+
     def draw_header(self):
         drawing = self.drawing
 
@@ -406,13 +422,7 @@ class SvgRenderer(StreamRenderer):
                 ))
 
             for j, desc_item in enumerate(reversed(col_desc)):
-                header_group.add(drawing.text(
-                    str(desc_item),
-                    insert=(
-                        self.pixel_side_width + (i + 0.85) * self.cell_size,
-                        self.pixel_header_height - (j + 0.2) * self.cell_size,
-                    )
-                ))
+                header_group.add(self.block_svg(desc_item, True, i, j))
 
         drawing.add(header_group)
 
@@ -437,13 +447,7 @@ class SvgRenderer(StreamRenderer):
                 ))
 
             for i, desc_item in enumerate(reversed(row_desc)):
-                side_group.add(drawing.text(
-                    str(desc_item),
-                    insert=(
-                        self.pixel_side_width - (i + 0.2) * self.cell_size,
-                        self.pixel_header_height + (j + 0.8) * self.cell_size
-                    )
-                ))
+                side_group.add(self.block_svg(desc_item, False, j, i))
 
         drawing.add(side_group)
 
