@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>autoescape</w>
+      <w>defaultcolor</w>
       <w>lxml</w>
       <w>nfsm</w>
       <w>nonogram</w>

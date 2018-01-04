@@ -310,9 +310,9 @@ class SvgRenderer(StreamRenderer):
         self.drawing = svg.Drawing(size=(
             self.full_width + self.cell_size,
             self.full_height + self.cell_size))
-        self._add_defs()
+        self._add_definitions()
 
-    def _add_defs(self):
+    def _add_definitions(self):
         drawing = self.drawing
 
         # dynamic style rules
