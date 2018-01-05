@@ -284,7 +284,10 @@ class ColoredBoard(Board):
                 vertical_colors[block_color] += block_len
 
         if horizontal_colors != vertical_colors:
-            raise ValueError('Colo boxes differ: {} (rows) and {} (columns)'.format(
+            horizontal_colors = set(horizontal_colors.items())
+            vertical_colors = set(vertical_colors.items())
+
+            raise ValueError('Color boxes differ: {} (rows) and {} (columns)'.format(
                 horizontal_colors, vertical_colors))
 
     @classmethod
@@ -297,6 +300,7 @@ class ColoredBoard(Board):
                 if prev_color == color:
                     need_cells += 1
                 need_cells += number
+                prev_color = color
 
             LOG.debug('Row: %s; Need: %s; Available: %s.',
                       row, need_cells, max_size)

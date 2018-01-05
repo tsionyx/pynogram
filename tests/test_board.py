@@ -7,7 +7,7 @@ from io import StringIO
 
 import pytest
 
-from pyngrm.core.board import Board
+from pyngrm.core.board import Board, make_board, ColoredBoard
 from pyngrm.core.solve import line_solver, contradiction_solver
 from pyngrm.input.reader import examples_file, read
 from pyngrm.renderer import (
@@ -327,3 +327,97 @@ class TestContradictions(object):
 
         contradiction_solver.solve(board, by_rows=False, propagate_on_row=True)
         assert board.solution_rate == 0
+
+
+def color_board_def():
+    columns = [['1r', (1, 'b')]] * 3
+    rows = ['3r', 0, '3b']
+    colors = {'r': ('red', 'X'), 'b': ('blue', '*')}
+
+    return columns, rows, colors
+
+
+@pytest.fixture
+def color_board(renderer=BaseAsciiRenderer, **kwargs):
+    return make_board(*color_board_def(), renderer=renderer, **kwargs)
+
+
+class TestMakeBoard(object):
+    def test_black_and_white(self):
+        columns = [3, None, 1, 1]
+        rows = [
+            1,
+            '1 1',
+            '1 1',
+        ]
+
+        b = make_board(columns, rows)
+        assert isinstance(b, Board)
+
+    # noinspection PyShadowingNames
+    def test_colored(self, color_board):
+        assert isinstance(color_board, ColoredBoard)
+
+    def test_bad_make_board(self):
+        with pytest.raises(ValueError, match='Bad number of \*args'):
+            make_board(color_board_def()[0])
+
+
+class TestColorBoard(object):
+    @pytest.fixture
+    def board(self):
+        with open(examples_file('uk')) as _file:
+            board_def = read(_file)
+
+        return make_board(*board_def)
+
+    def test_rows(self, board):
+        assert len(board.rows_descriptions) == 15
+
+        assert board.rows_descriptions[:2] == board.rows_descriptions[-1:-3:-1] == tuple([
+            ((3, 'r'), (11, 'b'), (3, 'r'), (11, 'b'), (3, 'r')),
+            ((2, 'b'), (3, 'r'), (9, 'b'), (3, 'r'), (9, 'b'), (3, 'r'), (2, 'b'))
+        ])
+
+        assert set(board.rows_descriptions[6:9]) == {((31, 'r'),)}
+
+    def test_columns(self, board):
+        assert len(board.columns_descriptions) == 31
+
+        assert board.columns_descriptions[:2] == board.columns_descriptions[-1:-3:-1] == tuple([
+            ((1, 'r'), (5, 'b'), (3, 'r'), (5, 'b'), (1, 'r')),
+            ((1, 'r'), (5, 'b'), (3, 'r'), (5, 'b'), (1, 'r'))
+        ])
+
+        assert set(board.columns_descriptions[14:17]) == {((15, 'r'),)}
+
+    def test_colors(self):
+        board = make_board(*color_board_def())
+        assert board.char_for_color('r') == 'X'
+        assert board.rgb_for_color('b') == 'blue'
+
+    def test_colors_conflict(self):
+        columns, rows, colors = color_board_def()
+        rows[0] = '3g'
+        with pytest.raises(ValueError, match='Colors differ'):
+            make_board(columns, rows, colors)
+
+    def test_color_not_defined(self):
+        columns, rows, colors = color_board_def()
+        del colors['r']
+        with pytest.raises(ValueError, match='Some colors not defined:'):
+            make_board(columns, rows, colors)
+
+    def test_color_boxes_differ(self):
+        columns, rows, colors = color_board_def()
+        rows[0] = '2r'
+        with pytest.raises(ValueError, match='Color boxes differ:'):
+            make_board(columns, rows, colors)
+
+    def test_same_boxes_in_a_row(self):
+        columns = [['1r', (1, 'b'), (1, 'b')]] * 3
+        rows = ['3r', '3b', '3b']
+        colors = {'r': ('red', 'X'), 'b': ('blue', '*')}
+
+        with pytest.raises(ValueError, match='Cannot allocate row .+ in just 3 cells'):
+            make_board(columns, rows, colors)
