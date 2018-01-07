@@ -253,6 +253,10 @@ class NonogramFSM(fsm.FiniteStateMachine):
 
         # pylint: disable=no-member
         self.solutions_cache.save((self.description, row), solved_row)
+
+        # it's a complete solution, so other solvers can use it too
+        # pylint: disable=no-member
+        FastSolver.solutions_cache.save((self.description, row), solved_row)
         return solved_row
 
 

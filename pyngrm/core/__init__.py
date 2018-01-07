@@ -99,7 +99,7 @@ def normalize_description_colored(row):
 INFORMAL_REPRESENTATIONS = {
     UNKNOWN: ('_', ' ', '?', '*'),
     SPACE: ('.', '0', 'O', '-'),
-    BOX: ('X', '+'),
+    BOX: ('X', '+', '#'),
 }
 
 FORMAL_ALPHABET = set(INFORMAL_REPRESENTATIONS)
