@@ -93,12 +93,15 @@ def solve(board, parallel=False,
         methods = [methods]
 
     for method in methods:
-        _solve_with_method(
+        jobs = _solve_with_method(
             board, method,
             parallel=parallel,
             row_indexes=row_indexes,
             column_indexes=column_indexes,
             contradiction_mode=contradiction_mode)
+
+        row_indexes = [index for is_column, index in jobs if not is_column]
+        column_indexes = [index for is_column, index in jobs if is_column]
 
 
 def _solve_with_method(
@@ -108,7 +111,7 @@ def _solve_with_method(
     """Solve the nonogram to the most using given method"""
 
     if board.solution_rate == 1:
-        return
+        return ()
 
     lines_solved = 0
 
@@ -126,19 +129,27 @@ def _solve_with_method(
     # when adding column, `is_column = True = 1`
     # heap always pops the lowest item, so the rows will go first
 
+    LOG.info("Solving %s rows and %s columns with '%s' method",
+             row_indexes, column_indexes, method)
+
     line_jobs = PriorityDict()
+    all_jobs = set()
+
+    def _add_job(job, _priority):
+        line_jobs[job] = _priority
+        all_jobs.add(job)
 
     if row_indexes is None:
         row_indexes = range(board.height)
 
     for row_index in row_indexes:
-        line_jobs[(False, row_index)] = 0
+        _add_job((False, row_index), 0)
 
     if column_indexes is None:
         column_indexes = range(board.width)
 
     for column_index in column_indexes:
-        line_jobs[(True, column_index)] = 0
+        _add_job((True, column_index), 0)
 
     while line_jobs:
         (is_column, index), priority = line_jobs.pop_smallest()
@@ -147,18 +158,19 @@ def _solve_with_method(
 
         for new_job in new_jobs:
             # lower priority = more priority
-            line_jobs[new_job] = priority - 1
+            _add_job(new_job, priority - 1)
+
         lines_solved += 1
 
     # all the following actions applied only to verified solving
-    if contradiction_mode:
-        return
+    if not contradiction_mode:
+        board.solution_round_completed()
 
-    board.solution_round_completed()
+        # self._solved = True
+        if board.solution_rate != 1:
+            LOG.warning("The nonogram is not solved full ('%s'). The rate is %.4f",
+                        method, board.solution_rate)
+        LOG.info('Full solution: %.6f sec', time.time() - start)
+        LOG.info('Lines solved: %i', lines_solved)
 
-    # self._solved = True
-    if board.solution_rate != 1:
-        LOG.warning("The nonogram is not solved full ('%s'). The rate is %.4f",
-                    method, board.solution_rate)
-    LOG.info('Full solution: %.6f sec', time.time() - start)
-    LOG.info('Lines solved: %i', lines_solved)
+    return all_jobs

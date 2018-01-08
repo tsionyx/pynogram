@@ -109,7 +109,7 @@ def _contradictions_round(
                     propagate=propagate_on_cell
                 )
 
-            if propagate_on_cell:
+            if not propagate_on_cell:
                 # solve with only one column as new info
                 line_solver.solve(
                     board, column_indexes=(solved_column,))
