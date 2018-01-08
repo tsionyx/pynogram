@@ -55,7 +55,6 @@ def solve_row(board, index, is_column, method,
     new_jobs = []
     if board.row_solution_rate(updated) > pre_solution_rate:
         # LOG.debug('Queue: %s', jobs_queue)
-
         for i, (pre, post) in enumerate(zip(row, updated)):
             if pre != post:
                 assert pre == UNKNOWN

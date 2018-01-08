@@ -9,7 +9,7 @@ import time
 from itertools import cycle
 
 from pyngrm.core import UNKNOWN, BOX, invert
-from pyngrm.core.solve import NonogramError, NonogramFSM, line_solver
+from pyngrm.core.solve import NonogramError, line_solver, cache_hit_rate
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -172,4 +172,5 @@ def solve(
         LOG.warning('The nonogram is not solved full (with contradictions). '
                     'The rate is %.4f', board.solution_rate)
     LOG.info('Full solution: %.6f sec', time.time() - start)
-    LOG.info('Cache hit rate: %.4f%%', NonogramFSM.solutions_cache().hit_rate * 100.0)
+    for method, hit_rate in cache_hit_rate().items():
+        LOG.info('Cache hit rate (%s): %.4f%%', method, hit_rate * 100.0)

@@ -46,3 +46,12 @@ def assert_match(row_desc, row):
     nfsm = NonogramFSM.from_description(row_desc)
     if not nfsm.match(row):
         raise NonogramError("The row '{}' cannot fit".format(row))
+
+
+# pylint: disable=no-member
+def cache_hit_rate():
+    """Cache hit rate for different solvers"""
+    return {
+        'simpson': simpson.FastSolver.solutions_cache.hit_rate,
+        'reverse_tracking': NonogramFSM.solutions_cache.hit_rate,
+    }
