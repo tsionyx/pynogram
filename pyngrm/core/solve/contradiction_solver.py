@@ -6,6 +6,7 @@ from __future__ import unicode_literals, print_function
 import logging
 import os
 import time
+from itertools import cycle
 
 from pyngrm.core import UNKNOWN, BOX, invert
 from pyngrm.core.solve import NonogramError, NonogramFSM, line_solver
@@ -137,13 +138,15 @@ def solve(
     board.set_solved(False)
     start = time.time()
 
-    solved = board.solution_rate
     counter = 0
 
-    assumption = BOX  # try the different assumptions every time
+    assumptions = (BOX, invert(BOX))  # try the different assumptions every time
+    active_assumptions_rate = {state: board.solution_rate for state in assumptions}
 
-    while True:
+    assumptions = cycle(assumptions)
+    while active_assumptions_rate:
         counter += 1
+        assumption = next(assumptions)
         LOG.warning('Contradiction round %i (assumption %s)', counter, assumption)
 
         _contradictions_round(
@@ -151,14 +154,18 @@ def solve(
             propagate_on_cell=propagate_on_cell,
             by_rows=by_rows)
 
-        if board.solution_rate > solved:
+        if board.solution_rate > active_assumptions_rate[assumption]:
             board.solution_round_completed()
 
-        if board.solution_rate == 1 or solved == board.solution_rate:
+        if board.solution_rate == 1:
             break
 
-        solved = board.solution_rate
-        assumption = invert(assumption)
+        if board.solution_rate == active_assumptions_rate[assumption]:
+            break
+            # stalled
+            # del active_assumptions_rate[assumption]
+        else:
+            active_assumptions_rate[assumption] = board.solution_rate
 
     board.set_solved()
     if board.solution_rate != 1:
