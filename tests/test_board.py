@@ -421,3 +421,53 @@ class TestColorBoard(object):
 
         with pytest.raises(ValueError, match='Cannot allocate row .+ in just 3 cells'):
             make_board(columns, rows, colors)
+
+    def test_normalize(self):
+        columns = [['1r', 1]] * 3
+        rows = [((3, 'r'),), 0, '3']
+        colors = {'r': ('red', 'X')}
+
+        board = make_board(columns, rows, colors)
+
+        assert board.rows_descriptions == (
+            ((3, 'r'),),
+            (),
+            ((3, 'black'),),
+        )
+        assert board.columns_descriptions == (
+            ((1, 'r'), (1, 'black')),
+            ((1, 'r'), (1, 'black')),
+            ((1, 'r'), (1, 'black')),
+        )
+
+    def test_bad_description(self):
+        columns = [(('1', 'r', 1),)]
+        rows = [((1, 'r'),), 0, '1']
+        colors = {'r': ('red', 'X')}
+
+        with pytest.raises(ValueError, match='Bad description block:'):
+            make_board(columns, rows, colors)
+
+    @pytest.fixture
+    def stream(self):
+        return StringIO()
+
+    def test_color_renderer(self, stream):
+        columns = [['1r', 1]] * 3
+        rows = [((3, 'r'),), 0, '3']
+        colors = {'r': ('red', '%')}
+
+        renderer = BaseAsciiRenderer(stream=stream)
+        board = make_board(columns, rows, colors, renderer=renderer)
+        board.cells[0] = ['r', 'r', 'r']
+        board.cells[2] = [(True, True, True)]
+
+        board.draw()
+
+        assert stream.getvalue().rstrip() == '\n'.join([
+            '- 1 1 1',
+            '- 1 1 1',
+            '3 % % %',
+            '0 _ _ _',
+            '3 X X X',
+        ])

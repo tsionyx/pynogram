@@ -14,7 +14,7 @@ import svgwrite as svg
 from six import integer_types, text_type, string_types
 
 from pyngrm.core import UNKNOWN, BOX, SPACE
-from pyngrm.core.board import Renderer, Board
+from pyngrm.core.board import Renderer, Board, ColoredBoard
 from pyngrm.utils.collections import pad, split_seq
 
 _LOG_NAME = __name__
@@ -54,10 +54,9 @@ class StreamRenderer(Renderer):
         Gets a symbolic representation of a cell given its state
         and predefined table `icons`
         """
-        color_name = None
         if isinstance(state, (list, tuple)):
-            # colored board
-            state, color_name = state[:2]
+            # colored clue cell
+            state = state[0]
 
         types = tuple(map(type, self.icons))
         # why not just `isinstance(state, int)`?
@@ -65,14 +64,11 @@ class StreamRenderer(Renderer):
         if isinstance(state, integer_types) and not isinstance(state, types):
             return text_type(state)
 
-        if color_name is None:
-            return self.icons[state]
+        if isinstance(self.board, ColoredBoard):
+            if state in self.board.color_map:
+                return self.board.char_for_color(state)
 
-        ico = self.icons.get(state, None)
-        if ico is not None:
-            return ico
-
-        return self.board.char_for_color(color_name)
+        return self.icons[state]
 
 
 class BaseAsciiRenderer(StreamRenderer):
