@@ -180,9 +180,11 @@ class FastSolver(object):
                     LOG.debug("     stretched %d >%s#", block, (posv + i))
 
                     # find an earlier block that isn't covering a solid
+                    error_block = block
                     while True:
                         if block == 0:
-                            raise NonogramError("All previous blocks cover solids")
+                            raise NonogramError(
+                                "The %d-th block cannot be stretched" % error_block)
                         block -= 1
                         if (solid[block] < 0) or (
                                 pos[(block + 1) * posstep] + solid[block + 1]
@@ -361,25 +363,3 @@ class FastSolver(object):
         # pylint: disable=no-member
         cls.solutions_cache.save((rule, line), work)
         return work
-
-
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    SOLVE_JOBS = [
-        ([1, 1, 5], '---#--         -      # '),
-        ([9, 1, 1, 1], '   --#########-------   #- - '),
-        ([5, 6, 3, 1, 1], '               #- -----      ##-      ---   #-'),
-        ([4, 2], ' #   .  '),
-        ([4, 2], ' #  .   '),
-        # ([4, 2], ' # .    '),
-        ((1, 1, 2, 1, 1, 3, 1),
-         [True, False, False, None, None, False,
-          None, True, None, False, False, True,
-          None, None, None, None, None, True,
-          None, None, None, None]),
-        # ((5, 3, 2, 2, 4, 2, 2),
-        #  '-#####----###-----------##-                          ###   ')
-    ]
-
-    for job in SOLVE_JOBS:
-        print(FastSolver.solve(*job))
