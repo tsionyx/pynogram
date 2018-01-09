@@ -3,7 +3,7 @@
 Defines various renderers for the game of nonogram
 """
 
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals, print_function, division
 
 import logging
 import os
@@ -558,7 +558,7 @@ class SvgRenderer(StreamRenderer):
         # self._print(self.drawing.tostring())
 
     def draw(self):
-        self.drawing.elements.clear()
+        self.drawing.elements = []
         self.drawing.add(self.drawing.defs)
 
         super(SvgRenderer, self).draw()

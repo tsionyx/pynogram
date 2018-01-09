@@ -3,6 +3,7 @@
     <words>
       <w>autoescape</w>
       <w>defaultcolor</w>
+      <w>defs</w>
       <w>lxml</w>
       <w>nfsm</w>
       <w>nonogram</w>
@@ -17,6 +18,8 @@
       <w>webpbn</w>
       <w>wikipedia</w>
       <w>xeon</w>
+      <w>xlink</w>
+      <w>xmlns</w>
     </words>
   </dictionary>
 </component>
