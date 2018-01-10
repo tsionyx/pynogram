@@ -8,94 +8,42 @@ from __future__ import unicode_literals, print_function
 import os
 import re
 
+from six import string_types, PY2
+# noinspection PyUnresolvedReferences
+from six.moves.configparser import RawConfigParser  # I don't want interpolation features
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+_INLINE_COMMENT_PREFIXES = '#;'
 
-def parse_line(description_line):
+
+def parse_line(description, inline_comments=_INLINE_COMMENT_PREFIXES):
     """
     Parse a line and correctly add the description(s) to a collection
     """
+
+    # manually strip out the comments
+    # py2 cannot ignore comments on a continuation line
+    # https://stackoverflow.com/q/9110428/1177288
+    #
+    # PY3 can do it for you with 'inline_comment_prefixes' = '#;'
+    if PY2:
+        for comment_prefix in inline_comments:
+            pos = description.find(comment_prefix)
+            if pos != -1:
+                # comment line or inline comment (after a space)
+                if pos == 0 or description[pos - 1].isspace():
+                    description = description[:pos]
+
+        if not description:
+            return None
+
     # there can be trailing commas if you copy from source code
-    descriptions = description_line.strip(',').split(',')
+    descriptions = description.strip(',').split(',')
 
     # strip all the spaces and quotes
     descriptions = [desc.strip().strip("'").strip('"').strip() for desc in descriptions]
-
     return descriptions
-
-
-_ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK = 1
-
-_NOT_READ = 0
-_READ_COLORS = 1
-_READ_COLUMNS = 2
-_READ_ROWS = 3
-_COMPLETE = 4
-
-_STATES = (_NOT_READ, _READ_COLORS, _READ_COLUMNS, _READ_ROWS, _COMPLETE)
-_COLOR_RE = re.compile(r'color:[ \t]*(.+)\((.+)\) (.+)')
-
-
-def read(stream):
-    """
-    Read and parse lines from a stream to create a nonogram board
-    """
-    colors = dict()
-    columns = []
-    rows = []
-
-    state = _NOT_READ
-    next_block = False
-    empty_lines_counter = 0
-
-    for i, line in enumerate(stream):
-        # ignore whitespaces
-        line = line.strip()
-
-        # strip out the trailing comment
-        comment_index = line.find('#')
-        if comment_index >= 0:
-            line = line[:comment_index].rstrip()
-
-        # ignore empty lines
-        if not line:
-            empty_lines_counter += 1
-
-            # if already start to read columns
-            # and the empty line appeared
-            # then the following info is about rows
-            if empty_lines_counter > _ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK:
-                next_block = True
-
-            continue  # pragma: no cover
-
-        if state == _NOT_READ or next_block:
-            state += 1
-            next_block = False
-
-        empty_lines_counter = 0
-
-        if state == _READ_COLORS:
-            match = _COLOR_RE.match(line)
-            if match:
-                colors[match.group(1)] = match.groups()[1:]
-                continue
-            else:
-                # black and white nonogram
-                state += 1
-
-        if state == _COMPLETE:
-            raise ValueError("Found excess info on the line {} "
-                             "while EOF expected: '{}'".format(i, line))
-
-        assert state in (_READ_ROWS, _READ_COLUMNS)
-        current_collection = rows if state == _READ_ROWS else columns
-        current_collection.extend(parse_line(line))
-
-    if colors:
-        return columns, rows, colors
-
-    return columns, rows
 
 
 def example_file(file_name=''):
@@ -121,6 +69,70 @@ def example_file(file_name=''):
 
 def read_example(board_file):
     """Return the board definition for given example name"""
+    return read_ini(example_file(board_file))
 
-    with open(example_file(board_file)) as _file:
-        return read(_file)
+
+# pylint: disable=too-few-public-methods
+class MultiLineConfigParser(RawConfigParser, object):
+    """
+    INI-file parser that allows multiple lines in a value
+    to be treated like a list.
+    Also adds the ';'-style inline comments (disabled in PY3)
+
+    https://stackoverflow.com/a/11866695/1177288
+    """
+
+    def __init__(self, *args, **kwargs):
+        # allow '#' or ';' as the start of a comment
+        if not PY2 and 'inline_comment_prefixes' not in kwargs:
+            kwargs['inline_comment_prefixes'] = _INLINE_COMMENT_PREFIXES
+
+        # noinspection PyArgumentList
+        super(MultiLineConfigParser, self).__init__(*args, **kwargs)
+
+    def get_list(self, section, option):
+        """Split the value into list, remove empty items"""
+        value = self.get(section, option)
+        return [x.strip() for x in value.splitlines() if x]
+
+
+_COLOR_RE = re.compile(r'\((.+)\) (.+)')
+
+
+def read_ini(content):
+    """Return the board definition from an INI-file"""
+
+    parser = MultiLineConfigParser()
+
+    if isinstance(content, string_types):
+        if os.path.isfile(content):
+            parser.read(content)
+
+    else:
+        parser.readfp(content)
+
+    columns = []
+    for col in parser.get_list('clues', 'columns'):
+        col = parse_line(col)
+        if col is not None:
+            columns.extend(col)
+
+    rows = []
+    for row in parser.get_list('clues', 'rows'):
+        row = parse_line(row)
+        if row is not None:
+            rows.extend(row)
+
+    res = [columns, rows]
+
+    if parser.has_section('colors'):
+        colors = dict()
+        for color_name, color_desc in parser.items('colors'):
+            match = _COLOR_RE.match(color_desc)
+            # TODO: spit some info if not matched
+            colors[color_name] = match.groups()
+
+        if colors:
+            res.append(colors)
+
+    return tuple(res)

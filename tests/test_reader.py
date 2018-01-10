@@ -6,10 +6,12 @@ import os
 
 import pytest
 from six.moves import StringIO
+# noinspection PyUnresolvedReferences
+from six.moves.configparser import NoSectionError
 
 from pyngrm.core.board import Board
 from pyngrm.core.solve import line_solver
-from pyngrm.input.reader import example_file, read, read_example
+from pyngrm.input.reader import example_file, read_ini, read_example
 from pyngrm.renderer import BaseAsciiRenderer
 
 
@@ -41,14 +43,12 @@ class TestReader(object):
     def test_examples_dir(self):
         assert os.path.isdir(example_file())
 
-    def test_read_after_eof(self):
-        text = '\n'.join(['1', '', '', '1', '', '', 'bad'])
+    def test_section_typo(self):
+        text = '\n'.join(['[clue]', 'rows=1', 'columns=1'])
         stream = StringIO(text)
 
-        with pytest.raises(ValueError) as ei:
-            read(stream)
-
-        assert str(ei.value) == "Found excess info on the line 6 while EOF expected: 'bad'"
+        with pytest.raises(NoSectionError, match="No section: u?'clues'"):
+            read_ini(stream)
 
     def test_txt_suffix(self):
         columns1, rows1 = read_example('w.txt')
