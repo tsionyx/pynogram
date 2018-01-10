@@ -15,8 +15,7 @@ from six import PY2
 
 from .core.board import make_board
 from .core.solve.contradiction_solver import solve
-from .input.pbn import get_puzzle_desc
-from .input.reader import read_example
+from .reader import read_example, Pbn
 from .renderer import BaseAsciiRenderer
 
 
@@ -38,7 +37,7 @@ def main(board_file, draw_every_round=True, pbn_id=None):
     """Solve the given board in terminal with animation"""
 
     if pbn_id:
-        board_def = get_puzzle_desc(pbn_id)
+        board_def = Pbn.read(pbn_id)
     else:
         board_def = read_example(board_file)
 

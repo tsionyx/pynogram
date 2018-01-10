@@ -9,7 +9,7 @@ import pytest
 
 from pyngrm.core.board import Board, make_board, ColoredBoard
 from pyngrm.core.solve import line_solver, contradiction_solver
-from pyngrm.input.reader import read_example
+from pyngrm.reader import read_example
 from pyngrm.renderer import (
     BaseAsciiRenderer,
     AsciiRenderer,

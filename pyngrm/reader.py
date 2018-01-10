@@ -8,9 +8,11 @@ from __future__ import unicode_literals, print_function
 import os
 import re
 
+from lxml import etree
 from six import string_types, PY2
 # noinspection PyUnresolvedReferences
 from six.moves.configparser import RawConfigParser  # I don't want interpolation features
+from six.moves.urllib.request import urlopen
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -50,7 +52,7 @@ def example_file(file_name=''):
     """
     Returns a path to the examples board in text files
     """
-    project_dir = os.path.dirname(os.path.dirname(CURRENT_DIR))
+    project_dir = os.path.dirname(CURRENT_DIR)
     examples_dir = os.path.join(project_dir, 'examples')
     if not file_name:
         return examples_dir
@@ -133,6 +135,66 @@ def read_ini(content):
             colors[color_name] = match.groups()
 
         if colors:
+            # noinspection PyTypeChecker
             res.append(colors)
 
     return tuple(res)
+
+
+class PbnNotFoundError(Exception):
+    """Raised when trying to reach webpbn puzzle by non-existing id"""
+    pass
+
+
+class Pbn(object):
+    """Grab the examples from http://webpbn.com/"""
+
+    BASE_URL = 'http://webpbn.com'
+
+    @classmethod
+    def _get_puzzle_xml(cls, _id):
+        # noinspection SpellCheckingInspection
+        url = '{}/XMLpuz.cgi?id={}'.format(cls.BASE_URL, _id)
+        return urlopen(url)
+
+    @classmethod
+    def _parse_clue(cls, clue, default_color=None):
+        if default_color:
+            return tuple(
+                (
+                    int(block.text),
+                    block.attrib.get('color', default_color)
+                )
+                for block in clue.xpath('count'))
+
+        return tuple(map(int, clue.xpath('count/text()')))
+
+    @classmethod
+    def read(cls, _id):
+        """Find and parse the columns and rows of a webpbn nonogram by id"""
+        xml = cls._get_puzzle_xml(_id)
+        try:
+            tree = etree.parse(xml)
+        except etree.XMLSyntaxError as exc:
+            str_e = str(exc)
+            if str_e.startswith('Document is empty') or str_e.startswith('Start tag expected'):
+                raise PbnNotFoundError(_id)
+            raise
+
+        colors = {color.attrib['name']: (color.text, color.attrib['char'])
+                  for color in tree.xpath('//color')}
+
+        if len(colors) > 2:
+            default_color = tree.xpath('//puzzle[@type="grid"]/@defaultcolor')[0]
+        else:
+            default_color = None
+
+        columns = [cls._parse_clue(clue, default_color)
+                   for clue in tree.xpath('//clues[@type="columns"]/line')]
+        rows = [cls._parse_clue(clue, default_color)
+                for clue in tree.xpath('//clues[@type="rows"]/line')]
+
+        if len(colors) > 2:
+            return columns, rows, colors
+
+        return columns, rows

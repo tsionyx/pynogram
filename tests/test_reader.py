@@ -11,7 +11,7 @@ from six.moves.configparser import NoSectionError
 
 from pyngrm.core.board import Board
 from pyngrm.core.solve import line_solver
-from pyngrm.input.reader import example_file, read_ini, read_example
+from pyngrm.reader import example_file, read_ini, read_example
 from pyngrm.renderer import BaseAsciiRenderer
 
 

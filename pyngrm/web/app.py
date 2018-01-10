@@ -18,8 +18,7 @@ import tornado.web
 
 from pyngrm.core.board import make_board
 from pyngrm.core.solve.contradiction_solver import solve
-from pyngrm.input.pbn import get_puzzle_desc, PbnNotFoundError
-from pyngrm.input.reader import read_example
+from pyngrm.reader import read_example, Pbn, PbnNotFoundError
 from pyngrm.renderer import (
     StreamRenderer,
     BaseAsciiRenderer,
@@ -225,7 +224,7 @@ class Application(tornado.web.Application):
             return make_board(*board_def, renderer=BaseAsciiRenderer)
 
         elif create_mode == 'pbn':
-            board_def = get_puzzle_desc(_id)
+            board_def = Pbn.read(_id)
             return make_board(*board_def, renderer=SvgRenderer, **board_params)
 
         raise tornado.web.HTTPError(400, 'Bad mode: %s', create_mode)
