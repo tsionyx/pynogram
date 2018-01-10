@@ -11,7 +11,7 @@ from six.moves.configparser import NoSectionError
 
 from pyngrm.core.board import Board
 from pyngrm.core.solve import line_solver
-from pyngrm.reader import example_file, read_ini, read_example
+from pyngrm.reader import example_file, read_ini, read_example, Pbn, PbnNotFoundError
 from pyngrm.renderer import BaseAsciiRenderer
 
 
@@ -59,3 +59,23 @@ class TestReader(object):
 
     def test_not_existed_file_does_not_append_txt(self):
         assert example_file('board.pbm').endswith('board.pbm')
+
+
+class TestPbn(object):
+    def test_simple(self):
+        columns, rows = Pbn.read(1)
+        assert columns == [(2, 1), (2, 1, 3), (7,), (1, 3), (2, 1)]
+        assert rows == [(2,), (2, 1), (1, 1), (3,), (1, 1), (1, 1), (2,), (1, 1), (1, 2), (2,)]
+
+    def test_absent(self):
+        with pytest.raises(PbnNotFoundError, match='5'):
+            Pbn.read(5)
+
+    def test_colored(self):
+        columns, rows, colors = Pbn.read(898)
+        assert colors == {
+            'white': ('FFFFFF', '.'),
+            'black': ('000000', 'X'),
+            'red': ('FF0000', '*'),
+            'green': ('00B000', '%'),
+        }
