@@ -233,10 +233,13 @@ class TestVersion(object):
         assert all(isinstance(v, int) for v in version)
 
     def test_setup_py_already_in_path(self, setup_py_path):
-        sys.path.remove(setup_py_path)
-        version = get_version()
-        assert setup_py_path not in sys.path
-        sys.path.append(setup_py_path)
+        save_path = sys.path
+        try:
+            sys.path = [v for v in sys.path if v != setup_py_path]
+            version = get_version()
+            assert setup_py_path not in sys.path
+        finally:
+            sys.path = save_path
 
         assert len(version) == 3
         assert all(isinstance(v, int) for v in version)
