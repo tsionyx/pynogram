@@ -9,14 +9,13 @@ from six.moves import StringIO
 
 from pyngrm.core.board import Board
 from pyngrm.core.solve import line_solver
-from pyngrm.input.reader import examples_file, read
+from pyngrm.input.reader import example_file, read, read_example
 from pyngrm.renderer import BaseAsciiRenderer
 
 
 class TestReader(object):
     def test_hello(self):
-        with open(examples_file('hello.txt')) as f:
-            columns, rows = read(f)
+        columns, rows = read_example('hello.txt')
 
         stream = StringIO()
         board = Board(columns, rows, renderer=BaseAsciiRenderer, stream=stream)
@@ -40,7 +39,7 @@ class TestReader(object):
         # assert board.solved
 
     def test_examples_dir(self):
-        assert os.path.isdir(examples_file())
+        assert os.path.isdir(example_file())
 
     def test_read_after_eof(self):
         text = '\n'.join(['1', '', '', '1', '', '', 'bad'])
@@ -52,14 +51,11 @@ class TestReader(object):
         assert str(ei.value) == "Found excess info on the line 6 while EOF expected: 'bad'"
 
     def test_txt_suffix(self):
-        with open(examples_file('w.txt')) as f:
-            columns1, rows1 = read(f)
-
-        with open(examples_file('w')) as f:
-            columns2, rows2 = read(f)
+        columns1, rows1 = read_example('w.txt')
+        columns2, rows2 = read_example('w')
 
         assert columns1 == columns2
         assert rows1 == rows2
 
     def test_not_existed_file_does_not_append_txt(self):
-        assert examples_file('board.pbm').endswith('board.pbm')
+        assert example_file('board.pbm').endswith('board.pbm')

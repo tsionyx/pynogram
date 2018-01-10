@@ -9,7 +9,7 @@ import pytest
 
 from pyngrm.core.board import Board, make_board, ColoredBoard
 from pyngrm.core.solve import line_solver, contradiction_solver
-from pyngrm.input.reader import examples_file, read
+from pyngrm.input.reader import read_example
 from pyngrm.renderer import (
     BaseAsciiRenderer,
     AsciiRenderer,
@@ -270,9 +270,7 @@ class TestContradictions(object):
     # TODO: more tests on simple contradictions boards
 
     def test_smile(self):
-        with open(examples_file('smile.txt')) as _file:
-            columns, rows = read(_file)
-
+        columns, rows = read_example('smile.txt')
         board = Board(columns, rows)
 
         line_solver.solve(board)
@@ -366,9 +364,7 @@ class TestMakeBoard(object):
 class TestColorBoard(object):
     @pytest.fixture
     def board(self):
-        with open(examples_file('uk')) as _file:
-            board_def = read(_file)
-
+        board_def = read_example('uk')
         return make_board(*board_def)
 
     def test_rows(self, board):

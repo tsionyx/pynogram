@@ -16,7 +16,7 @@ from six import PY2
 from .core.board import make_board
 from .core.solve.contradiction_solver import solve
 from .input.pbn import get_puzzle_desc
-from .input.reader import examples_file, read
+from .input.reader import read_example
 from .renderer import BaseAsciiRenderer
 
 
@@ -40,8 +40,7 @@ def main(board_file, draw_every_round=True, pbn_id=None):
     if pbn_id:
         board_def = get_puzzle_desc(pbn_id)
     else:
-        with open(examples_file(board_file)) as _file:
-            board_def = read(_file)
+        board_def = read_example(board_file)
 
     d_board = make_board(*board_def, renderer=BaseAsciiRenderer)
     d_board.renderer.icons.update({True: '\u2B1B'})

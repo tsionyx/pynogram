@@ -11,7 +11,7 @@ import re
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def _append_line_to_list(description_line, descriptions_list):
+def parse_line(description_line):
     """
     Parse a line and correctly add the description(s) to a collection
     """
@@ -21,7 +21,7 @@ def _append_line_to_list(description_line, descriptions_list):
     # strip all the spaces and quotes
     descriptions = [desc.strip().strip("'").strip('"').strip() for desc in descriptions]
 
-    return descriptions_list.extend(descriptions)
+    return descriptions
 
 
 _ALLOWED_EMPTY_LINES_IN_A_ROW_INSIDE_BLOCK = 1
@@ -89,8 +89,8 @@ def read(stream):
                              "while EOF expected: '{}'".format(i, line))
 
         assert state in (_READ_ROWS, _READ_COLUMNS)
-        current = rows if state == _READ_ROWS else columns
-        _append_line_to_list(line, current)
+        current_collection = rows if state == _READ_ROWS else columns
+        current_collection.extend(parse_line(line))
 
     if colors:
         return columns, rows, colors
@@ -98,19 +98,29 @@ def read(stream):
     return columns, rows
 
 
-def examples_file(file_name=''):
+def example_file(file_name=''):
     """
     Returns a path to the examples board in text files
     """
     project_dir = os.path.dirname(os.path.dirname(CURRENT_DIR))
     examples_dir = os.path.join(project_dir, 'examples')
-    if file_name:
-        file_name = os.path.join(examples_dir, file_name)
-        if not os.path.isfile(file_name):
-            txt_file_name = file_name + '.txt'
-            if os.path.isfile(txt_file_name):
-                return txt_file_name
+    if not file_name:
+        return examples_dir
 
+    file_name = os.path.join(examples_dir, file_name)
+    if os.path.isfile(file_name):
         return file_name
 
-    return examples_dir
+    txt_file_name = file_name + '.txt'
+    if os.path.isfile(txt_file_name):
+        return txt_file_name
+
+    # just return the original file name, don't know where is it
+    return file_name
+
+
+def read_example(board_file):
+    """Return the board definition for given example name"""
+
+    with open(example_file(board_file)) as _file:
+        return read(_file)

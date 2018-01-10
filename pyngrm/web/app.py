@@ -19,7 +19,7 @@ import tornado.web
 from pyngrm.core.board import make_board
 from pyngrm.core.solve.contradiction_solver import solve
 from pyngrm.input.pbn import get_puzzle_desc, PbnNotFoundError
-from pyngrm.input.reader import examples_file, read
+from pyngrm.input.reader import read_example
 from pyngrm.renderer import (
     StreamRenderer,
     BaseAsciiRenderer,
@@ -221,8 +221,7 @@ class Application(tornado.web.Application):
             return board_factory(**board_params)
 
         elif create_mode == 'local':
-            with open(examples_file(_id)) as _file:
-                board_def = read(_file)
+            board_def = read_example(_id)
             return make_board(*board_def, renderer=BaseAsciiRenderer)
 
         elif create_mode == 'pbn':
