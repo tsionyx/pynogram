@@ -1,6 +1,11 @@
 [![pipeline status](https://gitlab.com/tsionyx/pyngrm/badges/dev/pipeline.svg)](https://gitlab.com/tsionyx/pyngrm/pipelines)
 [![coverage report](https://gitlab.com/tsionyx/pyngrm/badges/dev/coverage.svg?job=test)](https://gitlab.com/tsionyx/pyngrm/commits/dev)
 
+#### github badges
+remove this comment and gitlab badges above after moving to Github
+
+[![Build Status](https://img.shields.io/travis/tsionyx/pynogram.svg)](https://travis-ci.org/tsionyx/pynogram)
+[![Coverage Status](https://img.shields.io/coveralls/github/tsionyx/pynogram.svg)](https://coveralls.io/github/tsionyx/pynogram)
 
 # Nonogram solver
 
