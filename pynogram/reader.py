@@ -57,6 +57,9 @@ def example_file(file_name=''):
     if not file_name:
         return examples_dir
 
+    if os.path.isfile(file_name):
+        return file_name
+
     file_name = os.path.join(examples_dir, file_name)
     if os.path.isfile(file_name):
         return file_name

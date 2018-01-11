@@ -8,7 +8,6 @@
   - refactor file names
   - check docstrings
   - check for " (replace with ')
-  - allow to specify board from file system, not only examples dir
   - exec file, not an ugly `python -m pynogram`
 
 - merge, add tags
