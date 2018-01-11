@@ -13,7 +13,7 @@ from http://webpbn.com that have thousands of them.
 Install
 -------
 
-::
+.. code-block::
 
     pip install pynogram
 
@@ -23,11 +23,13 @@ Usage
 Console
 ~~~~~~~
 
-::
+.. code-block::
 
     pynogram
 
     pynogram --board=winter --draw-final
+
+    pynogram --pbn=2040
 
 Browser
 ~~~~~~~
@@ -35,6 +37,8 @@ Browser
 -  start the server: ``pynogram-web``
 
 -  enjoy the solutions:
+
+   http://localhost:3145/demo/1
 
    http://localhost:3145/demo/2
 

@@ -1,16 +1,12 @@
-- rename the project
-- improve packaging:
-  - docs:
-    - more info in README: links to other solvers, publications
-    - images and examples
+- find a way to include examples in the distribution
+- improve docs:
+  - more info in README: links to other solvers, publications
+  - images and examples
 
 - clean:
-  - refactor file names
   - check docstrings
   - check for " (replace with ')
-  - exec file, not an ugly `python -m pynogram`
 
-- merge, add tags
 - tests for Web UI
 
 -- github, [PyPi](http://the-hitchhikers-guide-to-packaging.readthedocs.io/en/latest/quickstart.html)
