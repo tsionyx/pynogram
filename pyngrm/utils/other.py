@@ -24,24 +24,24 @@ def get_uptime():  # pragma: no cover
 
 
 def get_version():
-    """Return the program's version from distribution metadata"""
+    """Return the program's version from the package root"""
 
-    setup_py_dir = os.path.dirname(os.path.dirname(CURRENT_DIR))
+    root_dir = os.path.dirname(CURRENT_DIR)
 
-    if setup_py_dir not in sys.path:
-        sys.path.append(setup_py_dir)
+    if root_dir not in sys.path:
+        sys.path.append(root_dir)
         remove = True
     else:
         remove = False
 
     try:
-        from setup import VERSION
+        from __version__ import VERSION
     except ImportError:  # pragma: no cover
         # noinspection PyPep8Naming
         VERSION = ()
 
     if remove:
-        sys.path.remove(setup_py_dir)
+        sys.path.remove(root_dir)
 
     return VERSION
 

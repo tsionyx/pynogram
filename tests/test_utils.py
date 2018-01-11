@@ -221,23 +221,28 @@ class TestPriorityDict(object):
 
 class TestVersion(object):
     @pytest.fixture
-    def setup_py_path(self):
-        return os.path.dirname(CURRENT_DIR)
+    def root_path(self):
+        return os.path.join(os.path.dirname(CURRENT_DIR), 'pyngrm')
 
-    def test_simple(self, setup_py_path):
-        assert setup_py_path in sys.path
-        version = get_version()
-        assert setup_py_path in sys.path
+    def test_simple(self, root_path):
+        save_path = sys.path
+        assert root_path not in sys.path
+        try:
+            version = get_version()
 
-        assert len(version) == 3
-        assert all(isinstance(v, int) for v in version)
+            assert len(version) == 3
+            assert all(isinstance(v, int) for v in version)
 
-    def test_setup_py_already_in_path(self, setup_py_path):
+            assert root_path not in sys.path
+        finally:
+            sys.path = save_path
+
+    def test_setup_py_already_in_path(self, root_path):
         save_path = sys.path
         try:
-            sys.path = [v for v in sys.path if v != setup_py_path]
+            sys.path = [v for v in sys.path if v != root_path]
             version = get_version()
-            assert setup_py_path not in sys.path
+            assert root_path not in sys.path
         finally:
             sys.path = save_path
 
