@@ -14,7 +14,7 @@ from argparse import ArgumentParser
 from six import PY2
 
 from .core.board import make_board
-from .core.solve.contradiction_solver import solve
+from .core.solver import contradiction as contradiction_solver
 from .reader import read_example, Pbn
 from .renderer import BaseAsciiRenderer
 
@@ -42,7 +42,7 @@ def draw_solution(board_def, every_round=True):
         d_board.on_solution_round_complete = lambda board: board.draw()
 
     try:
-        solve(d_board, by_rows=False)
+        contradiction_solver.solve(d_board, by_rows=False)
         if not every_round:
             d_board.draw()
     except Exception:

@@ -13,8 +13,8 @@ import sys
 import svgwrite as svg
 from six import integer_types, text_type, string_types
 
-from pyngrm.core import UNKNOWN, BOX, SPACE
 from pyngrm.core.board import Renderer, Board, ColoredBoard
+from pyngrm.core.common import UNKNOWN, BOX, SPACE
 from pyngrm.utils.collections import pad, split_seq
 
 _LOG_NAME = __name__

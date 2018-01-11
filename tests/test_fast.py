@@ -5,11 +5,9 @@ from __future__ import unicode_literals, print_function
 import pytest
 
 from pyngrm.core.board import Board
-from pyngrm.core.solve import (
-    NonogramError,
-    solve_line,
-    line_solver,
-)
+from pyngrm.core.solver import line as line_solver
+from pyngrm.core.solver.base import solve_line
+from pyngrm.core.solver.common import NonogramError
 from pyngrm.reader import read_example
 
 # TODO: more solved rows

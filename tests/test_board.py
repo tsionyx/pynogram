@@ -8,7 +8,10 @@ from io import StringIO
 import pytest
 
 from pyngrm.core.board import Board, make_board, ColoredBoard
-from pyngrm.core.solve import line_solver, contradiction_solver
+from pyngrm.core.solver import (
+    line as line_solver,
+    contradiction as contradiction_solver,
+)
 from pyngrm.reader import read_example
 from pyngrm.renderer import (
     BaseAsciiRenderer,

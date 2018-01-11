@@ -16,8 +16,8 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 
+import pyngrm.core.solver.contradiction as contradiction_solver
 from pyngrm.core.board import make_board
-from pyngrm.core.solve.contradiction_solver import solve
 from pyngrm.reader import read_example, Pbn, PbnNotFoundError
 from pyngrm.renderer import (
     StreamRenderer,
@@ -71,7 +71,8 @@ class BoardHandler(ThreadedBaseHandler):
         LOG.info('Solving board #%s', _id)
         LOG.debug('Callbacks: %s', board_notifier.callbacks)
 
-        yield self.executor.submit(solve, board_notifier.board,
+        yield self.executor.submit(contradiction_solver.solve,
+                                   board_notifier.board,
                                    by_rows=rows_first)
 
         # force callbacks to execute

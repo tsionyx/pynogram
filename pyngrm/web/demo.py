@@ -5,8 +5,8 @@ Demos and examples
 
 from __future__ import unicode_literals, print_function
 
-from pyngrm.core import BOX, SPACE
 from pyngrm.core.board import make_board
+from pyngrm.core.common import BOX, SPACE
 from pyngrm.reader import read_example
 from pyngrm.renderer import (
     AsciiRenderer,

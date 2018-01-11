@@ -10,7 +10,7 @@ from six.moves import StringIO
 from six.moves.configparser import NoSectionError
 
 from pyngrm.core.board import Board
-from pyngrm.core.solve import line_solver
+from pyngrm.core.solver import line
 from pyngrm.reader import example_file, read_ini, read_example, Pbn, PbnNotFoundError
 from pyngrm.renderer import BaseAsciiRenderer
 
@@ -21,7 +21,7 @@ class TestReader(object):
 
         stream = StringIO()
         board = Board(columns, rows, renderer=BaseAsciiRenderer, stream=stream)
-        line_solver.solve(board)
+        line.solve(board)
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([

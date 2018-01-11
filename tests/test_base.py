@@ -2,12 +2,12 @@
 
 from __future__ import unicode_literals, print_function
 
-from pyngrm.core import (
+# noinspection PyProtectedMember
+from pyngrm.core.board import Board, _solve_on_space_hints
+from pyngrm.core.common import (
     UNKNOWN, BOX, SPACE,
     invert,
 )
-# noinspection PyProtectedMember
-from pyngrm.core.board import Board, _solve_on_space_hints
 
 
 def test_space_hints_solving():

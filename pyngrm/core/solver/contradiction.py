@@ -8,8 +8,10 @@ import os
 import time
 from itertools import cycle
 
-from pyngrm.core import UNKNOWN, BOX, invert
-from pyngrm.core.solve import NonogramError, line_solver, cache_hit_rate
+from pyngrm.core.common import UNKNOWN, BOX, invert
+from pyngrm.core.solver import line
+from pyngrm.core.solver.base import cache_hit_rate
+from pyngrm.core.solver.common import NonogramError
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -37,7 +39,7 @@ def try_contradiction(board, row_index, column_index,
             LOG.debug('Pretend that (%i, %i) is %s',
                       row_index, column_index, assumption)
             board.cells[row_index][column_index] = assumption
-            line_solver.solve(
+            line.solve(
                 board,
                 row_indexes=(row_index,),
                 column_indexes=(column_index,),
@@ -58,7 +60,7 @@ def try_contradiction(board, row_index, column_index,
             # try to solve with additional info
             if propagate:
                 # solve with only one cell as new info
-                line_solver.solve(
+                line.solve(
                     board,
                     row_indexes=(row_index,),
                     column_indexes=(column_index,))
@@ -93,7 +95,7 @@ def _contradictions_round(
 
             if not propagate_on_cell:
                 # solve with only one row as new info
-                line_solver.solve(
+                line.solve(
                     board, row_indexes=(solved_row,))
     else:
         for solved_column in range(board.width):
@@ -111,7 +113,7 @@ def _contradictions_round(
 
             if not propagate_on_cell:
                 # solve with only one column as new info
-                line_solver.solve(
+                line.solve(
                     board, column_indexes=(solved_column,))
 
 
@@ -127,7 +129,7 @@ def solve(
     :param by_rows: iterate by rows (left-to-right) or by columns (top-to-bottom)
     """
 
-    line_solver.solve(board)
+    line.solve(board)
     if board.solution_rate == 1:
         board.set_solved()
         LOG.info('No need to solve with contradictions')

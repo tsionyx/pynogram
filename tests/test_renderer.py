@@ -6,8 +6,8 @@ from io import StringIO
 
 import pytest
 
-from pyngrm.core import BOX, SPACE
 from pyngrm.core.board import Board
+from pyngrm.core.common import BOX, SPACE
 from pyngrm.renderer import (
     Renderer,
     BaseAsciiRenderer,

@@ -12,7 +12,7 @@ from collections import defaultdict
 import numpy as np
 from six.moves import zip, range
 
-from pyngrm.core import (
+from pyngrm.core.common import (
     UNKNOWN, BOX, SPACE,
     normalize_description,
     normalize_description_colored,

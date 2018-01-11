@@ -14,17 +14,15 @@ import os
 from six import iteritems, itervalues, add_metaclass
 from six.moves import range
 
-from pyngrm.core import (
-    UNKNOWN, BOX, SPACE,
-    normalize_description,
-    normalize_row,
-)
 from pyngrm.core import fsm
-from pyngrm.core.solve.common import (
-    NonogramError,
-    LineSolutionsMeta,
+from pyngrm.core.common import (
+    UNKNOWN, BOX, SPACE,
+    normalize_description, normalize_row,
 )
-from pyngrm.core.solve.simpson import FastSolver
+from pyngrm.core.solver.common import (
+    NonogramError, LineSolutionsMeta,
+)
+from pyngrm.core.solver.simpson import FastSolver
 from pyngrm.utils.cache import Cache
 
 _LOG_NAME = __name__

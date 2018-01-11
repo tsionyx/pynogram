@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*
-"""Define nonogram solver that solve line-by-line"""
+"""Define nonogram solver that solves line-by-line"""
 
 from __future__ import unicode_literals, print_function
 
@@ -7,8 +7,12 @@ import logging
 import os
 import time
 
-from pyngrm.core import UNKNOWN, BOX, SPACE
-from pyngrm.core.solve import assert_match, solve_line
+from pyngrm.core.common import (
+    UNKNOWN, BOX, SPACE,
+)
+from pyngrm.core.solver.base import (
+    assert_match, solve_line,
+)
 from pyngrm.utils.priority_dict import PriorityDict
 
 _LOG_NAME = __name__

@@ -5,9 +5,9 @@ from __future__ import unicode_literals, print_function
 
 import logging
 
-from pyngrm.core.solve import simpson
-from pyngrm.core.solve.common import NonogramError
-from pyngrm.core.solve.machine import NonogramFSM, LOG as MACHINE_LOGGER
+from pyngrm.core.solver import simpson
+from pyngrm.core.solver.common import NonogramError
+from pyngrm.core.solver.machine import NonogramFSM, LOG as MACHINE_LOGGER
 
 MACHINE_LOGGER.setLevel(logging.WARNING)
 simpson.LOG.setLevel(logging.WARNING)
