@@ -9,7 +9,7 @@
   - check docstrings
   - check for " (replace with ')
   - allow to specify board from file system, not only examples dir
-  - exec file, not an ugly `python -m pyngrm`
+  - exec file, not an ugly `python -m pynogram`
 
 - merge, add tags
 - tests for Web UI
@@ -27,7 +27,7 @@
 - profile and improve bottlenecks:
 
 ```bash
-$ time python -m cProfile -o hot.prof pyngrm/__main__.py --pbn 2040 --draw-final
+$ time python -m cProfile -o hot.prof pynogram/__main__.py --pbn 2040 --draw-final
 ```
 
 ```

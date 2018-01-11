@@ -7,15 +7,15 @@ import sys
 
 import pytest
 
-from pyngrm.utils.collections import (
+from pynogram.utils.collections import (
     merge_dicts,
     pad,
     interleave,
     max_safe,
     avg,
 )
-from pyngrm.utils.other import get_version
-from pyngrm.utils.priority_dict import PriorityDict
+from pynogram.utils.other import get_version
+from pynogram.utils.priority_dict import PriorityDict
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -222,7 +222,7 @@ class TestPriorityDict(object):
 class TestVersion(object):
     @pytest.fixture
     def root_path(self):
-        return os.path.join(os.path.dirname(CURRENT_DIR), 'pyngrm')
+        return os.path.join(os.path.dirname(CURRENT_DIR), 'pynogram')
 
     def test_simple(self, root_path):
         save_path = sys.path

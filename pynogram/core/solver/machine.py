@@ -14,16 +14,16 @@ import os
 from six import iteritems, itervalues, add_metaclass
 from six.moves import range
 
-from pyngrm.core import fsm
-from pyngrm.core.common import (
+from pynogram.core import fsm
+from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     normalize_description, normalize_row,
 )
-from pyngrm.core.solver.common import (
+from pynogram.core.solver.common import (
     NonogramError, LineSolutionsMeta,
 )
-from pyngrm.core.solver.simpson import FastSolver
-from pyngrm.utils.cache import Cache
+from pynogram.core.solver.simpson import FastSolver
+from pynogram.utils.cache import Cache
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

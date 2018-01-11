@@ -4,11 +4,11 @@ from __future__ import unicode_literals, print_function
 
 import pytest
 
-from pyngrm.core.board import Board
-from pyngrm.core.solver import line as line_solver
-from pyngrm.core.solver.base import solve_line
-from pyngrm.core.solver.common import NonogramError
-from pyngrm.reader import read_example
+from pynogram.core.board import Board
+from pynogram.core.solver import line as line_solver
+from pynogram.core.solver.base import solve_line
+from pynogram.core.solver.common import NonogramError
+from pynogram.reader import read_example
 
 # TODO: more solved rows
 CASES = [

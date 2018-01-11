@@ -15,7 +15,7 @@ Install
 
 ::
 
-    pip install pyngrm
+    pip install pynogram
 
 Usage
 -----
@@ -25,14 +25,14 @@ Console
 
 ::
 
-    pyngrm
+    pynogram
 
-    pyngrm --board=winter --draw-final
+    pynogram --board=winter --draw-final
 
 Browser
 ~~~~~~~
 
--  start the server: ``pyngrm-web``
+-  start the server: ``pynogram-web``
 
 -  enjoy the solutions:
 

@@ -7,18 +7,18 @@ from io import StringIO
 
 import pytest
 
-from pyngrm.core.board import Board, make_board, ColoredBoard
-from pyngrm.core.solver import (
+from pynogram.core.board import Board, make_board, ColoredBoard
+from pynogram.core.solver import (
     line as line_solver,
     contradiction as contradiction_solver,
 )
-from pyngrm.reader import read_example
-from pyngrm.renderer import (
+from pynogram.reader import read_example
+from pynogram.renderer import (
     BaseAsciiRenderer,
     AsciiRenderer,
     AsciiRendererWithBold,
 )
-from pyngrm.utils.other import is_close
+from pynogram.utils.other import is_close
 
 
 @pytest.fixture

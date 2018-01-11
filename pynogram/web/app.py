@@ -16,10 +16,10 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 
-import pyngrm.core.solver.contradiction as contradiction_solver
-from pyngrm.core.board import make_board
-from pyngrm.reader import read_example, Pbn, PbnNotFoundError
-from pyngrm.renderer import (
+import pynogram.core.solver.contradiction as contradiction_solver
+from pynogram.core.board import make_board
+from pynogram.reader import read_example, Pbn, PbnNotFoundError
+from pynogram.renderer import (
     StreamRenderer,
     BaseAsciiRenderer,
     SvgRenderer,

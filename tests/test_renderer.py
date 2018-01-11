@@ -6,9 +6,9 @@ from io import StringIO
 
 import pytest
 
-from pyngrm.core.board import Board
-from pyngrm.core.common import BOX, SPACE
-from pyngrm.renderer import (
+from pynogram.core.board import Board
+from pynogram.core.common import BOX, SPACE
+from pynogram.renderer import (
     Renderer,
     BaseAsciiRenderer,
     AsciiRenderer,

@@ -5,10 +5,10 @@ Demos and examples
 
 from __future__ import unicode_literals, print_function
 
-from pyngrm.core.board import make_board
-from pyngrm.core.common import BOX, SPACE
-from pyngrm.reader import read_example
-from pyngrm.renderer import (
+from pynogram.core.board import make_board
+from pynogram.core.common import BOX, SPACE
+from pynogram.reader import read_example
+from pynogram.renderer import (
     AsciiRenderer,
     AsciiRendererWithBold,
     SvgRenderer,

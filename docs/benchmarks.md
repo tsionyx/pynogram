@@ -7,13 +7,13 @@
 # http://webpbn.com/pbnsolve.html
 for i in 1611 1694 6739 4645 2040 2712 6574 8098 2556; do
     echo "Solving PBN's puzzle #$i (http://webpbn.com/$i) ..."
-    time python -m pyngrm --pbn $i --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
+    time python -m pynogram --pbn $i --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
         grep -i contradict
 done
 
 for i in football einstein MLP; do
     echo "Solving local puzzle $i ..."
-    time python -m pyngrm --board $i --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
+    time python -m pynogram --board $i --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
         grep -i contradict
 done
 ```

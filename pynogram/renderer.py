@@ -13,9 +13,9 @@ import sys
 import svgwrite as svg
 from six import integer_types, text_type, string_types
 
-from pyngrm.core.board import Renderer, Board, ColoredBoard
-from pyngrm.core.common import UNKNOWN, BOX, SPACE
-from pyngrm.utils.collections import pad, split_seq
+from pynogram.core.board import Renderer, Board, ColoredBoard
+from pynogram.core.common import UNKNOWN, BOX, SPACE
+from pynogram.utils.collections import pad, split_seq
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

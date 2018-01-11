@@ -1,7 +1,7 @@
 ## Install
 
 ```
-mkvirtualenv pyngrm --python /usr/bin/python3
+mkvirtualenv pynogram --python /usr/bin/python3
 python setup.py develop
 ```
 

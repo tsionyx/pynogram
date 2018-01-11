@@ -7,13 +7,13 @@ import logging
 import os
 import time
 
-from pyngrm.core.common import (
+from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
 )
-from pyngrm.core.solver.base import (
+from pynogram.core.solver.base import (
     assert_match, solve_line,
 )
-from pyngrm.utils.priority_dict import PriorityDict
+from pynogram.utils.priority_dict import PriorityDict
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

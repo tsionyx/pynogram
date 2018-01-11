@@ -8,10 +8,10 @@ import os
 import time
 from itertools import cycle
 
-from pyngrm.core.common import UNKNOWN, BOX, invert
-from pyngrm.core.solver import line
-from pyngrm.core.solver.base import cache_hit_rate
-from pyngrm.core.solver.common import NonogramError
+from pynogram.core.common import UNKNOWN, BOX, invert
+from pynogram.core.solver import line
+from pynogram.core.solver.base import cache_hit_rate
+from pynogram.core.solver.common import NonogramError
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
 # import raven
 import tornado.web
 
-from pyngrm.utils.other import get_uptime, get_version
+from pynogram.utils.other import get_uptime, get_version
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

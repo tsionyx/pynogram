@@ -12,13 +12,13 @@ from collections import defaultdict
 import numpy as np
 from six.moves import zip, range
 
-from pyngrm.core.common import (
+from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     normalize_description,
     normalize_description_colored,
     DEFAULT_COLOR, DEFAULT_COLOR_NAME,
 )
-from pyngrm.utils.collections import avg, max_safe
+from pynogram.utils.collections import avg, max_safe
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

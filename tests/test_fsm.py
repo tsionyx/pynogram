@@ -6,12 +6,12 @@ from copy import copy
 
 import pytest
 
-from pyngrm.core.common import UNKNOWN, BOX, SPACE
-from pyngrm.core.fsm import (
+from pynogram.core.common import UNKNOWN, BOX, SPACE
+from pynogram.core.fsm import (
     StateMachineError,
     FiniteStateMachine,
 )
-from pyngrm.core.solver.base import (
+from pynogram.core.solver.base import (
     NonogramFSM,
     NonogramError,
     solve_line,

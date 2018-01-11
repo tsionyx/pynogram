@@ -13,12 +13,12 @@ import logging
 from six import add_metaclass
 from six.moves import range
 
-from pyngrm.core.common import (
+from pynogram.core.common import (
     BOX, SPACE, UNKNOWN,
     normalize_description,
     normalize_row,
 )
-from pyngrm.core.solver.common import (
+from pynogram.core.solver.common import (
     NonogramError,
     LineSolutionsMeta,
 )

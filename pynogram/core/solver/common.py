@@ -3,7 +3,7 @@
 
 from __future__ import unicode_literals, print_function
 
-from pyngrm.utils.cache import Cache
+from pynogram.utils.cache import Cache
 
 
 class NonogramError(ValueError):

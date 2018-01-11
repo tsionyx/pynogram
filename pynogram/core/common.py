@@ -11,7 +11,7 @@ import re
 
 from six import integer_types, string_types, iteritems
 
-from pyngrm.utils.collections import list_replace
+from pynogram.utils.collections import list_replace
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

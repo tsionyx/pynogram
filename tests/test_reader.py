@@ -9,10 +9,10 @@ from six.moves import StringIO
 # noinspection PyUnresolvedReferences
 from six.moves.configparser import NoSectionError
 
-from pyngrm.core.board import Board
-from pyngrm.core.solver import line
-from pyngrm.reader import example_file, read_ini, read_example, Pbn, PbnNotFoundError
-from pyngrm.renderer import BaseAsciiRenderer
+from pynogram.core.board import Board
+from pynogram.core.solver import line
+from pynogram.reader import example_file, read_ini, read_example, Pbn, PbnNotFoundError
+from pynogram.renderer import BaseAsciiRenderer
 
 
 class TestReader(object):
