@@ -19,65 +19,99 @@ LOG = logging.getLogger(_LOG_NAME)
 
 
 # pylint: disable=too-many-arguments, too-many-locals
-def solve_row(self, index, is_column, priority, jobs_queue,
+def solve_row(board, index, is_column, method,
               contradiction_mode=False):
     """
     Solve one line with FSM.
     If line gets partially solved,
-    put the crossed lines into queue
+    put the crossed lines into queue.
+
+    Return the list of new jobs that should be put into queue.
     """
 
     start = time.time()
 
     if is_column:
-        row_desc, row = self.columns_descriptions[index], self.cells.T[index]
+        row_desc, row = board.columns_descriptions[index], board.cells.T[index]
         desc = 'column'
     else:
-        row_desc, row = self.rows_descriptions[index], self.cells[index]
+        row_desc, row = board.rows_descriptions[index], board.cells[index]
         desc = 'row'
 
-    pre_solution_rate = self.row_solution_rate(row)
+    pre_solution_rate = board.row_solution_rate(row)
 
     if pre_solution_rate == 1:
         if contradiction_mode:
             assert_match(row_desc, row)
         else:
             # do not check solved lines in trusted mode
-            return
+            return ()
 
-    LOG.debug('Solving %s %s: %s. Partial: %s. Priority: %s',
-              index, desc, row_desc, row, priority)
+    LOG.debug('Solving %s %s: %s. Partial: %s',
+              index, desc, row_desc, row)
 
-    updated = solve_line(row_desc, row)
+    updated = solve_line(row_desc, row, method=method)
 
-    if self.row_solution_rate(updated) > pre_solution_rate:
-        LOG.debug('New info on %s %s: %s', desc, index, updated)
-        LOG.debug('Queue: %s', jobs_queue)
-
+    new_jobs = []
+    if board.row_solution_rate(updated) > pre_solution_rate:
+        # LOG.debug('Queue: %s', jobs_queue)
         for i, (pre, post) in enumerate(zip(row, updated)):
             if pre != post:
                 assert pre == UNKNOWN
                 assert post in (BOX, SPACE)
 
-                jobs_queue[(not is_column, i)] = priority - 1
-        LOG.debug('Queue: %s', jobs_queue)
+                new_jobs.append((not is_column, i))
+        # LOG.debug('Queue: %s', jobs_queue)
+        LOG.debug('New info on %s %s: %s', desc, index, [job_index for _, job_index in new_jobs])
 
         if is_column:
-            self.cells[:, index] = updated
-            self.column_updated(index)
+            board.cells[:, index] = updated
+            board.column_updated(index)
         else:
-            self.cells[index] = updated
-            self.row_updated(index)
+            board.cells[index] = updated
+            board.row_updated(index)
 
     LOG.debug('%ss solution: %.6f sec', desc.title(), time.time() - start)
+    return new_jobs
 
 
 def solve(board, parallel=False,
           row_indexes=None, column_indexes=None,
-          contradiction_mode=False):
-    """Solve the nonogram to the most with FSM using priority queue"""
+          contradiction_mode=False, methods=None):
+    """
+    Solve the nonogram to the most using two methods (by default):
+    - firstly with simple right-left overlap algorithm
+    - then with FSM and reverse tracking
+
+    All methods use priority queue to store the lines needed to solve.
+    """
+
+    if methods is None:
+        methods = ('simpson', 'reverse_tracking')
+
+    if not isinstance(methods, (tuple, list)):
+        methods = [methods]
+
+    for method in methods:
+        jobs = _solve_with_method(
+            board, method,
+            parallel=parallel,
+            row_indexes=row_indexes,
+            column_indexes=column_indexes,
+            contradiction_mode=contradiction_mode)
+
+        row_indexes = [index for is_column, index in jobs if not is_column]
+        column_indexes = [index for is_column, index in jobs if is_column]
+
+
+def _solve_with_method(
+        board, method, parallel=False,
+        row_indexes=None, column_indexes=None,
+        contradiction_mode=False):
+    """Solve the nonogram to the most using given method"""
+
     if board.solution_rate == 1:
-        return
+        return ()
 
     lines_solved = 0
 
@@ -95,34 +129,48 @@ def solve(board, parallel=False,
     # when adding column, `is_column = True = 1`
     # heap always pops the lowest item, so the rows will go first
 
+    LOG.info("Solving %s rows and %s columns with '%s' method",
+             row_indexes, column_indexes, method)
+
     line_jobs = PriorityDict()
+    all_jobs = set()
+
+    def _add_job(job, _priority):
+        line_jobs[job] = _priority
+        all_jobs.add(job)
 
     if row_indexes is None:
         row_indexes = range(board.height)
 
     for row_index in row_indexes:
-        line_jobs[(False, row_index)] = 0
+        _add_job((False, row_index), 0)
 
     if column_indexes is None:
         column_indexes = range(board.width)
 
     for column_index in column_indexes:
-        line_jobs[(True, column_index)] = 0
+        _add_job((True, column_index), 0)
 
     while line_jobs:
         (is_column, index), priority = line_jobs.pop_smallest()
-        solve_row(board, index, is_column, priority, line_jobs,
-                  contradiction_mode=contradiction_mode)
+        new_jobs = solve_row(board, index, is_column, method,
+                             contradiction_mode=contradiction_mode)
+
+        for new_job in new_jobs:
+            # lower priority = more priority
+            _add_job(new_job, priority - 1)
+
         lines_solved += 1
 
     # all the following actions applied only to verified solving
-    if contradiction_mode:
-        return
+    if not contradiction_mode:
+        board.solution_round_completed()
 
-    board.solution_round_completed()
+        # self._solved = True
+        if board.solution_rate != 1:
+            LOG.warning("The nonogram is not solved full ('%s'). The rate is %.4f",
+                        method, board.solution_rate)
+        LOG.info('Full solution: %.6f sec', time.time() - start)
+        LOG.info('Lines solved: %i', lines_solved)
 
-    # self._solved = True
-    if board.solution_rate != 1:
-        LOG.warning('The nonogram is not solved full. The rate is %.4f', board.solution_rate)
-    LOG.info('Full solution: %.6f sec', time.time() - start)
-    LOG.info('Lines solved: %i', lines_solved)
+    return all_jobs

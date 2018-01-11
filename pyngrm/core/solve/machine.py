@@ -11,7 +11,7 @@ from __future__ import unicode_literals, print_function
 import logging
 import os
 
-from six import iteritems, itervalues
+from six import iteritems, itervalues, add_metaclass
 from six.moves import range
 
 from pyngrm.core import (
@@ -20,7 +20,11 @@ from pyngrm.core import (
     normalize_row,
 )
 from pyngrm.core import fsm
-from pyngrm.core.solve.common import NonogramError
+from pyngrm.core.solve.common import (
+    NonogramError,
+    LineSolutionsMeta,
+)
+from pyngrm.core.solve.simpson import FastSolver
 from pyngrm.utils.cache import Cache
 
 _LOG_NAME = __name__
@@ -32,6 +36,7 @@ LOG = logging.getLogger(_LOG_NAME)
 fsm.LOG.setLevel(logging.WARNING)
 
 
+@add_metaclass(LineSolutionsMeta)
 class NonogramFSM(fsm.FiniteStateMachine):
     """
     Represents a special class of a FSM
@@ -216,20 +221,14 @@ class NonogramFSM(fsm.FiniteStateMachine):
 
         return transition_table
 
-    _solutions_cache = Cache(10000)
-
-    @classmethod
-    def solutions_cache(cls):
-        """Line solutions cache"""
-        return cls._solutions_cache
-
     def solve_with_reverse_tracking(self, row):
         """
         Solve the nonogram `row` using the FSM and reverse tracking
         """
         original_row, row = row, normalize_row(row)
 
-        solved_row = self.solutions_cache().get((self.description, row))
+        # pylint: disable=no-member
+        solved_row = self.solutions_cache.get((self.description, row))
         if solved_row is not None:
             assert len(solved_row) == len(row)
             return solved_row
@@ -251,7 +250,13 @@ class NonogramFSM(fsm.FiniteStateMachine):
                 solved_row.append(UNKNOWN)
 
         assert len(solved_row) == len(row)
-        self.solutions_cache().save((self.description, row), solved_row)
+
+        # pylint: disable=no-member
+        self.solutions_cache.save((self.description, row), solved_row)
+
+        # it's a complete solution, so other solvers can use it too
+        # pylint: disable=no-member
+        FastSolver.solutions_cache.save((self.description, row), solved_row)
         return solved_row
 
 

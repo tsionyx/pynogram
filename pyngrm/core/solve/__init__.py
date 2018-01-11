@@ -5,10 +5,12 @@ from __future__ import unicode_literals, print_function
 
 import logging
 
+from pyngrm.core.solve import simpson
 from pyngrm.core.solve.common import NonogramError
 from pyngrm.core.solve.machine import NonogramFSM, LOG as MACHINE_LOGGER
 
 MACHINE_LOGGER.setLevel(logging.WARNING)
+simpson.LOG.setLevel(logging.WARNING)
 
 
 def _solver(name):
@@ -20,6 +22,9 @@ def _solver(name):
             return method_func(row)
 
         return _solve
+
+    if name == 'simpson':
+        return simpson.FastSolver.solve
 
     raise AttributeError("Cannot find solving method '%s'" % name)
 
@@ -46,3 +51,12 @@ def assert_match(row_desc, row):
     nfsm = NonogramFSM.from_description(row_desc)
     if not nfsm.match(row):
         raise NonogramError("The row '{}' cannot fit".format(row))
+
+
+# pylint: disable=no-member
+def cache_hit_rate():
+    """Cache hit rate for different solvers"""
+    return {
+        'simpson': simpson.FastSolver.solutions_cache.hit_rate,
+        'reverse_tracking': NonogramFSM.solutions_cache.hit_rate,
+    }
