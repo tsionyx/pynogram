@@ -1,61 +1,3 @@
-[![pipeline status](https://gitlab.com/tsionyx/pyngrm/badges/dev/pipeline.svg)](https://gitlab.com/tsionyx/pyngrm/pipelines)
-[![coverage report](https://gitlab.com/tsionyx/pyngrm/badges/dev/coverage.svg?job=test)](https://gitlab.com/tsionyx/pyngrm/commits/dev)
-
-#### github badges
-remove this comment and gitlab badges above after moving to Github
-
-[![Build Status](https://img.shields.io/travis/tsionyx/pynogram.svg)](https://travis-ci.org/tsionyx/pynogram)
-[![Coverage Status](https://img.shields.io/coveralls/github/tsionyx/pynogram.svg)](https://coveralls.io/github/tsionyx/pynogram)
-
-# Nonogram solver
-
-## Install
-
-```
-mkvirtualenv pyngrm --python /usr/bin/python3
-python setup.py install
-```
-
-## Usage
-
-### See the demo in terminal
-
-```
-python -m pyngrm
-
-python -m pyngrm --board=winter --draw-final
-```
-
-### Web demo
-
-- start the server: `python -m pyngrm.web`
-- enjoy the solutions:
-
-  _http://localhost:3145/demo/2_
-
-  _http://localhost:3145/board/local/einstein_
-
-  _http://localhost:3145/board/pbn/2040_
-
-
-## Tests
-
-Currently there is no ability to run `setup.py test` to install
-tests requirements (see comments in _setup.py_). Just do
-`pip install tox` instead.
-
-### Run tests
-
-```
-tox
-```
-
-### Lint the project
-
-```
-tox -e lint
-```
-
 ### Benchmark on complex puzzles (remove `2>/dev/null` to see the picture)
 
 ```
@@ -92,6 +34,6 @@ and slower (_Intel(R) Core(TM) i5 CPU  M 560  @ 2.67GHz_) CPUs:
 | **8098**  | 0.9           | 1.5           | 1                    | **0**            |
 | **2556**  | 1.7           | 2.9           | 2                    | **92.72**        |
 |-- Local --                                                                          |
-| [football](examples/football.txt) | 0.7   | 1.1   | 1            | 100              |
-| [einstein](examples/einstein.txt) | 2.9   | 5.0   | 0            | 100              |
-| [MLP](examples/MLP.txt)           | 24    | 47    | 3            | 100              |
+| [football](../examples/football.txt) | 0.7   | 1.1   | 1            | 100              |
+| [einstein](../examples/einstein.txt) | 2.9   | 5.0   | 0            | 100              |
+| [MLP](../examples/MLP.txt)           | 24    | 47    | 3            | 100              |

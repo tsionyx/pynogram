@@ -3,13 +3,12 @@
     <words>
       <w>autoescape</w>
       <w>defaultcolor</w>
-      <w>defs</w>
+      <w>ffffff</w>
       <w>lxml</w>
       <w>nfsm</w>
       <w>nonogram</w>
       <w>nonograms</w>
-      <w>pygame</w>
-      <w>pyngrm</w>
+      <w>pynogram</w>
       <w>pytest</w>
       <w>renderers</w>
       <w>svgwrite</w>
@@ -18,8 +17,6 @@
       <w>webpbn</w>
       <w>wikipedia</w>
       <w>xeon</w>
-      <w>xlink</w>
-      <w>xmlns</w>
     </words>
   </dictionary>
 </component>

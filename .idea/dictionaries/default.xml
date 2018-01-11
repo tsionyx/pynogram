@@ -8,11 +8,14 @@
       <w>contextlib</w>
       <w>coreutils</w>
       <w>crlf</w>
+      <w>defs</w>
       <w>expectedly</w>
       <w>gitignore</w>
       <w>inlinevar</w>
       <w>ipynb</w>
       <w>levelname</w>
+      <w>licensable</w>
+      <w>licensor</w>
       <w>lineno</w>
       <w>msvs</w>
       <w>mymodule</w>
@@ -32,8 +35,12 @@
       <w>relpath</w>
       <w>sentry</w>
       <w>typecheck</w>
+      <w>versioning</w>
       <w>xargs</w>
+      <w>xlink</w>
+      <w>xmlns</w>
       <w>yaml</w>
+      <w>yyyy</w>
     </words>
   </dictionary>
 </component>

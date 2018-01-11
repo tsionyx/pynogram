@@ -136,7 +136,7 @@ esac
 # Add your favorite extensions here
 # get all the extensions you have with
 # $ git ls-files | sed 's|.*\.||' | sort -u
-KNOWN_EXTENSIONS='py|ipynb|php|sql|sh|js|html|htm|css|json|xml|yml|yaml|iml|csv|md|txt|conf|cfg|ini|gitignore'
+KNOWN_EXTENSIONS='py|ipynb|php|sql|sh|js|html|htm|css|json|xml|yml|yaml|iml|csv|md|rst|txt|conf|cfg|ini|in|gitignore'
 
 # check if any git-tracked files has been changed
 hash_file=$(tempfile) || exit 1
