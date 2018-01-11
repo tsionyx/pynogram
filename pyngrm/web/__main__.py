@@ -12,12 +12,18 @@ from pyngrm.web.app import LOG, run
 tornado.options.define('port', default=3145, help='run on the given port', type=int)
 tornado.options.define('debug', default=False, help='debug mode', type=bool)
 
-if __name__ == '__main__':
+
+def main():
+    """Main function for setuptools console_scripts"""
     tornado.options.parse_command_line()
-    PORT, DEBUG = tornado.options.options.port, tornado.options.options.debug
-    if not DEBUG:
+    port, debug = tornado.options.options.port, tornado.options.options.debug
+    if not debug:
         # FIXME
         LOG.warning('Only debug mode supported for now. Switching.')
-        DEBUG = True
+        debug = True
 
-    run(port=PORT, debug=DEBUG)
+    run(port=port, debug=debug)
+
+
+if __name__ == '__main__':
+    main()

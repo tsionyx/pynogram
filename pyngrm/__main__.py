@@ -33,22 +33,17 @@ def cli_args():
     return parser.parse_args()
 
 
-def main(board_file, draw_every_round=True, pbn_id=None):
+def draw_solution(board_def, every_round=True):
     """Solve the given board in terminal with animation"""
-
-    if pbn_id:
-        board_def = Pbn.read(pbn_id)
-    else:
-        board_def = read_example(board_file)
 
     d_board = make_board(*board_def, renderer=BaseAsciiRenderer)
     d_board.renderer.icons.update({True: '\u2B1B'})
-    if draw_every_round:
+    if every_round:
         d_board.on_solution_round_complete = lambda board: board.draw()
 
     try:
         solve(d_board, by_rows=False)
-        if not draw_every_round:
+        if not every_round:
             d_board.draw()
     except Exception:
         # draw the last solved cells
@@ -67,13 +62,24 @@ def log_level(verbosity):
     return logging.DEBUG
 
 
-if __name__ == '__main__':
+def main():
+    """Main function for setuptools console_scripts"""
     if PY2:
         sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
-    ARGS = cli_args()
+    args = cli_args()
     logging.basicConfig(
         format='[%(asctime)s] %(levelname)-8s %(filename)s:%(lineno)d -> %(message)s',
-        level=log_level(ARGS.verbose),
+        level=log_level(args.verbose),
     )
-    main(ARGS.board, draw_every_round=not ARGS.draw_final, pbn_id=ARGS.pbn)
+
+    if args.pbn:
+        board_def = Pbn.read(args.pbn)
+    else:
+        board_def = read_example(args.board)
+
+    draw_solution(board_def, every_round=not args.draw_final)
+
+
+if __name__ == '__main__':
+    main()
