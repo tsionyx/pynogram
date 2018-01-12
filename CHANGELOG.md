@@ -9,3 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Initial release!
 - Solve the black-and-white nonograms using several methods
 - Print out the solving process on the console or the web-page (SVG)
+
+## [0.1.0] - 2018-01-12
+### Fixed
+- examples distribution
