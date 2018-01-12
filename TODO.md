@@ -1,4 +1,3 @@
-- find a way to include examples in the distribution
 - improve docs:
   - more info in README: links to other solvers, publications
   - images and examples

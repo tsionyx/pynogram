@@ -28,12 +28,15 @@ def read_file(file_name, base_dir=CURRENT_DIR):
 
 
 # Package meta-data.
-NAME = os.path.basename(CURRENT_DIR)
+
+# Do not rely on the current dir: it fails when install from sources
+# NAME = os.path.basename(CURRENT_DIR)
+NAME = 'pynogram'
 DESCRIPTION = 'Nonogram solver'
 URL = 'https://github.com/{}/{}'.format(ME, NAME),
 EMAIL = '{}@gmail.com'.format(ME)
 AUTHOR = 'Ivan Ladelschikov'
-LICENSE = 'Apache',
+LICENSE = 'Apache License 2.0',
 
 REQUIRED = [
     'six',
@@ -153,7 +156,30 @@ if __name__ == '__main__':
         version=VERSION,
         packages=find_packages(exclude=('tests',)),
         install_requires=REQUIRED,
+
+        # INCLUDING DATA FILES:
+        # http://setuptools.readthedocs.io/en/latest/setuptools.html#including-data-files
         include_package_data=True,
+
+        # examples should ship with the package
+        # package_data={
+        #     # explicitly str, not unicode
+        #     # https://github.com/myint/language-check/issues/30
+        #     str(NAME): ['examples/*.txt'],
+        # },
+
+        # LICENSE and docs are listed in MANIFEST.in
+        # so they will be included in source distribution
+        # but excluded from installation
+        exclude_package_data={
+            # explicitly str, not unicode
+            # https://github.com/myint/language-check/issues/30
+            str(''): ['LICENSE', '*.md']
+        },
+        # As it appears these files are not included in any package
+        # so they will be excluded anyway. However i keep this for explicity.
+
+        # REQUIREMENTS:
         extras_require=REQUIRED_EXTRAS,
         tests_require=TEST_WITH,
         entry_points={

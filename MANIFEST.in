@@ -1,4 +1,3 @@
 include LICENSE
-include CHANGELOG.md
-recursive-include docs *.md
+recursive-include . *.md
 recursive-include pynogram/examples *.txt

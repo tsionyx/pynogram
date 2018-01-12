@@ -9,11 +9,22 @@ test:
   - tox
 
 run:
+  variables:
+    NAME: pynogram
+
   script:
-  - python setup.py bdist_wheel
-  # an alternative approach is to install and run:
-  - pip install dist/*
-  # run the command here
+  - python setup.py sdist bdist_wheel --universal
+
+  # docs and LICENSE should be in sources
+  - tar -tf dist/*.tar.gz | grep -v "/$NAME" | grep '/LICENSE'
+  - tar -tf dist/*.tar.gz | grep -v "/$NAME" | grep '/docs/.\+md'
+
+  # to install and run:
+  - pip install -U dist/*.whl
+  - time $NAME -b winter
+  # only two files should left
+  - pip show -f $NAME | grep '^ ' | grep -v " $NAME[-/]"
+
   artifacts:
     paths:
     - dist/*.whl
