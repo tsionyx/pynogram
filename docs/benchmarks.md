@@ -34,6 +34,6 @@ and slower (_Intel(R) Core(TM) i5 CPU  M 560  @ 2.67GHz_) CPUs:
 | **8098**  | 0.86          | 1.32          | 1                    | **0**            |
 | **2556**  | 1.83          | 3.12          | 3                    | **92.72**        |
 |-- Local --                                                                          |
-| [football](../examples/football.txt) | 0.63  | 1.04  | 1         | 100              |
-| [einstein](../examples/einstein.txt) | 0.86  | 1.58  | 0         | 100              |
-| [MLP](../examples/MLP.txt)           | 18.90 | 35.08 | 3         | 100              |
+| [football](../pynogram/examples/football.txt) | 0.63  | 1.04  | 1         | 100              |
+| [einstein](../pynogram/examples/einstein.txt) | 0.86  | 1.58  | 0         | 100              |
+| [MLP](../pynogram/examples/MLP.txt)           | 18.90 | 35.08 | 3         | 100              |

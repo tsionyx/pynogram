@@ -52,8 +52,8 @@ def example_file(file_name=''):
     """
     Returns a path to the examples board in text files
     """
-    project_dir = os.path.dirname(CURRENT_DIR)
-    examples_dir = os.path.join(project_dir, 'examples')
+    # project_dir = os.path.dirname(CURRENT_DIR)
+    examples_dir = os.path.join(CURRENT_DIR, 'examples')
     if not file_name:
         return examples_dir
 
