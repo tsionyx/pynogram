@@ -14,7 +14,7 @@ import numpy as np
 import svgwrite as svg
 from six import integer_types, text_type, string_types
 
-from pynogram.core.board import Renderer, Board
+from pynogram.core.board import Renderer, Board, ColoredBoard
 from pynogram.core.common import UNKNOWN, BOX, SPACE
 from pynogram.utils.collections import pad, split_seq
 
@@ -81,16 +81,18 @@ class ClueCell(Cell):  # pylint: disable=too-few-public-methods
 class GridCell(Cell):  # pylint: disable=too-few-public-methods
     """Represent the main area cell"""
 
-    def __init__(self, value, renderer):
+    def __init__(self, value, renderer, colored=False):
         super(GridCell, self).__init__()
 
         self.renderer = renderer
-        if value in self.renderer.icons:
-            self.value = value
-            self.colored = False
+        self.colored = colored
+        if self.colored:
+            if isinstance(value, (tuple, list, np.ndarray)):
+                self.value = tuple(value)
+            else:
+                self.value = value
         else:
-            self.value = tuple(value)
-            self.colored = True
+            self.value = value
 
     def ascii_icon(self):
         value = self.value
@@ -100,6 +102,7 @@ class GridCell(Cell):  # pylint: disable=too-few-public-methods
             return icons[self.value]
 
         if isinstance(value, (tuple, list, np.ndarray)):
+            value = tuple(set(value))
             if len(value) == 1:
                 value = value[0]
             else:
@@ -200,11 +203,14 @@ class BaseAsciiRenderer(StreamRenderer):
             self.cells[rend_i][:self.side_width] = rend_row
 
     def draw_grid(self):
+        colored = isinstance(self.board, ColoredBoard)
+
         for i, row in enumerate(self.board.cells):
             rend_i = i + self.header_height
             for j, val in enumerate(row):
                 rend_j = j + self.side_width
-                self.cells[rend_i][rend_j] = GridCell(val, self)
+                self.cells[rend_i][rend_j] = GridCell(
+                    val, self, colored=colored)
 
 
 class AsciiRenderer(BaseAsciiRenderer):

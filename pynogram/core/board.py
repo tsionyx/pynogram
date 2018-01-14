@@ -118,7 +118,8 @@ class Board(object):
         else:
             raise TypeError('Bad renderer: %s' % renderer)
 
-        self.cells = np.array([[UNKNOWN] * self.width for _ in range(self.height)])
+        init_state = self.init_cell_state()
+        self.cells = np.array([[init_state] * self.width for _ in range(self.height)])
         self.validate()
 
         # you can provide custom callbacks here
@@ -126,6 +127,11 @@ class Board(object):
         self.on_column_update = None
         self.on_solution_round_complete = None
         self._solved = False
+
+    @classmethod
+    def init_cell_state(cls):
+        """Initial value of a board cell"""
+        return UNKNOWN
 
     # pylint: disable=not-callable
     def row_updated(self, row_index):
@@ -233,6 +239,24 @@ class ColoredBoard(Board):
         self.color_map = color_map
         self.color_map[DEFAULT_COLOR_NAME] = DEFAULT_COLOR
         super(ColoredBoard, self).__init__(columns, rows, renderer=renderer, **renderer_params)
+
+    def init_cell_state(self):
+        return tuple(self.color_map)
+
+    @classmethod
+    def row_solution_rate(cls, row):
+        """
+        How many cells in a row are known to be of particular color
+        """
+        solved = 0
+        for cell in row:
+            if isinstance(cell, (tuple, list, np.ndarray)):
+                if len(cell) == 1:
+                    solved += 1
+            else:
+                solved += 1
+
+        return solved / len(row)
 
     def colors(self, horizontal):
         """

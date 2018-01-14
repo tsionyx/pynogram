@@ -458,8 +458,13 @@ class TestColorBoard(object):
 
         renderer = BaseAsciiRenderer(stream=stream)
         board = make_board(columns, rows, colors, renderer=renderer)
-        board.cells[0] = ['r', 'r', 'r']
-        board.cells[2] = [True, True, True]
+        for i in range(3):
+            board.cells[0][i] = 'r'
+            board.cells[2][i] = 'black'
+        # cannot do simply:
+        # board.cells[2] = [True, True, True]
+        # because of
+        # ValueError: could not broadcast input array from shape (3) into shape (3,2)
 
         board.draw()
 

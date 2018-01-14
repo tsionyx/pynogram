@@ -87,10 +87,13 @@ class TestConsoleBoard(object):
             '  0 _ _ _ _ _ _ _ _',
         ])
 
-    def test_bad_cell_value_consider_colored(self, board):
+    def test_bad_cell_value(self, board):
         board.cells[2][0] = str('space')
-        with pytest.raises(AttributeError, match="'color_map'"):
+
+        with pytest.raises(KeyError) as ei:
             board.draw()
+
+        assert str(ei.value), "'space'"
 
     def test_two_digits_bad_drawing(self, stream):
         width = 10
