@@ -177,7 +177,7 @@ if __name__ == '__main__':
             str(''): ['LICENSE', '*.md']
         },
         # As it appears these files are not included in any package
-        # so they will be excluded anyway. However i keep this for explicity.
+        # so they will be excluded anyway. However i kept this to be more verbose.
 
         # REQUIREMENTS:
         extras_require=REQUIRED_EXTRAS,

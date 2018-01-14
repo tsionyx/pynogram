@@ -10,10 +10,11 @@ import os
 import re
 import sys
 
+import numpy as np
 import svgwrite as svg
 from six import integer_types, text_type, string_types
 
-from pynogram.core.board import Renderer, Board, ColoredBoard
+from pynogram.core.board import Renderer, Board
 from pynogram.core.common import UNKNOWN, BOX, SPACE
 from pynogram.utils.collections import pad, split_seq
 
@@ -23,9 +24,96 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 
 LOG = logging.getLogger(_LOG_NAME)
 
-# cell states that matters for renderer
-_NOT_SET = 'E'  # empty cell, e.g. in the headers
-_THUMBNAIL = 'T'
+
+class Cell(object):  # pylint: disable=too-few-public-methods
+    """Represent basic rendered cell"""
+
+    DEFAULT_ICON = ' '
+
+    def __init__(self, icon=None):
+        self.icon = icon or self.DEFAULT_ICON
+
+    def ascii_icon(self):
+        """How the cell can be printed as a text"""
+        return self.DEFAULT_ICON
+
+    def __repr__(self):
+        return '{}()'.format(self.__class__.__name__)
+
+
+class ThumbnailCell(Cell):  # pylint: disable=too-few-public-methods
+    """
+    Represent upper-left cell
+    (where the thumbnail of the puzzle usually drawn).
+    """
+    DEFAULT_ICON = '#'
+
+
+class ClueCell(Cell):  # pylint: disable=too-few-public-methods
+    """
+    Represent cell that is part of description (clue).
+    They are usually drawn on the top and on the left.
+    """
+
+    def __init__(self, value):
+        super(ClueCell, self).__init__()
+        if isinstance(value, (tuple, list, np.ndarray)):
+            self.value, self.color = value
+        else:
+            self.value, self.color = value, None
+
+    def ascii_icon(self):
+        """
+        Gets a symbolic representation of a cell given its state
+        and predefined table `icons`
+        """
+        if isinstance(self.value, integer_types):
+            return text_type(self.value)
+
+        return self.DEFAULT_ICON
+
+    def __repr__(self):
+        return '{}(({}, {}))'.format(
+            self.__class__.__name__,
+            self.value, self.color)
+
+
+class GridCell(Cell):  # pylint: disable=too-few-public-methods
+    """Represent the main area cell"""
+
+    def __init__(self, value, renderer):
+        super(GridCell, self).__init__()
+
+        self.renderer = renderer
+        if value in self.renderer.icons:
+            self.value = value
+            self.colored = False
+        else:
+            self.value = tuple(value)
+            self.colored = True
+
+    def ascii_icon(self):
+        value = self.value
+        icons = self.renderer.icons
+
+        if not self.colored:
+            return icons[self.value]
+
+        if isinstance(value, (tuple, list, np.ndarray)):
+            if len(value) == 1:
+                value = value[0]
+            else:
+                # multiple colors
+                value = UNKNOWN
+
+        if value in self.renderer.board.color_map:
+            return self.renderer.board.char_for_color(value)
+
+        return icons.get(value, self.DEFAULT_ICON)
+
+    def __repr__(self):
+        return '{}({})'.format(
+            self.__class__.__name__, self.value)
 
 
 # noinspection PyAbstractClass
@@ -35,40 +123,21 @@ class StreamRenderer(Renderer):
     Simplify textual rendering of a board to a stream (stdout by default)
     """
 
-    def __init__(self, board=None, stream=sys.stdout):
+    DEFAULT_ICONS = {
+        UNKNOWN: '_',
+        BOX: 'X',
+        SPACE: '.',
+    }
+
+    def __init__(self, board=None, stream=sys.stdout, icons=None):
         self.stream = stream
-        self.icons = {
-            _NOT_SET: ' ',
-            _THUMBNAIL: '-',
-            UNKNOWN: '_',
-            BOX: 'X',
-            SPACE: '.',
-        }
+        if icons is None:
+            icons = dict(self.DEFAULT_ICONS)
+        self.icons = icons
         super(StreamRenderer, self).__init__(board)
 
     def _print(self, *args):
         return print(*args, file=self.stream)
-
-    def cell_icon(self, state):
-        """
-        Gets a symbolic representation of a cell given its state
-        and predefined table `icons`
-        """
-        if isinstance(state, (list, tuple)):
-            # colored clue cell
-            state = state[0]
-
-        types = tuple(map(type, self.icons))
-        # why not just `isinstance(state, int)`?
-        # because `isinstance(True, int) == True`
-        if isinstance(state, integer_types) and not isinstance(state, types):
-            return text_type(state)
-
-        if isinstance(self.board, ColoredBoard):
-            if state in self.board.color_map:
-                return self.board.char_for_color(state)
-
-        return self.icons[state]
 
 
 class BaseAsciiRenderer(StreamRenderer):
@@ -79,8 +148,16 @@ class BaseAsciiRenderer(StreamRenderer):
     def board_init(self, board=None):
         super(BaseAsciiRenderer, self).board_init(board)
         LOG.info('init cells: %sx%s', self.full_width, self.full_width)
-        self.cells = [[self.cell_icon(_NOT_SET)] * self.full_width
-                      for _ in range(self.full_height)]
+
+        self.cells = np.array([[Cell()] * self.full_width
+                               for _ in range(self.full_height)])
+
+    def cell_icon(self, cell):  # pylint: disable=no-self-use
+        """
+        Gets a symbolic representation of a cell given its state
+        and predefined table `icons`
+        """
+        return cell.ascii_icon()
 
     def render(self):
         for row in self.cells:
@@ -100,16 +177,16 @@ class BaseAsciiRenderer(StreamRenderer):
     def draw_header(self):
         for i in range(self.header_height):
             for j in range(self.side_width):
-                self.cells[i][j] = _THUMBNAIL
+                self.cells[i][j] = ThumbnailCell()
 
         for j, col in enumerate(self.board.columns_descriptions):
             rend_j = j + self.side_width
             if not col:
                 col = [0]
-            rend_row = pad(col, self.header_height, _NOT_SET)
-            # self.cells[:self.side_width][rend_j] = map(text_type, rend_row)
-            for rend_i, cell in enumerate(rend_row):
-                self.cells[rend_i][rend_j] = cell
+
+            rend_column = [ClueCell(val) for val in col]
+            rend_column = pad(rend_column, self.header_height, Cell())
+            self.cells[:self.header_height, rend_j] = rend_column
 
     def draw_side(self):
         for i, row in enumerate(self.board.rows_descriptions):
@@ -117,15 +194,17 @@ class BaseAsciiRenderer(StreamRenderer):
             # row = list(row)
             if not row:
                 row = [0]
-            rend_row = pad(row, self.side_width, _NOT_SET)
+
+            rend_row = [ClueCell(val) for val in row]
+            rend_row = pad(rend_row, self.side_width, Cell())
             self.cells[rend_i][:self.side_width] = rend_row
 
     def draw_grid(self):
         for i, row in enumerate(self.board.cells):
             rend_i = i + self.header_height
-            for j, cell in enumerate(row):
+            for j, val in enumerate(row):
                 rend_j = j + self.side_width
-                self.cells[rend_i][rend_j] = cell
+                self.cells[rend_i][rend_j] = GridCell(val, self)
 
 
 class AsciiRenderer(BaseAsciiRenderer):
@@ -137,7 +216,6 @@ class AsciiRenderer(BaseAsciiRenderer):
     def __init__(self, board=None, stream=sys.stdout):
         super(AsciiRenderer, self).__init__(board, stream=stream)
         self.icons.update({
-            _THUMBNAIL: '#',
             UNKNOWN: ' ',
         })
 
@@ -220,8 +298,8 @@ class AsciiRenderer(BaseAsciiRenderer):
             end,
         ])
 
-    def cell_icon(self, state):
-        ico = super(AsciiRenderer, self).cell_icon(state)
+    def cell_icon(self, cell):
+        ico = super(AsciiRenderer, self).cell_icon(cell)
         max_width = self.CELL_WIDTH
         padded = max_width - len(ico)
         if padded < 0:

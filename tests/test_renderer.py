@@ -51,8 +51,8 @@ class TestConsoleBoard(object):
     def test_draw_empty(self, board, stream):
         board.draw()
         assert stream.getvalue().rstrip() == '\n'.join([
-            '- -       2 2      ',
-            '- - 0 9 9 2 2 4 4 0',
+            '# #       2 2      ',
+            '# # 0 9 9 2 2 4 4 0',
             '  0 _ _ _ _ _ _ _ _',
             '  4 _ _ _ _ _ _ _ _',
             '  6 _ _ _ _ _ _ _ _',
@@ -72,8 +72,8 @@ class TestConsoleBoard(object):
         board.cells[2][-1] = SPACE
         board.draw()
         assert stream.getvalue().rstrip() == '\n'.join([
-            '- -       2 2      ',
-            '- - 0 9 9 2 2 4 4 0',
+            '# #       2 2      ',
+            '# # 0 9 9 2 2 4 4 0',
             '  0 _ _ _ _ _ _ _ _',
             '  4 _ _ _ _ _ _ _ _',
             '  6 . X X X X X X .',
@@ -87,12 +87,10 @@ class TestConsoleBoard(object):
             '  0 _ _ _ _ _ _ _ _',
         ])
 
-    def test_bad_cell_value(self, board):
+    def test_bad_cell_value_consider_colored(self, board):
         board.cells[2][0] = str('space')
-        with pytest.raises(KeyError) as ei:
+        with pytest.raises(AttributeError, match="'color_map'"):
             board.draw()
-
-        assert str(ei.value), "'space'"
 
     def test_two_digits_bad_drawing(self, stream):
         width = 10
@@ -103,7 +101,7 @@ class TestConsoleBoard(object):
         b.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
-            '- - 1 1 1 1 1 1 1 1 1 1 0 1',
+            '# # 1 1 1 1 1 1 1 1 1 1 0 1',
             '101 _ _ _ _ _ _ _ _ _ _ _ _',
         ])
 

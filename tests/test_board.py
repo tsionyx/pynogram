@@ -459,13 +459,13 @@ class TestColorBoard(object):
         renderer = BaseAsciiRenderer(stream=stream)
         board = make_board(columns, rows, colors, renderer=renderer)
         board.cells[0] = ['r', 'r', 'r']
-        board.cells[2] = [(True, True, True)]
+        board.cells[2] = [True, True, True]
 
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
-            '- 1 1 1',
-            '- 1 1 1',
+            '# 1 1 1',
+            '# 1 1 1',
             '3 % % %',
             '0 _ _ _',
             '3 X X X',
