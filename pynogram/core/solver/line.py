@@ -71,11 +71,9 @@ def solve_row(board, index, is_column, method,
         LOG.debug('New info on %s %s: %s', desc, index, [job_index for _, job_index in new_jobs])
 
         if is_column:
-            board.cells[:, index] = updated
-            board.column_updated(index)
+            board.set_column(index, updated)
         else:
-            board.cells[index] = updated
-            board.row_updated(index)
+            board.set_row(index, updated)
 
     LOG.debug('%ss solution: %.6f sec', desc.title(), time.time() - start)
     return new_jobs

@@ -9,7 +9,6 @@ import logging
 import os
 import re
 
-import numpy as np
 from six import integer_types, string_types, iteritems
 
 from pynogram.utils.collections import list_replace
@@ -139,10 +138,14 @@ def normalize_row(row):
 
 
 def is_list_like(value):
-    """Whether value is tuple, list or numpy array"""
-    return isinstance(value, (tuple, list, np.ndarray))
+    """Whether value is tuple or list"""
+    return isinstance(value, (tuple, list))
 
 
 def is_color_list(value):
-    """Whether value is numpy array"""
-    return isinstance(value, np.ndarray)
+    """Whether value is a list-like of list-likes"""
+    if is_list_like(value):
+        if value and is_list_like(value[0]):
+            return True
+
+    return False

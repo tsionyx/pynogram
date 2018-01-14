@@ -10,7 +10,6 @@ import os
 import re
 import sys
 
-import numpy as np
 import svgwrite as svg
 from six import integer_types, text_type, string_types
 
@@ -155,8 +154,8 @@ class BaseAsciiRenderer(StreamRenderer):
         super(BaseAsciiRenderer, self).board_init(board)
         LOG.info('init cells: %sx%s', self.full_width, self.full_width)
 
-        self.cells = np.array([[Cell()] * self.full_width
-                               for _ in range(self.full_height)])
+        self.cells = [[Cell()] * self.full_width
+                      for _ in range(self.full_height)]
 
     def cell_icon(self, cell):  # pylint: disable=no-self-use
         """
@@ -192,7 +191,10 @@ class BaseAsciiRenderer(StreamRenderer):
 
             rend_column = [ClueCell(val) for val in col]
             rend_column = pad(rend_column, self.header_height, Cell())
-            self.cells[:self.header_height, rend_j] = rend_column
+
+            # self.cells[:self.header_height, rend_j] = rend_column
+            for i, cell in enumerate(rend_column):
+                self.cells[i][rend_j] = cell
 
     def draw_side(self):
         for i, row in enumerate(self.board.rows_descriptions):

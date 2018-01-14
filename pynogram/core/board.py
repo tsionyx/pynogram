@@ -9,7 +9,6 @@ import logging
 import os
 from collections import defaultdict
 
-import numpy as np
 from six.moves import zip, range
 
 from pynogram.core.common import (
@@ -97,7 +96,7 @@ class Renderer(object):
         raise NotImplementedError()
 
 
-class Board(object):
+class Board(object):  # pylint: disable=too-many-public-methods
     """
     Nonogram board with columns and rows defined
     """
@@ -120,7 +119,7 @@ class Board(object):
             raise TypeError('Bad renderer: %s' % renderer)
 
         init_state = self.init_cell_state()
-        self.cells = np.array([[init_state] * self.width for _ in range(self.height)])
+        self.cells = [[init_state] * self.width for _ in range(self.height)]
         self.validate()
 
         # you can provide custom callbacks here
@@ -148,7 +147,20 @@ class Board(object):
 
     def get_column(self, index):
         """Get the board's column at given index"""
-        return self.cells.T[index]
+        return tuple(row[index] for row in self.cells)
+
+    def set_row(self, index, value):
+        """Set the board's row at given index with given value"""
+        self.cells[index] = list(value)
+
+        self.row_updated(index)
+
+    def set_column(self, index, value):
+        """Set the board's column at given index with given value"""
+        for row_index, item in enumerate(value):
+            self.cells[row_index][index] = item
+
+        self.column_updated(index)
 
     # pylint: disable=not-callable
     def row_updated(self, row_index):
@@ -278,10 +290,6 @@ class ColoredBoard(Board):
             return UNKNOWN
 
         return cell
-
-    def get_column(self, index):
-        # do not transpose array of possible colors
-        return self.cells.transpose([1, 0, 2])[index]
 
     def cell_colors(self, i, j):
         """Get all the possible colors of a cell"""

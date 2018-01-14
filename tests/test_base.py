@@ -19,7 +19,7 @@ def test_space_hints_solving():
     ]
     board = Board(columns, rows)
     _solve_on_space_hints(board, [[0], [0, 1], [0, 1]])
-    assert board.cells.tolist() == [
+    assert board.cells == [
         [True, True, True],
         [True, False, True],
         [True, False, True],

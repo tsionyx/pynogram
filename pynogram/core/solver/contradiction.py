@@ -6,6 +6,7 @@ from __future__ import unicode_literals, print_function
 import logging
 import os
 import time
+from copy import deepcopy
 from itertools import cycle
 
 from pynogram.core.common import UNKNOWN, BOX, invert
@@ -31,7 +32,7 @@ def try_contradiction(board, row_index, column_index,
     if board.has_color(board.cells[row_index][column_index]) != UNKNOWN:
         return
 
-    save = board.cells.copy()
+    save = deepcopy(board.cells)
     contradiction = False
 
     try:

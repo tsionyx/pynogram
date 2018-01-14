@@ -1,5 +1,4 @@
 six >= 1.10.0
-numpy
 futures; python_version < '3.2'
 tornado
 lxml
