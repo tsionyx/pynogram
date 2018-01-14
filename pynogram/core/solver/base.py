@@ -5,6 +5,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 
+from pynogram.core.common import normalize_row, normalize_description
 from pynogram.core.solver import simpson
 from pynogram.core.solver.common import NonogramError
 from pynogram.core.solver.machine import NonogramFSM, LOG as MACHINE_LOGGER
@@ -39,9 +40,13 @@ def solve_line(*args, **kwargs):
         # mp's map supports only one iterable, so this weird syntax
         args = args[0]
 
-    row_desc, row = args
+    desc, line = args
 
-    return _solver(method)(row_desc, row)
+    desc = normalize_description(desc)
+    # desc = tuple(desc)
+    line = normalize_row(line)
+
+    return _solver(method)(desc, line)
 
 
 def assert_match(row_desc, row):

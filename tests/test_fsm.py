@@ -6,7 +6,10 @@ from copy import copy
 
 import pytest
 
-from pynogram.core.common import UNKNOWN, BOX, SPACE
+from pynogram.core.common import (
+    UNKNOWN, BOX, SPACE,
+    normalize_row,
+)
 from pynogram.core.fsm import (
     StateMachineError,
     FiniteStateMachine,
@@ -243,6 +246,8 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
     def test_transition_table(self):
         description, row = '2 2', '___0X_____'
         nfsm = NonogramFSM.from_description(description)
+
+        row = normalize_row(row)
         # noinspection PyProtectedMember
         transition_table = nfsm._make_transition_table(row)
         # TODO: assert string representation
@@ -301,7 +306,7 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
         with pytest.raises(NonogramError) as ie:
             solve_line('1 1', '__.', method='reverse_tracking')
 
-        assert str(ie.value) == "The row '__.' cannot fit"
+        assert str(ie.value) == "The row '(None, None, False)' cannot fit"
 
     def test_solve_bad_method(self):
         with pytest.raises(AttributeError) as ie:

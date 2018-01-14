@@ -185,8 +185,6 @@ class NonogramFSM(fsm.FiniteStateMachine):
         return solved
 
     def _make_transition_table(self, row):
-        row = normalize_row(row)
-
         # for each read cell store a list of StepState
         # plus O-th for the state before any read cells
         transition_table = TransitionTable.with_capacity(len(row) + 1)
@@ -223,7 +221,6 @@ class NonogramFSM(fsm.FiniteStateMachine):
         """
         Solve the nonogram `row` using the FSM and reverse tracking
         """
-        original_row, row = row, normalize_row(row)
 
         # pylint: disable=no-member
         solved_row = self.solutions_cache.get((self.description, row))
@@ -234,7 +231,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
         transition_table = self._make_transition_table(row)
 
         if self.final_state not in transition_table[-1]:
-            raise NonogramError("The row '{}' cannot fit".format(original_row))
+            raise NonogramError("The row '{}' cannot fit".format(row))
         # print(transition_table)
 
         solved_row = []

@@ -15,8 +15,6 @@ from six.moves import range
 
 from pynogram.core.common import (
     BOX, SPACE, UNKNOWN,
-    normalize_description,
-    normalize_row,
 )
 from pynogram.core.solver.common import (
     NonogramError,
@@ -274,8 +272,6 @@ class FastSolver(object):
         Solve the given line with given rule (description)
         with left and right overlap algorithm
         """
-        rule = normalize_description(rule)
-        line = normalize_row(line)
 
         # pylint: disable=no-member
         solved = cls.solutions_cache.get((rule, line))

@@ -26,8 +26,8 @@ LOG = logging.getLogger(_LOG_NAME)
 def solve_row(board, index, is_column, method,
               contradiction_mode=False):
     """
-    Solve one line with FSM.
-    If line gets partially solved,
+    Solve a line with the solving `method`.
+    If the line gets partially solved,
     put the crossed lines into queue.
 
     Return the list of new jobs that should be put into queue.
