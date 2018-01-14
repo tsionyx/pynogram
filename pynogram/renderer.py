@@ -15,7 +15,10 @@ import svgwrite as svg
 from six import integer_types, text_type, string_types
 
 from pynogram.core.board import Renderer, Board, ColoredBoard
-from pynogram.core.common import UNKNOWN, BOX, SPACE
+from pynogram.core.common import (
+    UNKNOWN, BOX, SPACE,
+    is_list_like,
+)
 from pynogram.utils.collections import pad, split_seq
 
 _LOG_NAME = __name__
@@ -57,7 +60,7 @@ class ClueCell(Cell):  # pylint: disable=too-few-public-methods
 
     def __init__(self, value):
         super(ClueCell, self).__init__()
-        if isinstance(value, (tuple, list, np.ndarray)):
+        if is_list_like(value):
             self.value, self.color = value
         else:
             self.value, self.color = value, None
@@ -87,7 +90,7 @@ class GridCell(Cell):  # pylint: disable=too-few-public-methods
         self.renderer = renderer
         self.colored = colored
         if self.colored:
-            if isinstance(value, (tuple, list, np.ndarray)):
+            if is_list_like(value):
                 self.value = tuple(value)
             else:
                 self.value = value
@@ -101,7 +104,7 @@ class GridCell(Cell):  # pylint: disable=too-few-public-methods
         if not self.colored:
             return icons[self.value]
 
-        if isinstance(value, (tuple, list, np.ndarray)):
+        if is_list_like(value):
             value = tuple(set(value))
             if len(value) == 1:
                 value = value[0]

@@ -9,6 +9,7 @@ import logging
 import os
 import re
 
+import numpy as np
 from six import integer_types, string_types, iteritems
 
 from pynogram.utils.collections import list_replace
@@ -135,3 +136,13 @@ def normalize_row(row):
 
     assert set(row).issubset(FORMAL_ALPHABET)
     return tuple(row)
+
+
+def is_list_like(value):
+    """Whether value is tuple, list or numpy array"""
+    return isinstance(value, (tuple, list, np.ndarray))
+
+
+def is_color_list(value):
+    """Whether value is numpy array"""
+    return isinstance(value, np.ndarray)

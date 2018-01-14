@@ -17,6 +17,7 @@ from pynogram.core.common import (
     normalize_description,
     normalize_description_colored,
     DEFAULT_COLOR, DEFAULT_COLOR_NAME,
+    is_list_like,
 )
 from pynogram.utils.collections import avg, max_safe
 
@@ -250,7 +251,7 @@ class ColoredBoard(Board):
         """
         solved = 0
         for cell in row:
-            if isinstance(cell, (tuple, list, np.ndarray)):
+            if is_list_like(cell):
                 if len(cell) == 1:
                     solved += 1
             else:
