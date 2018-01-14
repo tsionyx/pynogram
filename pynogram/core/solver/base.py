@@ -8,18 +8,28 @@ import logging
 from pynogram.core.common import normalize_row, normalize_description
 from pynogram.core.solver import simpson
 from pynogram.core.solver.common import NonogramError
-from pynogram.core.solver.machine import NonogramFSM, LOG as MACHINE_LOGGER
+from pynogram.core.solver.machine import (
+    NonogramFSM, NonogramFSMColored,
+    LOG as MACHINE_LOGGER,
+)
 
 MACHINE_LOGGER.setLevel(logging.WARNING)
 simpson.LOG.setLevel(logging.WARNING)
 
 
 def _solver(name):
-    if name in ('partial_match', 'reverse_tracking'):
+    if name in ('partial_match', 'reverse_tracking', 'reverse_tracking_color'):
         def _solve(row_desc, row):
-            nfsm = NonogramFSM.from_description(row_desc)
+            _name = name
+            if _name == 'reverse_tracking_color':
+                nfsm_class = NonogramFSMColored
+                _name = 'reverse_tracking'
+            else:
+                nfsm_class = NonogramFSM
 
-            method_func = getattr(nfsm, 'solve_with_' + name)
+            nfsm = nfsm_class.from_description(row_desc)
+
+            method_func = getattr(nfsm, 'solve_with_' + _name)
             return method_func(row)
 
         return _solve

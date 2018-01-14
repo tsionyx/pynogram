@@ -7,8 +7,10 @@ import logging
 import os
 import time
 
+from pynogram.core.board import ColoredBoard
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
+    is_list_like,
 )
 from pynogram.core.solver.base import (
     assert_match, solve_line,
@@ -61,10 +63,17 @@ def solve_row(board, index, is_column, method,
     new_jobs = []
     if board.line_solution_rate(updated) > pre_solution_rate:
         # LOG.debug('Queue: %s', jobs_queue)
+        LOG.debug(row)
+        LOG.debug(updated)
         for i, (pre, post) in enumerate(zip(row, updated)):
             if pre != post:
-                assert pre == UNKNOWN
-                assert post in (BOX, SPACE)
+                if is_list_like(post):  # colored
+                    if set(pre) == set(post):
+                        continue
+                    assert len(pre) > len(post)
+                else:
+                    assert pre == UNKNOWN
+                    assert post in (BOX, SPACE)
 
                 new_jobs.append((not is_column, i))
         # LOG.debug('Queue: %s', jobs_queue)
@@ -91,7 +100,10 @@ def solve(board, parallel=False,
     """
 
     if methods is None:
-        methods = ('simpson', 'reverse_tracking')
+        if isinstance(board, ColoredBoard):
+            methods = ('reverse_tracking_color',)
+        else:
+            methods = ('simpson', 'reverse_tracking')
 
     if not isinstance(methods, (tuple, list)):
         methods = [methods]

@@ -12,7 +12,7 @@ from collections import defaultdict
 from six.moves import zip, range
 
 from pynogram.core.common import (
-    UNKNOWN, BOX, SPACE,
+    UNKNOWN, BOX, SPACE, invert,
     normalize_description,
     normalize_description_colored,
     DEFAULT_COLOR, DEFAULT_COLOR_NAME,
@@ -140,6 +140,18 @@ class Board(object):  # pylint: disable=too-many-public-methods
         If the color is undefined yet, return UNKNOWN.
         """
         return cell
+
+    @classmethod
+    def assumptions(cls):
+        """All the possible state that the cell can be in"""
+        return BOX, SPACE
+
+    def unset_state(self, bad_state, row_index, column_index):
+        """
+        Drop the state from the list of possible states
+        for a given cell
+        """
+        self.cells[row_index][column_index] = invert(bad_state)
 
     def get_row(self, index):
         """Get the board's row at given index"""
@@ -278,7 +290,7 @@ class ColoredBoard(Board):
         super(ColoredBoard, self).__init__(columns, rows, renderer=renderer, **renderer_params)
 
     def init_cell_state(self):
-        return tuple(self.color_map)
+        return tuple(self.color_map) + (SPACE,)
 
     @classmethod
     def has_color(cls, cell):
@@ -290,6 +302,24 @@ class ColoredBoard(Board):
             return UNKNOWN
 
         return cell
+
+    def assumptions(self):
+        return tuple(self.color_map) + (SPACE,)
+
+    def unset_state(self, bad_state, row_index, column_index):
+        colors = self.cells[row_index][column_index]
+        if not is_list_like(bad_state):
+            bad_state = [bad_state]
+        LOG.debug('(%d, %d) previous state: %s',
+                  row_index, column_index, colors)
+        LOG.debug('Bad states: %s', bad_state)
+
+        if set(bad_state).intersection(set(colors)):
+            new_value = [color for color in colors if color not in bad_state]
+
+            LOG.debug('(%d, %d) new state: %s',
+                      row_index, column_index, new_value)
+            self.cells[row_index][column_index] = new_value
 
     def cell_colors(self, i, j):
         """Get all the possible colors of a cell"""
@@ -337,7 +367,7 @@ class ColoredBoard(Board):
         horizontal_colors = self.colors(True)
         vertical_colors = self.colors(False)
 
-        if horizontal_colors != vertical_colors:
+        if set(horizontal_colors) != set(vertical_colors):
             raise ValueError('Colors differ: {} (rows) and {} (columns)'.format(
                 horizontal_colors, vertical_colors))
 

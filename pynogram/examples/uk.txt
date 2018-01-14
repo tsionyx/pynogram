@@ -52,7 +52,7 @@ rows =
     31r, 31r, 31r
 
     10b 3r 1b 3r 1b 3r 10b
-    10b 3r 1b 3r 1b 3r 10b
+    8b 3r 3b 3r 3b 3r 8b
     6b 3r 5b 3r 5b 3r 6b
     4b 3r 7b 3r 7b 3r 4b
     2b 3r 9b 3r 9b 3r 2b

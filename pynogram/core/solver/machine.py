@@ -184,6 +184,16 @@ class NonogramFSM(fsm.FiniteStateMachine):
                         i, cell, original_row))
         return solved
 
+    @classmethod
+    def _types_for_cell(cls, cell):
+        if cell in (BOX, SPACE):
+            return [cell]
+
+        if cell == UNKNOWN:
+            return [BOX, SPACE]
+
+        return []
+
     def _make_transition_table(self, row):
         # for each read cell store a list of StepState
         # plus O-th for the state before any read cells
@@ -207,15 +217,20 @@ class NonogramFSM(fsm.FiniteStateMachine):
             transition_index = i + 1
 
             for prev_state, prev in iteritems(transition_table[i]):
-                if cell in (BOX, UNKNOWN):
-                    _shift_one_cell(BOX, transition_index,
-                                    prev, prev_state)
-
-                if cell in (SPACE, UNKNOWN):
-                    _shift_one_cell(SPACE, transition_index,
+                for _type in self._types_for_cell(cell):
+                    _shift_one_cell(_type, transition_index,
                                     prev, prev_state)
 
         return transition_table
+
+    @classmethod
+    def _cell_value_from_solved(cls, states):
+        assert states
+
+        if len(states) == 1:
+            return states[0]
+
+        return UNKNOWN
 
     def solve_with_reverse_tracking(self, row):
         """
@@ -230,19 +245,14 @@ class NonogramFSM(fsm.FiniteStateMachine):
 
         transition_table = self._make_transition_table(row)
 
+        # print(transition_table)
         if self.final_state not in transition_table[-1]:
             raise NonogramError("The row '{}' cannot fit".format(row))
-        # print(transition_table)
 
         solved_row = []
         for states in reversed(list(
                 transition_table.reverse_tracking(self.final_state))):
-            assert states
-
-            if len(states) == 1:
-                solved_row.append(states[0])
-            else:
-                solved_row.append(UNKNOWN)
+            solved_row.append(self._cell_value_from_solved(states))
 
         assert len(solved_row) == len(row)
 
@@ -348,3 +358,66 @@ class TransitionTable(list):
 
             possible_states = step_possible_states
             yield tuple(step_possible_cell_types)
+
+
+class NonogramFSMColored(NonogramFSM):
+    """
+    FSM-based line solver for colored puzzles
+    """
+
+    @classmethod
+    def _required_color(cls, state, color):
+        return (state, color), state + 1
+
+    @classmethod
+    def from_description(cls, *description):
+        if len(description) == 1:
+            description = description[0]
+        description = normalize_description(description)
+        LOG.debug('Clues: %s', description)
+
+        state_map = cls._fsm_cache.get(description)
+        if state_map is not None:
+            return cls(description, state_map)
+
+        state_counter = cls.INITIAL_STATE
+        state_map = []
+
+        prev_color = None
+        for value, color in description:
+            # it SHOULD be a space before block
+            # if it is not a first block AND the previous block was of the same color
+            if prev_color == color:
+                trans, state_counter = cls._required_space(state_counter)
+                LOG.debug('Add transition: %s -> %s', trans, state_counter)
+                state_map.append((trans, state_counter))
+
+            # it CAN be multiple spaces before every block
+            trans, state_counter = cls._optional_space(state_counter)
+            LOG.debug('Add transition: %s -> %s', trans, state_counter)
+            state_map.append((trans, state_counter))
+
+            # the block of some color
+            for _ in range(value):
+                trans, state_counter = cls._required_color(state_counter, color)
+                LOG.debug('Add transition: %s -> %s', trans, state_counter)
+                state_map.append((trans, state_counter))
+
+            prev_color = color
+
+        # at the end of the line can be optional spaces
+        trans, state_counter = cls._optional_space(state_counter)
+        LOG.debug('Add transition: %s -> %s', trans, state_counter)
+        state_map.append((trans, state_counter))
+
+        cls._fsm_cache.save(description, state_map)
+        return cls(description, state_map)
+
+    @classmethod
+    def _types_for_cell(cls, cell):
+        return list(set(cell))
+
+    @classmethod
+    def _cell_value_from_solved(cls, states):
+        # assert states.size
+        return states

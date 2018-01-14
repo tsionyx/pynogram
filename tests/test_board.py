@@ -475,3 +475,8 @@ class TestColorBoard(object):
             '0 _ _ _',
             '3 X X X',
         ])
+
+    def test_solve(self, board):
+        contradiction_solver.solve(board)
+        assert board.solution_rate == 1
+        assert board.solved

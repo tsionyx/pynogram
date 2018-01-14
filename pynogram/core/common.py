@@ -109,6 +109,9 @@ def normalize_row(row):
     """
     Normalize an easy-to write row representation with a formal one
     """
+    if is_color_list(row):
+        return tuple(map(tuple, row))
+
     alphabet = set(row)
     if alphabet.issubset(FORMAL_ALPHABET):
         return tuple(row)

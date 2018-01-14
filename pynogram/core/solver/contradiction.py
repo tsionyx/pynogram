@@ -9,7 +9,8 @@ import time
 from copy import deepcopy
 from itertools import cycle
 
-from pynogram.core.common import UNKNOWN, BOX, invert
+from pynogram.core.board import ColoredBoard
+from pynogram.core.common import UNKNOWN
 from pynogram.core.solver import line
 from pynogram.core.solver.base import cache_hit_rate
 from pynogram.core.solver.common import NonogramError
@@ -22,7 +23,7 @@ LOG = logging.getLogger(_LOG_NAME)
 
 
 def try_contradiction(board, row_index, column_index,
-                      assumption=BOX, propagate=True):
+                      assumption, propagate=True):
     """
     Try to find if the given cell can be in an assumed state.
     If the contradiction is found, set the cell
@@ -34,11 +35,17 @@ def try_contradiction(board, row_index, column_index,
 
     save = deepcopy(board.cells)
     contradiction = False
+    colored = isinstance(board, ColoredBoard)
 
     try:
         try:
             LOG.debug('Pretend that (%i, %i) is %s',
                       row_index, column_index, assumption)
+            if colored:
+                if assumption not in board.cells[row_index][column_index]:
+                    return
+                assumption = [assumption]
+
             board.cells[row_index][column_index] = assumption
             line.solve(
                 board,
@@ -56,7 +63,7 @@ def try_contradiction(board, row_index, column_index,
         if contradiction:
             LOG.info("Found contradiction at (%i, %i)",
                      row_index, column_index)
-            board.cells[row_index][column_index] = invert(assumption)
+            board.unset_state(assumption, row_index, column_index)
 
             # try to solve with additional info
             if propagate:
@@ -75,6 +82,7 @@ def _contradictions_round(
     by trying every cell and the basic `solve` method.
 
     :param assumption: which state to try: BOX or SPACE
+    or all the possible colors for colored boards
     :param propagate_on_cell: how to propagate changes:
     after each solved cell or in the end of the row
     :param by_rows: iterate by rows (left-to-right) or by columns (top-to-bottom)
@@ -90,7 +98,7 @@ def _contradictions_round(
                 try_contradiction(
                     board,
                     solved_row, solved_column,
-                    assumption=assumption,
+                    assumption,
                     propagate=propagate_on_cell
                 )
 
@@ -108,7 +116,7 @@ def _contradictions_round(
                 try_contradiction(
                     board,
                     solved_row, solved_column,
-                    assumption=assumption,
+                    assumption,
                     propagate=propagate_on_cell
                 )
 
@@ -142,8 +150,9 @@ def solve(
     start = time.time()
 
     counter = 0
+    colored = isinstance(board, ColoredBoard)
 
-    assumptions = (BOX, invert(BOX))  # try the different assumptions every time
+    assumptions = board.assumptions()  # try the different assumptions every time
     active_assumptions_rate = {state: board.solution_rate for state in assumptions}
 
     assumptions = cycle(assumptions)
@@ -164,9 +173,11 @@ def solve(
             break
 
         if board.solution_rate == active_assumptions_rate[assumption]:
-            break
-            # stalled
-            # del active_assumptions_rate[assumption]
+            if colored:
+                # stalled
+                del active_assumptions_rate[assumption]
+            else:
+                break
         else:
             active_assumptions_rate[assumption] = board.solution_rate
 
