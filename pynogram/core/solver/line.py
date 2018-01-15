@@ -36,13 +36,15 @@ def solve_row(board, index, is_column, method,
     start = time.time()
 
     if is_column:
-        row_desc, row = board.columns_descriptions[index], board.cells.T[index]
+        row_desc = board.columns_descriptions[index]
+        row = board.get_column(index)
         desc = 'column'
     else:
-        row_desc, row = board.rows_descriptions[index], board.cells[index]
+        row_desc = board.rows_descriptions[index]
+        row = board.get_row(index)
         desc = 'row'
 
-    pre_solution_rate = board.row_solution_rate(row)
+    pre_solution_rate = board.line_solution_rate(row)
 
     if pre_solution_rate == 1:
         if contradiction_mode:
@@ -57,7 +59,7 @@ def solve_row(board, index, is_column, method,
     updated = solve_line(row_desc, row, method=method)
 
     new_jobs = []
-    if board.row_solution_rate(updated) > pre_solution_rate:
+    if board.line_solution_rate(updated) > pre_solution_rate:
         # LOG.debug('Queue: %s', jobs_queue)
         for i, (pre, post) in enumerate(zip(row, updated)):
             if pre != post:

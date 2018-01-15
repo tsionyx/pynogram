@@ -28,7 +28,7 @@ def try_contradiction(board, row_index, column_index,
     in an inverted state and propagate the changes if needed.
     """
     # already solved
-    if board.cells[row_index][column_index] != UNKNOWN:
+    if board.has_color(board.cells[row_index][column_index]) != UNKNOWN:
         return
 
     save = board.cells.copy()
@@ -81,7 +81,7 @@ def _contradictions_round(
 
     if by_rows:
         for solved_row in range(board.height):
-            if board.row_solution_rate(board.cells[solved_row]) == 1:
+            if board.row_solution_rate(solved_row) == 1:
                 continue
 
             LOG.info('Trying to assume on row %i', solved_row)
@@ -99,7 +99,7 @@ def _contradictions_round(
                     board, row_indexes=(solved_row,))
     else:
         for solved_column in range(board.width):
-            if board.row_solution_rate(board.cells.T[solved_column]) == 1:
+            if board.column_solution_rate(solved_column) == 1:
                 continue
 
             LOG.info('Trying to assume on column %i', solved_column)

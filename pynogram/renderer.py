@@ -14,7 +14,7 @@ import numpy as np
 import svgwrite as svg
 from six import integer_types, text_type, string_types
 
-from pynogram.core.board import Renderer, Board, ColoredBoard
+from pynogram.core.board import Renderer, ColoredBoard
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
@@ -524,7 +524,7 @@ class SvgRenderer(StreamRenderer):
 
         header_group = drawing.g(class_='header-clues')
         for i, col_desc in enumerate(self.board.columns_descriptions):
-            if Board.row_solution_rate(self.board.cells.T[i]) == 1:
+            if self.board.column_solution_rate(i) == 1:
                 x_pos = self.pixel_side_width + (i * self.cell_size)
                 header_group.add(drawing.rect(
                     insert=(x_pos, 0),
@@ -549,7 +549,7 @@ class SvgRenderer(StreamRenderer):
 
         side_group = drawing.g(class_='side-clues')
         for j, row_desc in enumerate(self.board.rows_descriptions):
-            if Board.row_solution_rate(self.board.cells[j]) == 1:
+            if self.board.row_solution_rate(j) == 1:
                 y_pos = self.pixel_header_height + (j * self.cell_size)
                 side_group.add(drawing.rect(
                     insert=(0, y_pos),
@@ -607,8 +607,8 @@ class SvgRenderer(StreamRenderer):
         boxes = drawing.g(class_='box')
         spaces = drawing.g(class_='space')
 
-        for i, column in enumerate(self.board.cells.T):
-            for j, cell in enumerate(column):
+        for j, row in enumerate(self.board.cells):
+            for i, cell in enumerate(row):
                 if cell == BOX:
                     icon = drawing.use(
                         href='#box',

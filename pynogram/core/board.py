@@ -134,6 +134,22 @@ class Board(object):
         """Initial value of a board cell"""
         return UNKNOWN
 
+    @classmethod
+    def has_color(cls, cell):
+        """
+        Return the cell color if it's set.
+        If the color is undefined yet, return UNKNOWN.
+        """
+        return cell
+
+    def get_row(self, index):
+        """Get the board's row at given index"""
+        return self.cells[index]
+
+    def get_column(self, index):
+        """Get the board's column at given index"""
+        return self.cells.T[index]
+
     # pylint: disable=not-callable
     def row_updated(self, row_index):
         """Runs each time the row of the board gets partially solved"""
@@ -214,12 +230,20 @@ class Board(object):
     @property
     def solution_rate(self):
         """How many cells in the whole board are known to be box or space"""
-        return avg(self.row_solution_rate(row) for row in self.cells)
+        return avg(self.line_solution_rate(row) for row in self.cells)
 
     @classmethod
-    def row_solution_rate(cls, row):
-        """How many cells in a row are known to be box or space"""
+    def line_solution_rate(cls, row):
+        """How many cells in a given line are known to be box or space"""
         return sum(1 for cell in row if cell != UNKNOWN) / len(row)
+
+    def row_solution_rate(self, index):
+        """How many cells in a horizontal row are known to be box or space"""
+        return self.line_solution_rate(self.get_row(index))
+
+    def column_solution_rate(self, index):
+        """How many cells in a vertical column are known to be box or space"""
+        return self.line_solution_rate(self.get_column(index))
 
     @property
     def solved(self):
@@ -245,18 +269,34 @@ class ColoredBoard(Board):
         return tuple(self.color_map)
 
     @classmethod
-    def row_solution_rate(cls, row):
+    def has_color(cls, cell):
+        if is_list_like(cell):
+            colors = tuple(set(cell))
+            assert colors
+            if len(colors) == 1:
+                return colors[0]
+            return UNKNOWN
+
+        return cell
+
+    def get_column(self, index):
+        # do not transpose array of possible colors
+        return self.cells.transpose([1, 0, 2])[index]
+
+    def cell_colors(self, i, j):
+        """Get all the possible colors of a cell"""
+        cell = self.cells[i][j]
+        if is_list_like(cell):
+            return tuple(set(cell))
+
+        return cell
+
+    @classmethod
+    def line_solution_rate(cls, row):
         """
         How many cells in a row are known to be of particular color
         """
-        solved = 0
-        for cell in row:
-            if is_list_like(cell):
-                if len(cell) == 1:
-                    solved += 1
-            else:
-                solved += 1
-
+        solved = sum(1 for cell in row if cls.has_color(cell) != UNKNOWN)
         return solved / len(row)
 
     def colors(self, horizontal):
