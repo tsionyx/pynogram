@@ -37,3 +37,48 @@ and slower (_Intel(R) Core(TM) i5 CPU  M 560  @ 2.67GHz_) CPUs:
 | [football](../pynogram/examples/football.txt) | 0.63  | 1.04  | 1         | 100              |
 | [einstein](../pynogram/examples/einstein.txt) | 0.86  | 1.58  | 0         | 100              |
 | [MLP](../pynogram/examples/MLP.txt)           | 18.90 | 35.08 | 3         | 100              |
+
+
+
+### Colored puzzles
+
+```
+for i in 11360 12924 13951 15711 2014 2021 2518 3408 5353 6098 7598 7959 8364 10266 10295 11059 11443 11924 12987 13932 13983 14040 14442 14691 14913 14918 15082 15233 15370; do
+    echo "Solving PBN's puzzle #$i (http://webpbn.com/$i) ..."
+    /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
+    grep -iP 'contradiction|Total'
+    echo
+done
+```
+
+| #         | Contradiction rounds | Solution rate, % | Fail on round |
+|-----------|:--------------------:|-----------------:|--------------:|
+| **11360** |   1                  |                  |   False
+| 12924     |   1                  |
+| 13951     |   1                  |
+| **15711** |   6                  |   0.872
+| 2014      |   1                  |
+| 2021      |   1                  |
+| **2518**  |   2                  |                  | green, False
+| **3408**  |   2                  |                  | black
+| 5353      |   1                  |
+| 6098      |   2                  |
+| **7598**  |   6                  |   0.9020
+| 7959      |   1                  |
+| 8364      |   1                  |
+| **10266** |   6                  |   0.872
+| **10295** |   13                 |   0.9913
+| 11059     |   1                  |
+| 11443     |   2                  |
+| 11924     |   1                  |
+| 12987     |   1                  |
+| **13932** |   2                  |                  | False
+| 13983     |   3                  |
+| 14040     |   1                  |
+| 14442     |   1                  |
+| 14691     |   1                  |
+| 14913     |   1                  |
+| **14918** |   1                  |                  | False
+| **15082** |   1                  |                  | False
+| **15233** |   5                  |   0.9943
+| 15370     |   1                  |
