@@ -11,7 +11,10 @@ import re
 import sys
 
 import svgwrite as svg
-from six import integer_types, text_type, string_types
+from six import (
+    integer_types, text_type, string_types,
+    iteritems,
+)
 
 from pynogram.core.board import Renderer, ColoredBoard
 from pynogram.core.common import (
@@ -392,10 +395,21 @@ class SvgRenderer(StreamRenderer):
         super(SvgRenderer, self).__init__(board, stream)
 
         self.cell_size = size
+        self.color_symbols = dict()
         self.drawing = svg.Drawing(size=(
             self.full_width + self.cell_size,
             self.full_height + self.cell_size))
         self._add_definitions()
+
+    def _add_symbol(self, id_, color, *parts, **kwargs):
+        drawing = self.drawing
+        symbol = drawing.symbol(id_=id_, **kwargs)
+        for part in parts:
+            symbol.add(part)
+
+        if color is not None:
+            self.color_symbols[color] = id_
+        drawing.defs.add(symbol)
 
     def _add_definitions(self):
         drawing = self.drawing
@@ -411,31 +425,41 @@ class SvgRenderer(StreamRenderer):
             )
         ))
 
-        box_symbol = drawing.symbol(id_='box')
-        box_symbol.add(drawing.rect(
-            size=(self.cell_size, self.cell_size),
-        ))
+        if isinstance(self.board, ColoredBoard):
+            for color_name in self.board.color_map:
+                self._add_symbol(
+                    'color-%s' % color_name, color_name,
+                    drawing.rect(
+                        size=(self.cell_size, self.cell_size),
+                        fill=self._color_from_name(color_name),
+                    ))
+        else:
+            self._add_symbol(
+                'box', BOX,
+                drawing.rect(
+                    size=(self.cell_size, self.cell_size),
+                ))
 
-        space_symbol = drawing.symbol(id_='space')
-        space_symbol.add(drawing.circle(
-            r=self.cell_size / 20
-        ))
+        self._add_symbol(
+            'space', SPACE,
+            drawing.circle(
+                r=self.cell_size / 20
+            ))
 
-        solved_symbol = drawing.symbol(id_='check', stroke='green', fill='none')
-        solved_symbol.add(drawing.circle(
-            r=40, stroke_width=10, center=(50, 50)
-        ))
-        solved_symbol.add(drawing.polyline(
-            stroke_width=12,
-            points=[(35, 35), (35, 55), (75, 55)],
-            transform='rotate(-45 50 50)'
-        ))
+        self._add_symbol(
+            'check', None,
+            drawing.circle(
+                r=40, stroke_width=10, center=(50, 50)
+            ),
+            drawing.polyline(
+                stroke_width=12,
+                points=[(35, 35), (35, 55), (75, 55)],
+                transform='rotate(-45 50 50)'
+            ),
+            stroke='green', fill='none'
+        )
 
         self.check_icon_size = 100
-
-        drawing.defs.add(box_symbol)
-        drawing.defs.add(space_symbol)
-        drawing.defs.add(solved_symbol)
 
     @property
     def pixel_side_width(self):
@@ -564,6 +588,18 @@ class SvgRenderer(StreamRenderer):
 
         drawing.add(side_group)
 
+    @classmethod
+    def _color_code(cls, cell):
+        if is_list_like(cell):
+            cell = tuple(set(cell))
+            if len(cell) == 1:
+                cell = cell[0]
+            else:
+                # multiple colors
+                cell = UNKNOWN
+
+        return cell
+
     def draw_grid(self):  # pylint: disable=too-many-locals
         drawing = self.drawing
 
@@ -606,30 +642,40 @@ class SvgRenderer(StreamRenderer):
 
         drawing.add(grid_lines)
 
-        boxes = drawing.g(class_='box')
-        spaces = drawing.g(class_='space')
+        cell_groups = dict()
+        for cell_value, id_ in iteritems(self.color_symbols):
+            cell_groups[cell_value] = drawing.g(class_=id_)
+
+        colored = isinstance(self.board, ColoredBoard)
 
         for j, row in enumerate(self.board.cells):
             for i, cell in enumerate(row):
-                if cell == BOX:
-                    icon = drawing.use(
-                        href='#box',
-                        insert=(
-                            self.pixel_side_width + (i * self.cell_size),
-                            self.pixel_header_height + (j * self.cell_size))
-                    )
-                    boxes.add(icon)
-                elif cell == SPACE:
-                    icon = drawing.use(
-                        href='#space',
-                        insert=(
-                            self.pixel_side_width + (i + 0.5) * self.cell_size,
-                            self.pixel_header_height + (j + 0.5) * self.cell_size)
-                    )
-                    spaces.add(icon)
+                if colored:
+                    cell = self._color_code(cell)
 
-        drawing.add(boxes)
-        drawing.add(spaces)
+                if cell == UNKNOWN:
+                    continue
+
+                if cell == SPACE:
+                    insert_point = (
+                        self.pixel_side_width + (i + 0.5) * self.cell_size,
+                        self.pixel_header_height + (j + 0.5) * self.cell_size)
+                else:
+                    # for boxes colored and black
+                    insert_point = (
+                        self.pixel_side_width + (i * self.cell_size),
+                        self.pixel_header_height + (j * self.cell_size))
+
+                id_ = self.color_symbols[cell]
+                icon = drawing.use(
+                    href='#' + id_,
+                    insert=insert_point)
+                cell_groups[cell].add(icon)
+
+        # to get predictable order
+        for cell_value, group in sorted(iteritems(cell_groups),
+                                        key=lambda x: str(x[0])):
+            drawing.add(group)
 
         if self.board.solution_rate == 1:
             check_icon_size = self.check_icon_size

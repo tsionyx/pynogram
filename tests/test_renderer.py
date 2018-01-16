@@ -331,8 +331,8 @@ class TestSvg(object):
                     <line x1="30" x2="30" y1="0" y2="30" />
                     <line class="bold" x1="45" x2="45" y1="0" y2="30" />
                 </g>
-                <g class="box" />
                 <g class="space" />
+                <g class="box" />
             </svg>"""
 
         assert table[0] == '<?xml version="1.0" encoding="utf-8" ?>'
