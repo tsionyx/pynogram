@@ -156,8 +156,11 @@ def solve(
 
     assumptions = cycle(assumptions)
     while active_assumptions_rate:
-        counter += 1
         assumption = next(assumptions)
+        if assumption not in active_assumptions_rate:
+            continue
+
+        counter += 1
         LOG.warning('Contradiction round %i (assumption %s)', counter, assumption)
 
         _contradictions_round(
