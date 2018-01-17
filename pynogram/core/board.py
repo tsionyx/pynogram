@@ -316,20 +316,40 @@ class ColoredBoard(Board):
                       row_index, column_index, new_value)
             self.cells[row_index][column_index] = new_value
 
-    def cell_colors(self, i, j):
-        """Get all the possible colors of a cell"""
-        cell = self.cells[i][j]
+    def cell_solution_rate(self, cell):
+        """
+        How the cell's color set is close
+        to the full solution (one color).
+
+        The formula is like that:
+        `rate = (N - n) / (N - 1)`, where
+        N = full puzzle color set
+        n = current color set for given cell,
+
+        in particular:
+        a) when the cell is completely unsolved
+           rate = (N - N) / (N - 1) = 0
+        b) when the cell is solved
+           rate = (N - 1) / (N - 1) = 1
+        """
+
         if is_list_like(cell):
-            return tuple(set(cell))
+            cell_colors = set(cell)
+        else:
+            cell_colors = {cell}
 
-        return cell
+        full_colors = self.colors()
+        rate = len(full_colors) - len(cell_colors & full_colors)
+        normalized_rate = rate / (len(full_colors) - 1)
 
-    @classmethod
-    def line_solution_rate(cls, row):
+        assert 0 <= normalized_rate <= 1, 'Full: {}, Cell: {}'.format(full_colors, cell_colors)
+        return normalized_rate
+
+    def line_solution_rate(self, row):
         """
         How many cells in a row are known to be of particular color
         """
-        solved = sum(1 for cell in row if cls.has_color(cell) != UNKNOWN)
+        solved = sum(self.cell_solution_rate(cell) for cell in row)
         return solved / len(row)
 
     def _colors(self, horizontal):
