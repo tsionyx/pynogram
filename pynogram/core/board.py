@@ -134,17 +134,14 @@ class Board(object):  # pylint: disable=too-many-public-methods
         return UNKNOWN
 
     @classmethod
-    def has_color(cls, cell):
-        """
-        Return the cell color if it's set.
-        If the color is undefined yet, return UNKNOWN.
-        """
-        return cell
+    def cell_solved(cls, cell):
+        """Return whether the cell is completely solved"""
+        return cell != UNKNOWN
 
     @classmethod
-    def assumptions(cls):
-        """All the possible state that the cell can be in"""
-        return BOX, SPACE
+    def colors(cls):
+        """All the possible states that the cell can be in"""
+        return {BOX, SPACE}
 
     def unset_state(self, bad_state, row_index, column_index):
         """
@@ -293,18 +290,16 @@ class ColoredBoard(Board):
         return tuple(self.color_map) + (SPACE,)
 
     @classmethod
-    def has_color(cls, cell):
+    def cell_solved(cls, cell):
         if is_list_like(cell):
             colors = tuple(set(cell))
             assert colors
-            if len(colors) == 1:
-                return colors[0]
-            return UNKNOWN
+            return len(colors) == 1
 
-        return cell
+        return True
 
-    def assumptions(self):
-        return tuple(self.color_map) + (SPACE,)
+    def colors(self):
+        return set(self.color_map) | {SPACE}
 
     def unset_state(self, bad_state, row_index, column_index):
         colors = self.cells[row_index][column_index]
@@ -337,7 +332,7 @@ class ColoredBoard(Board):
         solved = sum(1 for cell in row if cls.has_color(cell) != UNKNOWN)
         return solved / len(row)
 
-    def colors(self, horizontal):
+    def _colors(self, horizontal):
         """
         All the different colors appeared
         in the descriptions (rows or columns)
@@ -351,7 +346,7 @@ class ColoredBoard(Board):
         for block in descriptions:
             for __, block_color in block:
                 colors.add(block_color)
-        return tuple(colors)
+        return colors
 
     @classmethod
     def normalize(cls, rows):
@@ -364,14 +359,14 @@ class ColoredBoard(Board):
         self.validate_headers(self.columns_descriptions, self.height)
         self.validate_headers(self.rows_descriptions, self.width)
 
-        horizontal_colors = self.colors(True)
-        vertical_colors = self.colors(False)
+        horizontal_colors = self._colors(True)
+        vertical_colors = self._colors(False)
 
-        if set(horizontal_colors) != set(vertical_colors):
+        if horizontal_colors != vertical_colors:
             raise ValueError('Colors differ: {} (rows) and {} (columns)'.format(
                 horizontal_colors, vertical_colors))
 
-        not_defined_colors = set(horizontal_colors) - set(self.color_map)
+        not_defined_colors = horizontal_colors - set(self.color_map)
         if not_defined_colors:
             raise ValueError('Some colors not defined: {}'.format(
                 tuple(not_defined_colors)))

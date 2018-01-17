@@ -10,7 +10,6 @@ from copy import deepcopy
 from itertools import cycle
 
 from pynogram.core.board import ColoredBoard
-from pynogram.core.common import UNKNOWN
 from pynogram.core.solver import line
 from pynogram.core.solver.base import cache_hit_rate
 from pynogram.core.solver.common import NonogramError
@@ -30,7 +29,7 @@ def try_contradiction(board, row_index, column_index,
     in an inverted state and propagate the changes if needed.
     """
     # already solved
-    if board.has_color(board.cells[row_index][column_index]) != UNKNOWN:
+    if board.cell_solved(board.cells[row_index][column_index]):
         return
 
     save = deepcopy(board.cells)
@@ -152,7 +151,7 @@ def solve(
     counter = 0
     colored = isinstance(board, ColoredBoard)
 
-    assumptions = board.assumptions()  # try the different assumptions every time
+    assumptions = board.colors()  # try the different assumptions every time
     active_assumptions_rate = {state: board.solution_rate for state in assumptions}
 
     assumptions = cycle(assumptions)
