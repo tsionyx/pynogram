@@ -15,8 +15,8 @@ from pynogram.core.fsm import (
     FiniteStateMachine,
 )
 from pynogram.core.solver.base import (
-    NonogramFSM,
     NonogramError,
+    make_nfsm,
     solve_line,
 )
 
@@ -84,7 +84,7 @@ class TestFiniteStateMachine(object):
 class TestNonogramFiniteStateMachine(object):
     @classmethod
     def fsm(cls, *description):
-        return NonogramFSM.from_description(*description)
+        return make_nfsm(*description)
 
     @pytest.fixture
     def nfsm(self):
@@ -122,9 +122,9 @@ class TestNonogramFiniteStateMachine(object):
 
     def test_from_list(self):
         for nfsm in (
-                NonogramFSM.from_description([1, 1]),
-                NonogramFSM.from_description(1, 1),
-                NonogramFSM.from_description('1 1'),
+                make_nfsm([1, 1]),
+                make_nfsm(1, 1),
+                make_nfsm('1 1'),
         ):
             assert nfsm.current_state == 1
             assert nfsm.states == (1, 2, 3, 4)
@@ -245,7 +245,7 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
 
     def test_transition_table(self):
         description, row = '2 2', '___0X_____'
-        nfsm = NonogramFSM.from_description(description)
+        nfsm = make_nfsm(description)
 
         row = normalize_row(row)
         # noinspection PyProtectedMember

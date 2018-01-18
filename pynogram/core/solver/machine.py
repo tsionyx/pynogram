@@ -18,6 +18,7 @@ from pynogram.core import fsm
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     normalize_description, normalize_row,
+    is_list_like,
 )
 from pynogram.core.solver.common import (
     NonogramError, LineSolutionsMeta,
@@ -52,55 +53,64 @@ class NonogramFSM(fsm.FiniteStateMachine):
         return (state, SPACE), state
 
     @classmethod
+    def _required_color(cls, state, color):
+        return (state, color), state + 1
+
+    @classmethod
     def _required_box(cls, state):
-        return (state, BOX), state + 1
+        return cls._required_color(state, BOX)
 
     @classmethod
     def _required_space(cls, state):
-        return (state, SPACE), state + 1
+        return cls._required_color(state, SPACE)
 
     INITIAL_STATE = 1
-    _fsm_cache = Cache(1000)
 
     @classmethod
-    def from_description(cls, *description):
+    def state_map_from_description(cls, description):
         """
-        Construct the machine from the description
+        Construct the machine's state map
+        from the description
         given in a nonogram definition
         """
-        if len(description) == 1:
-            description = description[0]
-        description = normalize_description(description)
         LOG.debug('Clues: %s', description)
-
-        state_map = cls._fsm_cache.get(description)
-        if state_map is not None:
-            return cls(description, state_map)
 
         state_counter = cls.INITIAL_STATE
         state_map = []
 
-        trans, state_counter = cls._optional_space(state_counter)
-        LOG.debug('Add transition: %s -> %s', trans, state_counter)
-        state_map.append((trans, state_counter))
+        prev_color = None
+        for block in description:
+            if is_list_like(block):
+                value, color = block
+            else:
+                value, color = block, BOX
 
-        for i, block in enumerate(description):
-            for _ in range(block):
-                trans, state_counter = cls._required_box(state_counter)
-                LOG.debug('Add transition: %s -> %s', trans, state_counter)
-                state_map.append((trans, state_counter))
-
-            if i < len(description) - 1:  # all but last
+            # it SHOULD be a space before block
+            # if it is not a first block AND the previous block was of the same color
+            if prev_color == color:
                 trans, state_counter = cls._required_space(state_counter)
                 LOG.debug('Add transition: %s -> %s', trans, state_counter)
                 state_map.append((trans, state_counter))
 
+            # it CAN be multiple spaces before every block
             trans, state_counter = cls._optional_space(state_counter)
             LOG.debug('Add transition: %s -> %s', trans, state_counter)
             state_map.append((trans, state_counter))
 
-        cls._fsm_cache.save(description, state_map)
-        return cls(description, state_map)
+            # the block of some color
+            for _ in range(value):
+                trans, state_counter = cls._required_color(state_counter, color)
+                LOG.debug('Add transition: %s -> %s', trans, state_counter)
+                state_map.append((trans, state_counter))
+
+            prev_color = color
+
+        # at the end of the line can be optional spaces
+        trans, state_counter = cls._optional_space(state_counter)
+        LOG.debug('Add transition: %s -> %s', trans, state_counter)
+        state_map.append((trans, state_counter))
+
+        return state_map
 
     def partial_match(self, row):
         """
@@ -366,54 +376,6 @@ class NonogramFSMColored(NonogramFSM):
     """
 
     @classmethod
-    def _required_color(cls, state, color):
-        return (state, color), state + 1
-
-    @classmethod
-    def from_description(cls, *description):
-        if len(description) == 1:
-            description = description[0]
-        description = normalize_description(description)
-        LOG.debug('Clues: %s', description)
-
-        state_map = cls._fsm_cache.get(description)
-        if state_map is not None:
-            return cls(description, state_map)
-
-        state_counter = cls.INITIAL_STATE
-        state_map = []
-
-        prev_color = None
-        for value, color in description:
-            # it SHOULD be a space before block
-            # if it is not a first block AND the previous block was of the same color
-            if prev_color == color:
-                trans, state_counter = cls._required_space(state_counter)
-                LOG.debug('Add transition: %s -> %s', trans, state_counter)
-                state_map.append((trans, state_counter))
-
-            # it CAN be multiple spaces before every block
-            trans, state_counter = cls._optional_space(state_counter)
-            LOG.debug('Add transition: %s -> %s', trans, state_counter)
-            state_map.append((trans, state_counter))
-
-            # the block of some color
-            for _ in range(value):
-                trans, state_counter = cls._required_color(state_counter, color)
-                LOG.debug('Add transition: %s -> %s', trans, state_counter)
-                state_map.append((trans, state_counter))
-
-            prev_color = color
-
-        # at the end of the line can be optional spaces
-        trans, state_counter = cls._optional_space(state_counter)
-        LOG.debug('Add transition: %s -> %s', trans, state_counter)
-        state_map.append((trans, state_counter))
-
-        cls._fsm_cache.save(description, state_map)
-        return cls(description, state_map)
-
-    @classmethod
     def _types_for_cell(cls, cell):
         return list(set(cell))
 
@@ -421,3 +383,28 @@ class NonogramFSMColored(NonogramFSM):
     def _cell_value_from_solved(cls, states):
         # assert states.size
         return states
+
+
+_FSM_CACHE = Cache(1000)
+
+
+def make_nfsm(*description, **kwargs):
+    """
+    Produce the black-and-white or colored
+    finite state machine for nonogram solving
+    """
+    nfsm_cls = kwargs.get('nfsm_cls', NonogramFSM)
+
+    if len(description) == 1:
+        description = description[0]
+    description = normalize_description(description)
+
+    if description and is_list_like(description[0]):
+        nfsm_cls = NonogramFSMColored
+
+    state_map = _FSM_CACHE.get(description)
+    if state_map is None:
+        state_map = nfsm_cls.state_map_from_description(description)
+        _FSM_CACHE.save(description, state_map)
+
+    return nfsm_cls(description, state_map)

@@ -5,10 +5,13 @@ from __future__ import unicode_literals, print_function
 
 import logging
 
+from six import iteritems
+
 from pynogram.core.common import normalize_row, normalize_description
 from pynogram.core.solver import simpson
 from pynogram.core.solver.common import NonogramError, LineSolutionsMeta
 from pynogram.core.solver.machine import (
+    make_nfsm,
     NonogramFSM, NonogramFSMColored,
     LOG as MACHINE_LOGGER,
 )
@@ -27,7 +30,7 @@ def _solver(name):
             else:
                 nfsm_class = NonogramFSM
 
-            nfsm = nfsm_class.from_description(row_desc)
+            nfsm = make_nfsm(row_desc, nfsm_cls=nfsm_class)
 
             method_func = getattr(nfsm, 'solve_with_' + _name)
             return method_func(row)
@@ -63,7 +66,7 @@ def assert_match(row_desc, row):
     """
     Verifies that the given row matches the description
     """
-    nfsm = NonogramFSM.from_description(row_desc)
+    nfsm = make_nfsm(row_desc)
     if not nfsm.match(row):
         raise NonogramError("The row '{}' cannot fit".format(row))
 
