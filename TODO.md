@@ -1,3 +1,23 @@
+- contradictions:
+  - try all the choices for every cell at once, then go to another cell
+  - find next cell for contradiction search on some criterion
+  - try until it stalls for all the choices
+  - if one of the choices comes to full solution
+    but another choices all to contradictions:
+    Hooray! It's the only solution we search.
+  - if no contradiction, then save repeated solutions
+    for all the possible choices and extract intersection
+    of that solution
+
+- SVG:
+  - fill=white
+  - class for every color (use in clues)
+  - shorter class and id names
+  - [compress](http://www.tornadoweb.org/en/stable/web.html)
+    [the page](https://betterexplained.com/articles/how-to-optimize-your-site-with-gzip-compression)
+  - collapse contiguous block into one long block
+
+
 - improve docs:
   - more info in README: links to other solvers, publications
   - images and examples
@@ -17,7 +37,6 @@
   - which directions to solve first: rows or columns
   - use multiprocessing?
 
-- colored nonograms
 - profile and improve bottlenecks:
 
 ```bash
