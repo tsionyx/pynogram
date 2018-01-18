@@ -384,6 +384,17 @@ class NonogramFSMColored(NonogramFSM):
         # assert states.size
         return states
 
+    def match(self, word):
+        one_color_word = []
+
+        for letter in word:
+            if is_list_like(letter) and len(letter) == 1:
+                letter = letter[0]
+
+            one_color_word.append(letter)
+
+        return super(NonogramFSMColored, self).match(one_color_word)
+
 
 _FSM_CACHE = Cache(1000)
 

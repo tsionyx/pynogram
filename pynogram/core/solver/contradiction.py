@@ -52,6 +52,7 @@ def try_contradiction(board, row_index, column_index,
                 column_indexes=(column_index,),
                 contradiction_mode=True)
         except NonogramError:
+            LOG.debug('Contradiction', exc_info=True)
             contradiction = True
         else:
             if board.solution_rate == 1:
