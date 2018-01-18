@@ -20,7 +20,10 @@ class LineSolutionsMeta(type):
     It adds the solutions_cache to the solver class.
     """
 
+    registered_caches = {}
+
     def __new__(mcs, *args, **kwargs):
         new_cls = super(LineSolutionsMeta, mcs).__new__(mcs, *args, **kwargs)
         new_cls.solutions_cache = Cache(10000)
+        mcs.registered_caches[new_cls.__name__] = new_cls.solutions_cache
         return new_cls

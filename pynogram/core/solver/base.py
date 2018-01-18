@@ -7,7 +7,7 @@ import logging
 
 from pynogram.core.common import normalize_row, normalize_description
 from pynogram.core.solver import simpson
-from pynogram.core.solver.common import NonogramError
+from pynogram.core.solver.common import NonogramError, LineSolutionsMeta
 from pynogram.core.solver.machine import (
     NonogramFSM, NonogramFSMColored,
     LOG as MACHINE_LOGGER,
@@ -68,10 +68,9 @@ def assert_match(row_desc, row):
         raise NonogramError("The row '{}' cannot fit".format(row))
 
 
-# pylint: disable=no-member
 def cache_hit_rate():
     """Cache hit rate for different solvers"""
     return {
-        'simpson': simpson.FastSolver.solutions_cache.hit_rate,
-        'reverse_tracking': NonogramFSM.solutions_cache.hit_rate,
+        class_name: cache.hit_rate
+        for class_name, cache in iteritems(LineSolutionsMeta.registered_caches)
     }
