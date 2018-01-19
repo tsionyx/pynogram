@@ -174,7 +174,7 @@ if __name__ == '__main__':
         exclude_package_data={
             # explicitly str, not unicode
             # https://github.com/myint/language-check/issues/30
-            str(''): ['LICENSE', '*.md']
+            str(''): ['LICENSE', '*.md', '*.gif']
         },
         # As it appears these files are not included in any package
         # so they will be excluded anyway. However i kept this to be more verbose.

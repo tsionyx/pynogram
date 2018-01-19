@@ -8,6 +8,7 @@
   - if no contradiction, then save repeated solutions
     for all the possible choices and extract intersection
     of that solution
+  - check on pbn=16838
 
 - SVG:
   - fill=white
@@ -15,10 +16,6 @@
   - shorter class and id names
   - collapse contiguous block into one long block
 
-
-- improve docs:
-  - more info in README: links to other solvers, publications
-  - images and examples
 
 - clean:
   - check docstrings

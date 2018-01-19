@@ -1,3 +1,4 @@
 include LICENSE
 recursive-include . *.md
 recursive-include pynogram/examples *.txt
+recursive-include docs/images/ *.gif

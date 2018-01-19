@@ -84,6 +84,8 @@ function check_syntax() {
 }
 
 
+ALLOW_NON_ASCII_FILE_TYPES='rst|md'
+
 function check_unicode() {
     # all git-tracked *.py files (if exists any)
     # should have `from __future__ import unicode_literals`
@@ -109,7 +111,7 @@ function check_unicode() {
     # a 'u' prefix before string literal
     ! git ls-files '*.py' | xargs grep -PI "[^a-zA-Z\x7F-\xFF]u['\\\"]"
 
-    ! git ls-files | xargs grep -PIr --color '[^\x00-\x7F]'
+    ! git ls-files "*[^.($ALLOW_NON_ASCII_FILE_TYPES)]" | xargs grep -PIr --color '[^\x00-\x7F]'
 }
 
 # =================== HERE IS THE 'MAIN' FUNCTION BEGINS =================== #
