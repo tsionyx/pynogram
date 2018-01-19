@@ -21,8 +21,7 @@ from pynogram.core.board import make_board
 from pynogram.reader import read_example, Pbn, PbnNotFoundError
 from pynogram.renderer import (
     StreamRenderer,
-    BaseAsciiRenderer,
-    SvgRenderer,
+    RENDERERS,
 )
 from .common import (
     BaseHandler,
@@ -49,8 +48,20 @@ class BoardHandler(ThreadedBaseHandler):
         """The sting that identifies board's source (local, pbn)"""
         raise NotImplementedError()
 
+    @property
+    def renderer(self):
+        """Get the renderer class based on user choice (?render=MODE)"""
+
+        rend_mode = self.get_argument('render', 'svg')
+        res = RENDERERS.get(rend_mode)
+        if not res:
+            raise tornado.web.HTTPError(404, 'Not found renderer: %s', rend_mode)
+
+        return res
+
     def get(self, _id):
-        board_notifier = self.application.get_board_notifier(_id, self.board_mode)
+        board_notifier = self.application.get_board_notifier(
+            _id, self.board_mode, create=True, renderer=self.renderer)
 
         self.render('index.html',
                     board_mode=self.board_mode,
@@ -59,10 +70,8 @@ class BoardHandler(ThreadedBaseHandler):
 
     @tornado.gen.coroutine
     def post(self, _id):
-        rows_first = 'columns_first' not in self.request.arguments
-        # parallel = 'parallel' in self.request.arguments
-
-        board_notifier = self.application.get_board_notifier(_id, self.board_mode)
+        board_notifier = self.application.get_board_notifier(
+            _id, self.board_mode, create=True, renderer=self.renderer)
 
         if not board_notifier:
             raise tornado.web.HTTPError(404, 'Not found board %s', _id)
@@ -71,8 +80,7 @@ class BoardHandler(ThreadedBaseHandler):
         LOG.debug('Callbacks: %s', board_notifier.callbacks)
 
         yield self.executor.submit(contradiction_solver.solve,
-                                   board_notifier.board,
-                                   by_rows=rows_first)
+                                   board_notifier.board)
 
         # force callbacks to execute
         board_notifier.board.solution_round_completed()
@@ -142,14 +150,22 @@ class BoardUpdateNotifier(LongPollNotifier):
         board.on_row_update = self.notify_callbacks
         board.on_column_update = self.notify_callbacks
 
+    def update_renderer(self, **renderer_params):
+        """Update the render method for given board"""
+
+        if 'stream' not in renderer_params:
+            self.stream = StringIO()
+            renderer_params['stream'] = self.stream
+        self.board.set_renderer(**renderer_params)
+
     def clear_stream(self):
         """
         Just reinitialize the stream
 
         https://stackoverflow.com/a/4330829
         """
-        self.stream = StringIO()
-        self.board.renderer.stream = self.stream
+        self.board.renderer.stream = StringIO()
+        self.stream = self.board.renderer.stream
 
     def callback_helper(self, callback, *args, **kwargs):
         if args:
@@ -195,28 +211,28 @@ class Application(tornado.web.Application):
         super(Application, self).__init__(handlers, **settings)
 
     @classmethod
-    def get_board(cls, _id, create_mode, **board_params):
+    def get_board(cls, _id, create_mode, **renderer_params):
         """Generates a board using given ID and mode"""
         if create_mode == 'local':
             board_def = read_example(_id)
-            return make_board(*board_def, renderer=BaseAsciiRenderer)
-
         elif create_mode == 'pbn':
             board_def = Pbn.read(_id)
-            return make_board(*board_def, renderer=SvgRenderer, **board_params)
+        else:
+            raise tornado.web.HTTPError(400, 'Bad mode: %s', create_mode)
 
-        raise tornado.web.HTTPError(400, 'Bad mode: %s', create_mode)
+        return make_board(*board_def, **renderer_params)
 
-    def get_board_notifier(self, _id, create_mode):
+    def get_board_notifier(self, _id, mode, create=False, **renderer_params):
         """
         Get the notifier wrapper around the board
         and optionally creates it.
         """
-        board_notifier = self.board_notifiers.get((_id, create_mode))
+        board_notifier = self.board_notifiers.get((_id, mode))
 
-        if not board_notifier and create_mode:
+        if not board_notifier and create:
             try:
-                board_notifier = BoardUpdateNotifier(_id, self.get_board(_id, create_mode))
+                board = self.get_board(_id, mode, **renderer_params)
+                board_notifier = BoardUpdateNotifier(_id, board)
             except IOError:
                 raise tornado.web.HTTPError(
                     404, 'File not found: %s', _id)
@@ -224,7 +240,12 @@ class Application(tornado.web.Application):
                 raise tornado.web.HTTPError(
                     404, "Webpbn's puzzle not found: %s", _id)
 
-            self.board_notifiers[(_id, create_mode)] = board_notifier
+            self.board_notifiers[(_id, mode)] = board_notifier
+
+        else:
+            # do not change the renderer if not said to
+            if renderer_params:
+                board_notifier.update_renderer(**renderer_params)
 
         return board_notifier
 

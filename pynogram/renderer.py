@@ -14,6 +14,7 @@ import svgwrite as svg
 from six import (
     integer_types, text_type, string_types,
     iteritems,
+    itervalues,
 )
 
 from pynogram.core.board import Renderer, ColoredBoard
@@ -153,6 +154,8 @@ class BaseAsciiRenderer(StreamRenderer):
     Renders a board as a simple text table (without grid)
     """
 
+    __rend_name__ = 'text'
+
     def board_init(self, board=None):
         super(BaseAsciiRenderer, self).board_init(board)
         LOG.info('init cells: %sx%s', self.full_width, self.full_width)
@@ -226,6 +229,8 @@ class AsciiRenderer(BaseAsciiRenderer):
     Renders the board as a full-blown ASCII table
     with headers, grid and borders
     """
+
+    __rend_name__ = 'text-grid'
 
     def __init__(self, board=None, stream=sys.stdout):
         super(AsciiRenderer, self).__init__(board, stream=stream)
@@ -370,6 +375,9 @@ class AsciiRendererWithBold(AsciiRenderer):
     AsciiRenderer that also splits the whole board into
     5x5 squares using 'bold' grid lines
     """
+
+    __rend_name__ = 'text-grid-bold'
+
     SIDE_DELIMITER_SIZE = 3
     BOLD_LINE_HORIZONTAL = AsciiRenderer.HEADER_DELIMITER
     BOLD_LINE_VERTICAL_SIZE = 2
@@ -379,6 +387,8 @@ class SvgRenderer(StreamRenderer):
     """
     Draws the board like an SVG image (best representation for web)
     """
+
+    __rend_name__ = 'svg'
 
     DEFAULT_CELL_SIZE_IN_PIXELS = 15
     BOLD_EVERY = 5
@@ -697,3 +707,15 @@ class SvgRenderer(StreamRenderer):
         self.drawing.add(self.drawing.defs)
 
         super(SvgRenderer, self).draw()
+
+
+def _register_renderers():
+    res = dict()
+    for obj in itervalues(globals()):
+        if isinstance(obj, type):
+            if issubclass(obj, StreamRenderer) and hasattr(obj, '__rend_name__'):
+                res[obj.__rend_name__] = obj
+    return res
+
+
+RENDERERS = _register_renderers()
