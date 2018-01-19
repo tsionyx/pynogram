@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #  -*- coding: utf-8 -*-
 """
-Entry point for demo web solver
+Entry point for web solver
 """
 from __future__ import unicode_literals
 

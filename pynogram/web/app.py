@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*
 """
 Defines web routes and tornado application
-to demonstrate nonogram solutions
+to visualize nonogram solutions
 """
 
 from __future__ import unicode_literals, print_function
@@ -30,7 +30,6 @@ from .common import (
     ThreadedBaseHandler,
     LongPollNotifier,
 )
-from .demo import local_boards
 
 # pylint: disable=arguments-differ
 
@@ -47,7 +46,7 @@ class BoardHandler(ThreadedBaseHandler):
 
     @property
     def board_mode(self):
-        """The sting that identifies board's source (demo, local, pbn)"""
+        """The sting that identifies board's source (local, pbn)"""
         raise NotImplementedError()
 
     def get(self, _id):
@@ -77,14 +76,6 @@ class BoardHandler(ThreadedBaseHandler):
 
         # force callbacks to execute
         board_notifier.board.solution_round_completed()
-
-
-class BoardDemoHandler(BoardHandler):
-    """Renders demonstration boards"""
-
-    @property
-    def board_mode(self):
-        return 'demo'
 
 
 class BoardLocalHandler(BoardHandler):
@@ -188,7 +179,6 @@ class Application(tornado.web.Application):
         self.board_notifiers = dict()
 
         handlers = [
-            (r'/demo/([0-9]+)/?', BoardDemoHandler),
             (r'/board/local/(.+)/?', BoardLocalHandler),
             (r'/board/pbn/([0-9]+)/?', BoardPbnHandler),
             (r'/board/status/(.+)/(.+)/?', BoardStatusHandler),
@@ -206,21 +196,8 @@ class Application(tornado.web.Application):
 
     @classmethod
     def get_board(cls, _id, create_mode, **board_params):
-        """
-        Generates a board using given ID.
-
-        This can be a function that extracts a board
-        from a database for example. By now it just returns
-        one of hardcoded demo boards.
-        """
-
-        if create_mode == 'demo':
-            _id = int(_id)
-            predefined = local_boards()
-            board_factory = predefined[_id % len(predefined)]
-            return board_factory(**board_params)
-
-        elif create_mode == 'local':
+        """Generates a board using given ID and mode"""
+        if create_mode == 'local':
             board_def = read_example(_id)
             return make_board(*board_def, renderer=BaseAsciiRenderer)
 
