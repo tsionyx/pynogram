@@ -46,7 +46,8 @@ REQUIRED = [
 
 # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
 REQUIRED_EXTRAS = {
-    'web': ['futures', 'tornado']
+    'web: python_version < "3.2"': ['futures'],
+    'web': ['tornado'],
 }
 
 TEST_WITH = [
