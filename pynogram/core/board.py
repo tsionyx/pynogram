@@ -103,25 +103,16 @@ class Board(object):  # pylint: disable=too-many-public-methods
 
     # pylint: disable=too-many-instance-attributes
 
-    def __init__(self, columns, rows, renderer=Renderer, **renderer_params):
-        """
-        :type renderer: Renderer | type[Renderer]
-        """
+    def __init__(self, columns, rows, **renderer_params):
         self.columns_descriptions = self.normalize(columns)
         self.rows_descriptions = self.normalize(rows)
-
-        self.renderer = renderer
-        if isinstance(self.renderer, type):
-            self.renderer = self.renderer(self, **renderer_params)
-        elif isinstance(self.renderer, Renderer):
-            self.renderer.board_init(self)
-        else:
-            raise TypeError('Bad renderer: %s' % renderer)
 
         init_state = self.init_cell_state()
         self.cells = [[init_state] * self.width for _ in range(self.height)]
         self.validate()
 
+        self.renderer = None
+        self.set_renderer(**renderer_params)
         # you can provide custom callbacks here
         self.on_row_update = None
         self.on_column_update = None
@@ -132,6 +123,21 @@ class Board(object):  # pylint: disable=too-many-public-methods
     def init_cell_state(cls):
         """Initial value of a board cell"""
         return UNKNOWN
+
+    def set_renderer(self, renderer=Renderer, **renderer_params):
+        """
+        Allow to specify renderer even in the middle of the solving
+
+        :type renderer: Renderer | type[Renderer]
+        """
+
+        if isinstance(renderer, type):
+            self.renderer = renderer(self, **renderer_params)
+        elif isinstance(renderer, Renderer):
+            self.renderer = renderer
+            self.renderer.board_init(self)
+        else:
+            raise TypeError('Bad renderer: %s' % renderer)
 
     @classmethod
     def cell_solved(cls, cell):
@@ -281,10 +287,10 @@ class ColoredBoard(Board):
     The board with three or more colors (not simple black and white)
     """
 
-    def __init__(self, columns, rows, color_map, renderer=Renderer, **renderer_params):
+    def __init__(self, columns, rows, color_map, **renderer_params):
         self.color_map = color_map
         self.color_map[DEFAULT_COLOR_NAME] = DEFAULT_COLOR
-        super(ColoredBoard, self).__init__(columns, rows, renderer=renderer, **renderer_params)
+        super(ColoredBoard, self).__init__(columns, rows, **renderer_params)
 
     def init_cell_state(self):
         return tuple(self.color_map) + (SPACE,)
