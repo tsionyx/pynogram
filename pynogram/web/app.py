@@ -205,6 +205,7 @@ class Application(tornado.web.Application):
 
         settings = dict(
             kwargs,
+            compress_response=True,
             template_path=os.path.join(CURRENT_DIR, 'templates'),
             static_path=os.path.join(CURRENT_DIR, 'static')
         )

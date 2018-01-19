@@ -13,8 +13,6 @@
   - fill=white
   - class for every color (use in clues)
   - shorter class and id names
-  - [compress](http://www.tornadoweb.org/en/stable/web.html)
-    [the page](https://betterexplained.com/articles/how-to-optimize-your-site-with-gzip-compression)
   - collapse contiguous block into one long block
 
 
