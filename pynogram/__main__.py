@@ -13,10 +13,11 @@ from argparse import ArgumentParser
 
 from six import PY2
 
-from .core.board import make_board
-from .core.solver import contradiction as contradiction_solver
-from .reader import read_example, Pbn
-from .renderer import BaseAsciiRenderer
+from pynogram.__version__ import __version__
+from pynogram.core.board import make_board
+from pynogram.core.solver import contradiction as contradiction_solver
+from pynogram.reader import read_example, Pbn
+from pynogram.renderer import BaseAsciiRenderer
 
 
 def cli_args():
@@ -24,12 +25,16 @@ def cli_args():
     parser = ArgumentParser(
         description='Solve predefined board (see in examples/ folder)')
 
+    parser.add_argument('--version', action='store_true',
+                        help='show version and exit')
     parser.add_argument('-b', '--board', default='hello',
                         help='board file to solve')
-    parser.add_argument('--pbn', type=int, help='id of a board on the webpbn.com')
-    parser.add_argument('--verbose', '-v', action='count')
+    parser.add_argument('--pbn', type=int,
+                        help='ID of a board to solve on the http://webpbn.com')
+    parser.add_argument('--verbose', '-v', action='count',
+                        help='increase logging level')
     parser.add_argument('--draw-final', action='store_true',
-                        help='Draw only final result, skip all the intermediate steps')
+                        help='draw only final result, skip all the intermediate steps')
     return parser.parse_args()
 
 
@@ -68,6 +73,10 @@ def main():
         sys.stdout = codecs.getwriter('utf8')(sys.stdout)
 
     args = cli_args()
+    if args.version:
+        print(__version__)
+        return
+
     logging.basicConfig(
         format='[%(asctime)s] %(levelname)-8s %(filename)s:%(lineno)d -> %(message)s',
         level=log_level(args.verbose),
