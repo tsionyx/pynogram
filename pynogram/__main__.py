@@ -59,9 +59,11 @@ def draw_solution(board_def, every_round=True):
 def log_level(verbosity):
     """Returns the log level based on given verbosity"""
     if not verbosity or verbosity < 1:
-        return logging.WARNING
+        return logging.ERROR
 
     if verbosity == 1:
+        return logging.WARNING
+    elif verbosity == 2:
         return logging.INFO
 
     return logging.DEBUG

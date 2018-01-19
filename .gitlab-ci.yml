@@ -21,8 +21,8 @@ run:
 
   # to install and run:
   - pip install -U dist/*.whl
-  - time $NAME -b winter
-  - time $NAME --pbn 4089 --draw-final -v
+  - time $NAME -b winter -v
+  - time $NAME --pbn 4089 --draw-final -vv
   # only two files should left
   - pip show -f $NAME | grep '^ ' | grep -v " $NAME[-/]"
 
