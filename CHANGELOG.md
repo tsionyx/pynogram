@@ -17,3 +17,17 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## [0.1.1] - 2018-01-18
 ### Added
 - color puzzles solver
+
+## [0.1.2] - 2018-01-30
+### Added
+- choose the renderer in URL
+- compress the page with gzip
+- documentation with examples and references
+
+### Fixed
+- requirements for python3 (futures)
+- suppress any WARNING by default (use -v)
+
+### Removed
+- demo boards
+- lxml dependency (use standard XML parser)
