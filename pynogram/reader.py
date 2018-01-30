@@ -8,7 +8,7 @@ from __future__ import unicode_literals, print_function
 import os
 import re
 
-from lxml import etree
+from xml.etree import ElementTree
 from six import string_types, PY2
 # noinspection PyUnresolvedReferences
 from six.moves.configparser import RawConfigParser  # I don't want interpolation features
@@ -168,34 +168,35 @@ class Pbn(object):
                     int(block.text),
                     block.attrib.get('color', default_color)
                 )
-                for block in clue.xpath('count'))
+                for block in clue.findall('count'))
 
-        return tuple(map(int, clue.xpath('count/text()')))
+        return tuple(int(block.text) for block in clue.findall('count'))
 
     @classmethod
     def read(cls, _id):
         """Find and parse the columns and rows of a webpbn nonogram by id"""
         xml = cls._get_puzzle_xml(_id)
         try:
-            tree = etree.parse(xml)
-        except etree.XMLSyntaxError as exc:
+            tree = ElementTree.parse(xml)
+        except ElementTree.ParseError as exc:
             str_e = str(exc)
-            if str_e.startswith('Document is empty') or str_e.startswith('Start tag expected'):
+            if str_e.startswith('syntax error'):
                 raise PbnNotFoundError(_id)
             raise
 
         colors = {color.attrib['name']: (color.text, color.attrib['char'])
-                  for color in tree.xpath('//color')}
+                  for color in tree.findall('.//color')}
 
         if len(colors) > 2:
-            default_color = tree.xpath('//puzzle[@type="grid"]/@defaultcolor')[0]
+            puzzle = tree.findall('.//puzzle[@type="grid"]')[0]
+            default_color = puzzle.attrib['defaultcolor']
         else:
             default_color = None
 
         columns = [cls._parse_clue(clue, default_color)
-                   for clue in tree.xpath('//clues[@type="columns"]/line')]
+                   for clue in tree.findall('.//clues[@type="columns"]/line')]
         rows = [cls._parse_clue(clue, default_color)
-                for clue in tree.xpath('//clues[@type="rows"]/line')]
+                for clue in tree.findall('.//clues[@type="rows"]/line')]
 
         if len(colors) > 2:
             return columns, rows, colors

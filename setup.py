@@ -40,7 +40,6 @@ LICENSE = 'Apache License 2.0',
 
 REQUIRED = [
     'six',
-    'lxml',
     'svgwrite',
 ]
 
