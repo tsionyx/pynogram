@@ -5,10 +5,29 @@ python:
   - "2.7"
   - "3.5"
 
+before_install:
+  - python setup.py sdist bdist_wheel --universal
+
 install:
   - pip install tox-travis
   - pip install coveralls
+  - pip install -U dist/*.whl
 
-script: tox
+env:
+  - NAME=pynogram
+
+before_script:
+  # docs and LICENSE should be in sources
+  - tar -tf dist/*.tar.gz | grep -v "/$NAME" | grep '/LICENSE'
+  - tar -tf dist/*.tar.gz | grep -v "/$NAME" | grep '/docs/.\+md'
+
+  # only two files should left
+  - pip show -f $NAME | grep '^ ' | grep -v " $NAME[-/]" |
+    wc -l | exit $(awk '{print $1-2}')
+
+script:
+  - tox
+  - time $NAME -b winter -v
+  - time $NAME --pbn 4089 --draw-final -vv
 
 after_success: coveralls

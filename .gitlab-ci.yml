@@ -24,7 +24,8 @@ run:
   - time $NAME -b winter -v
   - time $NAME --pbn 4089 --draw-final -vv
   # only two files should left
-  - pip show -f $NAME | grep '^ ' | grep -v " $NAME[-/]"
+  - pip show -f $NAME | grep '^ ' | grep -v " $NAME[-/]" |
+    wc -l | exit $(awk '{print $1-2}')
 
   artifacts:
     paths:
