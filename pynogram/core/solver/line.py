@@ -145,8 +145,8 @@ def _solve_with_method(
     # when adding column, `is_column = True = 1`
     # heap always pops the lowest item, so the rows will go first
 
-    LOG.info("Solving %s rows and %s columns with '%s' method",
-             row_indexes, column_indexes, method)
+    LOG.debug("Solving %s rows and %s columns with '%s' method",
+              row_indexes, column_indexes, method)
 
     line_jobs = PriorityDict()
     all_jobs = set()
