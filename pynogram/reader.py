@@ -7,8 +7,8 @@ from __future__ import unicode_literals, print_function
 
 import os
 import re
-
 from xml.etree import ElementTree
+
 from six import string_types, PY2
 # noinspection PyUnresolvedReferences
 from six.moves.configparser import RawConfigParser  # I don't want interpolation features

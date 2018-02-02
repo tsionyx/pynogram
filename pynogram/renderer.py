@@ -10,7 +10,6 @@ import os
 import re
 import sys
 
-import svgwrite as svg
 from six import (
     integer_types, text_type, string_types,
     iteritems,
@@ -404,9 +403,12 @@ class SvgRenderer(StreamRenderer):
     def __init__(self, board=None, stream=sys.stdout, size=DEFAULT_CELL_SIZE_IN_PIXELS):
         super(SvgRenderer, self).__init__(board, stream)
 
+        # decrease startup time when do not need this renderer
+        from svgwrite import Drawing
+
         self.cell_size = size
         self.color_symbols = dict()
-        self.drawing = svg.Drawing(size=(
+        self.drawing = Drawing(size=(
             self.full_width + self.cell_size,
             self.full_height + self.cell_size))
         self._add_definitions()
