@@ -42,7 +42,7 @@ $ time python -m cProfile -o hot.prof pynogram/__main__.py --pbn 2040 --draw-fin
 import pstats
 
 p = pstats.Stats('hot.prof')
-p.sort_stats('time').print_stats('sover', 20)
+p.sort_stats('time').print_stats('solver', 20)
 p.sort_stats('ncalls').print_stats('solver', 20)
 ```
 

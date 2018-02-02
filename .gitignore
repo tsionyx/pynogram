@@ -16,7 +16,8 @@
 # tests artifacts
 .noseids
 .tox/
-.cache
+.cache/
+.pytest_cache/
 
 # coverage artifacts
 .coverage
