@@ -282,6 +282,24 @@ class Board(object):  # pylint: disable=too-many-public-methods
         self._solved = solved
 
 
+class NumpyBoard(Board):
+    def __init__(self, columns, rows, **renderer_params):
+        import numpy as np
+
+        super(NumpyBoard, self).__init__(columns, rows, **renderer_params)
+        self.cells = np.array(self.cells)
+
+    def get_column(self, index):
+        # self.cells.transpose([1, 0, 2])[index]
+        return self.cells.T[index]
+
+    def set_column(self, index, value):
+        """Set the board's column at given index with given value"""
+
+        self.cells[:, index] = value
+        self.column_updated(index)
+
+
 class ColoredBoard(Board):
     """
     The board with three or more colors (not simple black and white)
@@ -471,8 +489,12 @@ def _solve_on_space_hints(board, hints):
 
 def make_board(*args, **kwargs):
     """Produce the black-and-white or colored nonogram"""
+
     if len(args) == 2:
-        return Board(*args, **kwargs)
+        try:
+            return NumpyBoard(*args, **kwargs)
+        except ImportError:
+            return Board(*args, **kwargs)
 
     elif len(args) == 3:
         return ColoredBoard(*args, **kwargs)

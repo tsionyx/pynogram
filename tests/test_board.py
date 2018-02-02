@@ -42,7 +42,7 @@ def tested_board(renderer=BaseAsciiRenderer, **kwargs):
         2,
         0,
     ]
-    return Board(columns, rows, renderer=renderer, **kwargs)
+    return make_board(columns, rows, renderer=renderer, **kwargs)
 
 
 class TestBoard(object):

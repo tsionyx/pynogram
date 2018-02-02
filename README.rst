@@ -18,6 +18,9 @@ Install
 
     pip install pynogram
 
+You can also install `numpy` for better performance
+(it's not listed in requirements to keep the package lightweight).
+
 Usage
 -----
 
