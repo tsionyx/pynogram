@@ -102,7 +102,8 @@ def _solution_round(board, ignore_neighbours=False):
                 continue
             no_unsolved = len(list(board.unsolved_neighbours(i, j)))
             if ignore_neighbours or no_unsolved < 4:
-                _add_job((i, j), 2 + no_unsolved)
+                cell_rate = board.row_solution_rate(i) + board.column_solution_rate(j)
+                _add_job((i, j), 4 - cell_rate + no_unsolved)
 
     while True:
         if not probe_jobs:
@@ -110,7 +111,7 @@ def _solution_round(board, ignore_neighbours=False):
 
         (i, j), priority = probe_jobs.pop_smallest()
         counter_total += 1
-        LOG.info('Probe #%d: %s (%d)', counter_total, (i, j), priority)
+        LOG.info('Probe #%d: %s (%f)', counter_total, (i, j), priority)
 
         for assumption in board.cell_colors(i, j):
             changed = probe(board, i, j, assumption)
