@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """
 Defines web routes and tornado application
 to visualize nonogram solutions

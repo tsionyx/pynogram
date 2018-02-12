@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """
 Simple algorithm to solve nonograms using left and right overlaps
 
