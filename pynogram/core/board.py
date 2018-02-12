@@ -139,19 +139,26 @@ class Board(object):  # pylint: disable=too-many-public-methods
         else:
             raise TypeError('Bad renderer: %s' % renderer)
 
-    @classmethod
-    def cell_solved(cls, cell):
+    def cell_solved(self, i, j):
         """Return whether the cell is completely solved"""
+        cell = self.cells[i][j]
         return cell != UNKNOWN
 
     @classmethod
     def colors(cls):
-        """All the possible states that the cell can be in"""
+        """All the possible states that a cell can be in"""
         return {BOX, SPACE}
 
     @property
     def is_colored(self):
         return False
+
+    def cell_colors(self, i, j):
+        """All the possible states that the cell can be in"""
+        if not self.cell_solved(i, j):
+            return self.colors()
+
+        return {self.cells[i][j]}
 
     def unset_state(self, bad_state, row_index, column_index):
         """
@@ -276,6 +283,11 @@ class Board(object):  # pylint: disable=too-many-public-methods
         """How many cells in a vertical column are known to be box or space"""
         return self.line_solution_rate(self.get_column(index))
 
+    def cell_solution_rate(self, cell):
+        if cell == UNKNOWN:
+            return 0
+        return 1
+
     @property
     def solved(self):
         """Return whether the nonogram is completely solved"""
@@ -284,6 +296,45 @@ class Board(object):  # pylint: disable=too-many-public-methods
     def set_solved(self, solved=True):
         """Set the solving status (used by renderers)"""
         self._solved = solved
+
+    def neighbours(self, row_index, column_index):
+        if row_index > 0:
+            yield row_index - 1, column_index
+
+        if row_index < self.height - 1:
+            yield row_index + 1, column_index
+
+        if column_index > 0:
+            yield row_index, column_index - 1
+
+        if column_index < self.width - 1:
+            yield row_index, column_index + 1
+
+    def unsolved_neighbours(self, row_index, column_index):
+        for cell in self.neighbours(row_index, column_index):
+            if not self.cell_solved(*cell):
+                yield cell
+
+    def changed(self, old_cells):
+        assert self.height == len(old_cells)
+        assert self.width == len(old_cells[0])
+
+        for i, row in enumerate(self.cells):
+            for j, cell in enumerate(row):
+                old_cell = old_cells[i][j]
+
+                solution_rate = self.cell_solution_rate(cell)
+                old_solution_rate = self.cell_solution_rate(old_cell)
+                assert solution_rate >= old_solution_rate
+
+                if solution_rate == old_solution_rate:
+                    if is_list_like(cell):
+                        assert set(cell) == set(old_cell)
+                    else:
+                        assert cell == old_cell
+
+                else:
+                    yield i, j
 
 
 class NumpyBoard(Board):
@@ -317,8 +368,9 @@ class ColoredBoard(Board):
     def init_cell_state(self):
         return tuple(self.color_map) + (SPACE,)
 
-    @classmethod
-    def cell_solved(cls, cell):
+    def cell_solved(self, i, j):
+        """Return whether the cell is completely solved"""
+        cell = self.cells[i][j]
         if is_list_like(cell):
             colors = tuple(set(cell))
             assert colors
@@ -332,6 +384,14 @@ class ColoredBoard(Board):
     @property
     def is_colored(self):
         return True
+
+    def cell_colors(self, i, j):
+        """All the possible states that the cell can be in"""
+        cell = self.cells[i][j]
+        if is_list_like(cell):
+            return set(cell)
+
+        return {cell}
 
     def unset_state(self, bad_state, row_index, column_index):
         colors = self.cells[row_index][column_index]

@@ -658,12 +658,9 @@ class SvgRenderer(StreamRenderer):
         for cell_value, id_ in iteritems(self.color_symbols):
             cell_groups[cell_value] = drawing.g(class_=id_)
 
-        is_colored = self.board.is_colored
-
         for j, row in enumerate(self.board.cells):
             for i, cell in enumerate(row):
-                if is_colored:
-                    cell = self._color_code(cell)
+                cell = self._color_code(cell)
 
                 if cell == UNKNOWN:
                     continue
