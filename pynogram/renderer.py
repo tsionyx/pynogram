@@ -16,7 +16,7 @@ from six import (
     itervalues,
 )
 
-from pynogram.core.board import Renderer, ColoredBoard
+from pynogram.core.board import Renderer
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
@@ -213,14 +213,14 @@ class BaseAsciiRenderer(StreamRenderer):
             self.cells[rend_i][:self.side_width] = rend_row
 
     def draw_grid(self):
-        colored = isinstance(self.board, ColoredBoard)
+        is_colored = self.board.is_colored
 
         for i, row in enumerate(self.board.cells):
             rend_i = i + self.header_height
             for j, val in enumerate(row):
                 rend_j = j + self.side_width
                 self.cells[rend_i][rend_j] = GridCell(
-                    val, self, colored=colored)
+                    val, self, colored=is_colored)
 
 
 class AsciiRenderer(BaseAsciiRenderer):
@@ -437,7 +437,7 @@ class SvgRenderer(StreamRenderer):
             )
         ))
 
-        if isinstance(self.board, ColoredBoard):
+        if self.board.is_colored:
             for color_name in self.board.color_map:
                 self._add_symbol(
                     'color-%s' % color_name, color_name,
@@ -658,11 +658,11 @@ class SvgRenderer(StreamRenderer):
         for cell_value, id_ in iteritems(self.color_symbols):
             cell_groups[cell_value] = drawing.g(class_=id_)
 
-        colored = isinstance(self.board, ColoredBoard)
+        is_colored = self.board.is_colored
 
         for j, row in enumerate(self.board.cells):
             for i, cell in enumerate(row):
-                if colored:
+                if is_colored:
                     cell = self._color_code(cell)
 
                 if cell == UNKNOWN:

@@ -9,7 +9,6 @@ import time
 from copy import deepcopy
 from itertools import cycle
 
-from pynogram.core.board import ColoredBoard
 from pynogram.core.solver import line
 from pynogram.core.solver.base import cache_hit_rate
 from pynogram.core.solver.common import NonogramError
@@ -34,13 +33,13 @@ def try_contradiction(board, row_index, column_index,
 
     save = deepcopy(board.cells)
     contradiction = False
-    colored = isinstance(board, ColoredBoard)
+    is_colored = board.is_colored
 
     try:
         try:
             LOG.debug('Pretend that (%i, %i) is %s',
                       row_index, column_index, assumption)
-            if colored:
+            if is_colored:
                 if assumption not in board.cells[row_index][column_index]:
                     return
                 assumption = [assumption]
@@ -150,7 +149,7 @@ def solve(
     start = time.time()
 
     counter = 0
-    colored = isinstance(board, ColoredBoard)
+    is_colored = board.is_colored
 
     assumptions = board.colors()  # try the different assumptions every time
     active_assumptions_rate = {state: board.solution_rate for state in assumptions}
@@ -176,7 +175,7 @@ def solve(
             break
 
         if board.solution_rate == active_assumptions_rate[assumption]:
-            if colored:
+            if is_colored:
                 # stalled
                 del active_assumptions_rate[assumption]
             else:

@@ -149,6 +149,10 @@ class Board(object):  # pylint: disable=too-many-public-methods
         """All the possible states that the cell can be in"""
         return {BOX, SPACE}
 
+    @property
+    def is_colored(self):
+        return False
+
     def unset_state(self, bad_state, row_index, column_index):
         """
         Drop the state from the list of possible states
@@ -324,6 +328,10 @@ class ColoredBoard(Board):
 
     def colors(self):
         return set(self.color_map) | {SPACE}
+
+    @property
+    def is_colored(self):
+        return True
 
     def unset_state(self, bad_state, row_index, column_index):
         colors = self.cells[row_index][column_index]

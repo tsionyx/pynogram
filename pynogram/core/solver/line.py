@@ -7,7 +7,6 @@ import logging
 import os
 import time
 
-from pynogram.core.board import ColoredBoard
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
@@ -100,7 +99,7 @@ def solve(board, parallel=False,
     """
 
     if methods is None:
-        if isinstance(board, ColoredBoard):
+        if board.is_colored:
             methods = ('reverse_tracking_color',)
         else:
             methods = ('simpson', 'reverse_tracking')

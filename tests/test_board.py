@@ -7,7 +7,7 @@ from io import StringIO
 
 import pytest
 
-from pynogram.core.board import Board, make_board, ColoredBoard
+from pynogram.core.board import Board, make_board
 from pynogram.core.solver import (
     line as line_solver,
     contradiction as contradiction_solver,
@@ -357,7 +357,7 @@ class TestMakeBoard(object):
 
     # noinspection PyShadowingNames
     def test_colored(self, color_board):
-        assert isinstance(color_board, ColoredBoard)
+        assert color_board.is_colored
 
     def test_bad_make_board(self):
         with pytest.raises(ValueError, match='Bad number of \*args'):
