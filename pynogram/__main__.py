@@ -69,6 +69,25 @@ def log_level(verbosity):
     return logging.DEBUG
 
 
+def _setup_logs(
+        level,
+        format_='[%(asctime)s] '
+                '%(levelname)-8s %(filename)s(%(module)s):%(lineno)d -> %(message)s'):
+    console = logging.StreamHandler()
+
+    try:
+        from tornado.log import LogFormatter
+        format_ = '%(color)s' + format_.replace('%(lineno)d', '%(lineno)d%(end_color)s')
+    except ImportError:
+        from logging import Formatter as LogFormatter
+
+    formatter = LogFormatter(format_)
+    console.setFormatter(formatter)
+
+    logging.getLogger('').addHandler(console)
+    logging.getLogger('').setLevel(level)
+
+
 def main():
     """Main function for setuptools console_scripts"""
     if PY2:
@@ -79,10 +98,7 @@ def main():
         print(__version__)
         return
 
-    logging.basicConfig(
-        format='[%(asctime)s] %(levelname)-8s %(filename)s:%(lineno)d -> %(message)s',
-        level=log_level(args.verbose),
-    )
+    _setup_logs(log_level(args.verbose))
 
     if args.pbn:
         board_def = Pbn.read(args.pbn)
