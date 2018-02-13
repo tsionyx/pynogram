@@ -12,7 +12,7 @@ from pynogram.core.solver import (
     line as line_solver,
     contradiction as contradiction_solver,
 )
-from pynogram.reader import read_example
+from pynogram.reader import read_example, Pbn
 from pynogram.renderer import (
     BaseAsciiRenderer,
     AsciiRenderer,
@@ -469,6 +469,12 @@ class TestColorBoard(object):
         ])
 
     def test_solve(self, board):
+        contradiction_solver.solve(board)
+        assert board.solution_rate == 1
+        assert board.solved
+
+    def test_solve_contradictions(self):
+        board = make_board(*Pbn.read(2021))
         contradiction_solver.solve(board)
         assert board.solution_rate == 1
         assert board.solved
