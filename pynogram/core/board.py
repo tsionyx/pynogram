@@ -364,6 +364,7 @@ class ColoredBoard(Board):
         self.color_map = color_map
         self.color_map[DEFAULT_COLOR_NAME] = DEFAULT_COLOR
         super(ColoredBoard, self).__init__(columns, rows, **renderer_params)
+        self._desc_colors = self._colors(True)
 
     def init_cell_state(self):
         return tuple(self.color_map) + (SPACE,)
@@ -379,7 +380,7 @@ class ColoredBoard(Board):
         return True
 
     def colors(self):
-        return set(self.color_map) | {SPACE}
+        return self._desc_colors | {SPACE}
 
     @property
     def is_colored(self):
@@ -455,9 +456,8 @@ class ColoredBoard(Board):
             descriptions = self.columns_descriptions
 
         colors = set()
-        for block in descriptions:
-            for __, block_color in block:
-                colors.add(block_color)
+        for desc in descriptions:
+            colors.update(color for size, color in desc)
         return colors
 
     @classmethod
