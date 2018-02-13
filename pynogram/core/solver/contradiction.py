@@ -22,63 +22,66 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 LOG = logging.getLogger(_LOG_NAME)
 
 
+USE_CONTRADICTION_RESULTS = True
+
+
 def probe(board, row_index, column_index, assumption):
     """
     Try to find if the given cell can be in an assumed state.
     If the contradiction is found, set the cell
     in an inverted state and propagate the changes if needed.
 
-    Return the set of cells that was changed during that probe.
+    Returns a snapshot of the board. It contains the state of a board
+    before any assumptions was made. It will help further to determine
+    which cells has changed on that probe.
     """
     # already solved
     if board.cell_solved(row_index, column_index):
         return None
 
-    # if assumption not in board.cell_colors(row_index, column_index):
-    #     return
-
     save = deepcopy(board.cells)
-    save_on_contradiction = ()
 
     try:
-        try:
-            LOG.debug('Pretend that (%i, %i) is %s',
-                      row_index, column_index, assumption)
+        LOG.debug('Pretend that (%i, %i) is %s',
+                  row_index, column_index, assumption)
 
-            if board.is_colored:
-                assumption = [assumption]
+        if board.is_colored:
+            assumption = [assumption]
 
-            board.cells[row_index][column_index] = assumption
-            line.solve(
-                board,
-                row_indexes=(row_index,),
-                column_indexes=(column_index,),
-                contradiction_mode=True)
-        except NonogramError:
-            LOG.debug('Contradiction', exc_info=True)
-            save_on_contradiction = save
+        board.cells[row_index][column_index] = assumption
+        line.solve(
+            board,
+            row_indexes=(row_index,),
+            column_indexes=(column_index,),
+            contradiction_mode=True)
+
+        if board.solution_rate == 1:
+            LOG.warning("Found one of the solutions!")
+
+        return None
+
+    except NonogramError:
+        LOG.debug('Contradiction', exc_info=True)
+        if USE_CONTRADICTION_RESULTS:
+            before_contradiction = deepcopy(save)
         else:
-            if board.solution_rate == 1:
-                LOG.warning("Found one of the solutions!")
+            before_contradiction = None
     finally:
         # rollback solved cells
         board.cells = save
 
-    if len(save_on_contradiction):
-        LOG.info("Found contradiction at (%i, %i)",
-                 row_index, column_index)
-        board.unset_state(assumption, row_index, column_index)
+    LOG.info("Found contradiction at (%i, %i)",
+             row_index, column_index)
+    board.unset_state(assumption, row_index, column_index)
 
-        # try to solve with additional info
-        # solve with only one cell as new info
-        line.solve(
-            board,
-            row_indexes=(row_index,),
-            column_indexes=(column_index,))
+    # try to solve with additional info
+    # solve with only one cell as new info
+    line.solve(
+        board,
+        row_indexes=(row_index,),
+        column_indexes=(column_index,))
 
-        return board.changed(save_on_contradiction)
-
-    return None
+    return before_contradiction
 
 
 def _solution_round(board, ignore_neighbours=False):
@@ -114,26 +117,27 @@ def _solution_round(board, ignore_neighbours=False):
         LOG.info('Probe #%d: %s (%f)', counter_total, (i, j), priority)
 
         for assumption in board.cell_colors(i, j):
-            changed = probe(board, i, j, assumption)
+            cells = probe(board, i, j, assumption)
+            if cells is None:
+                continue
 
-            if changed:
-                # evaluate generator
-                changed = list(changed)
+            counter_found += 1
+            if board.solution_rate == 1:
+                return counter_found
 
-                LOG.info('Changed %d cells with %s assumption',
-                         len(changed), assumption)
-                counter_found += 1
-                if board.solution_rate == 1:
-                    return counter_found
+            # evaluate generator
+            changed = list(board.changed(cells))
+            LOG.info('Changed %d cells with %s assumption',
+                     len(changed), assumption)
 
-                # add the neighbours of the changed cells into jobs
-                for coord in changed:
-                    for neighbour in board.unsolved_neighbours(*coord):
-                        _add_job(neighbour, 1)
+            # add the neighbours of the changed cells into jobs
+            for coord in changed:
+                for neighbour in board.unsolved_neighbours(*coord):
+                    _add_job(neighbour, 1)
 
-                # add the neighbours of the selected cell into jobs
-                for neighbour in board.unsolved_neighbours(i, j):
-                    _add_job(neighbour, 0)
+            # add the neighbours of the selected cell into jobs
+            for neighbour in board.unsolved_neighbours(i, j):
+                _add_job(neighbour, 0)
 
 
 def solve(board):

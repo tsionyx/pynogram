@@ -315,26 +315,26 @@ class Board(object):  # pylint: disable=too-many-public-methods
             if not self.cell_solved(*cell):
                 yield cell
 
-    def changed(self, old_cells):
-        assert self.height == len(old_cells)
-        assert self.width == len(old_cells[0])
+    @classmethod
+    def diff(cls, old_cells, new_cells):
+        assert len(old_cells) == len(new_cells)
+        assert len(old_cells[0]) == len(new_cells[0])
 
-        for i, row in enumerate(self.cells):
-            for j, cell in enumerate(row):
+        for i, row in enumerate(new_cells):
+            for j, new_cell in enumerate(row):
                 old_cell = old_cells[i][j]
 
-                solution_rate = self.cell_solution_rate(cell)
-                old_solution_rate = self.cell_solution_rate(old_cell)
-                assert solution_rate >= old_solution_rate
-
-                if solution_rate == old_solution_rate:
-                    if is_list_like(cell):
-                        assert set(cell) == set(old_cell)
+                if is_list_like(new_cell):
+                    if set(new_cell) < set(old_cell):
+                        yield i, j
                     else:
-                        assert cell == old_cell
-
-                else:
+                        assert set(new_cell) == set(old_cell)
+                elif new_cell != old_cell:
+                    assert old_cell == UNKNOWN
                     yield i, j
+
+    def changed(self, old_cells):
+        return self.diff(old_cells, self.cells)
 
 
 class NumpyBoard(Board):
