@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """
 Here lie the utilities methods that does not depend on any domain
 e.g. manipulations with collections or streams.

@@ -1,7 +1,4 @@
 - contradictions:
-  - try all the choices for every cell at once, then go to another cell
-  - find next cell for contradiction search on some criterion
-  - try until it stalls for all the choices
   - if one of the choices comes to full solution
     but another choices all to contradictions:
     Hooray! It's the only solution we search.

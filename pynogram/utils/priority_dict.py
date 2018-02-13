@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """
 Based on Matteo Dell'Amico's solution
 https://gist.github.com/matteodellamico/4451520

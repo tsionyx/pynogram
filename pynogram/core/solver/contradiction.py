@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """Define nonogram solver that uses contradictions"""
 
 from __future__ import unicode_literals, print_function
@@ -7,12 +7,13 @@ import logging
 import os
 import time
 from copy import deepcopy
-from itertools import cycle
 
-from pynogram.core.board import ColoredBoard
+from six.moves import range
+
 from pynogram.core.solver import line
 from pynogram.core.solver.base import cache_hit_rate
 from pynogram.core.solver.common import NonogramError
+from pynogram.utils.priority_dict import PriorityDict
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -21,28 +22,30 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 LOG = logging.getLogger(_LOG_NAME)
 
 
-def try_contradiction(board, row_index, column_index,
-                      assumption, propagate=True):
+def probe(board, row_index, column_index, assumption):
     """
     Try to find if the given cell can be in an assumed state.
     If the contradiction is found, set the cell
     in an inverted state and propagate the changes if needed.
+
+    Return the set of cells that was changed during that probe.
     """
     # already solved
-    if board.cell_solved(board.cells[row_index][column_index]):
-        return
+    if board.cell_solved(row_index, column_index):
+        return None
+
+    # if assumption not in board.cell_colors(row_index, column_index):
+    #     return
 
     save = deepcopy(board.cells)
-    contradiction = False
-    colored = isinstance(board, ColoredBoard)
+    save_on_contradiction = ()
 
     try:
         try:
             LOG.debug('Pretend that (%i, %i) is %s',
                       row_index, column_index, assumption)
-            if colored:
-                if assumption not in board.cells[row_index][column_index]:
-                    return
+
+            if board.is_colored:
                 assumption = [assumption]
 
             board.cells[row_index][column_index] = assumption
@@ -53,89 +56,92 @@ def try_contradiction(board, row_index, column_index,
                 contradiction_mode=True)
         except NonogramError:
             LOG.debug('Contradiction', exc_info=True)
-            contradiction = True
+            save_on_contradiction = save
         else:
             if board.solution_rate == 1:
                 LOG.warning("Found one of the solutions!")
     finally:
         # rollback solved cells
         board.cells = save
-        if contradiction:
-            LOG.info("Found contradiction at (%i, %i)",
-                     row_index, column_index)
-            board.unset_state(assumption, row_index, column_index)
 
-            # try to solve with additional info
-            if propagate:
-                # solve with only one cell as new info
-                line.solve(
-                    board,
-                    row_indexes=(row_index,),
-                    column_indexes=(column_index,))
+    if len(save_on_contradiction):
+        LOG.info("Found contradiction at (%i, %i)",
+                 row_index, column_index)
+        board.unset_state(assumption, row_index, column_index)
+
+        # try to solve with additional info
+        # solve with only one cell as new info
+        line.solve(
+            board,
+            row_indexes=(row_index,),
+            column_indexes=(column_index,))
+
+        return board.changed(save_on_contradiction)
+
+    return None
 
 
-def _contradictions_round(
-        board, assumption,
-        propagate_on_cell=True, by_rows=True):
+def _solution_round(board, ignore_neighbours=False):
     """
-    Solve the nonogram with contradictions
-    by trying every cell and the basic `solve` method.
+    Do the one round of solving with contradictions.
+    Returns the number of contradictions found.
 
-    :param assumption: which state to try: BOX or SPACE
-    or all the possible colors for colored boards
-    :param propagate_on_cell: how to propagate changes:
-    after each solved cell or in the end of the row
-    :param by_rows: iterate by rows (left-to-right) or by columns (top-to-bottom)
+    Based on https://www.cs.bgu.ac.il/~benr/nonograms/
     """
 
-    if by_rows:
-        for solved_row in range(board.height):
-            if board.row_solution_rate(solved_row) == 1:
+    counter_total, counter_found = 0, 0
+
+    probe_jobs = PriorityDict()
+
+    def _add_job(job, _priority):
+        probe_jobs[job] = _priority
+
+    for i in range(board.height):
+        for j in range(board.width):
+            if board.cell_solved(i, j):
                 continue
+            no_unsolved = len(list(board.unsolved_neighbours(i, j)))
+            if ignore_neighbours or no_unsolved < 4:
+                cell_rate = board.row_solution_rate(i) + board.column_solution_rate(j)
+                _add_job((i, j), 4 - cell_rate + no_unsolved)
 
-            LOG.info('Trying to assume on row %i', solved_row)
-            for solved_column in range(board.width):
-                try_contradiction(
-                    board,
-                    solved_row, solved_column,
-                    assumption,
-                    propagate=propagate_on_cell
-                )
+    while True:
+        if not probe_jobs:
+            return counter_found
 
-            if not propagate_on_cell:
-                # solve with only one row as new info
-                line.solve(
-                    board, row_indexes=(solved_row,))
-    else:
-        for solved_column in range(board.width):
-            if board.column_solution_rate(solved_column) == 1:
-                continue
+        (i, j), priority = probe_jobs.pop_smallest()
+        counter_total += 1
+        LOG.info('Probe #%d: %s (%f)', counter_total, (i, j), priority)
 
-            LOG.info('Trying to assume on column %i', solved_column)
-            for solved_row in range(board.height):
-                try_contradiction(
-                    board,
-                    solved_row, solved_column,
-                    assumption,
-                    propagate=propagate_on_cell
-                )
+        for assumption in board.cell_colors(i, j):
+            changed = probe(board, i, j, assumption)
 
-            if not propagate_on_cell:
-                # solve with only one column as new info
-                line.solve(
-                    board, column_indexes=(solved_column,))
+            if changed:
+                # evaluate generator
+                changed = list(changed)
+
+                LOG.info('Changed %d cells with %s assumption',
+                         len(changed), assumption)
+                counter_found += 1
+                if board.solution_rate == 1:
+                    return counter_found
+
+                # add the neighbours of the changed cells into jobs
+                for coord in changed:
+                    for neighbour in board.unsolved_neighbours(*coord):
+                        _add_job(neighbour, 1)
+
+                # add the neighbours of the selected cell into jobs
+                for neighbour in board.unsolved_neighbours(i, j):
+                    _add_job(neighbour, 0)
 
 
-def solve(
-        board, propagate_on_row=False, by_rows=True):
+def solve(board):
     """
     Solve the nonogram to the most with contradictions
     and the basic `solve` method.
 
     :type board: Board
-    :param propagate_on_row: how to propagate changes:
-    in the end of the row or after each solved cell
-    :param by_rows: iterate by rows (left-to-right) or by columns (top-to-bottom)
     """
 
     line.solve(board)
@@ -145,44 +151,34 @@ def solve(
         return
 
     LOG.warning('Trying to solve using contradictions method')
-    propagate_on_cell = not propagate_on_row
     board.set_solved(False)
     start = time.time()
 
-    counter = 0
-    colored = isinstance(board, ColoredBoard)
+    round_number = 0
+    # at first, take the number of unknown neighbours into account
+    brute_force = False
 
-    assumptions = board.colors()  # try the different assumptions every time
-    active_assumptions_rate = {state: board.solution_rate for state in assumptions}
+    while True:
+        prev_solution_rate = board.solution_rate
+        found_contradictions = _solution_round(board, ignore_neighbours=brute_force)
+        current_solution_rate = board.solution_rate
 
-    assumptions = cycle(assumptions)
-    while active_assumptions_rate:
-        assumption = next(assumptions)
-        if assumption not in active_assumptions_rate:
-            continue
+        round_number += 1
+        LOG.warning('Contradiction round #%d (found %d): %f',
+                    round_number, found_contradictions, current_solution_rate)
 
-        counter += 1
-        LOG.warning('Contradiction round %i (assumption %s)', counter, assumption)
-
-        _contradictions_round(
-            board, assumption,
-            propagate_on_cell=propagate_on_cell,
-            by_rows=by_rows)
-
-        if board.solution_rate > active_assumptions_rate[assumption]:
-            board.solution_round_completed()
-
-        if board.solution_rate == 1:
+        if current_solution_rate == 1:
             break
 
-        if board.solution_rate == active_assumptions_rate[assumption]:
-            if colored:
-                # stalled
-                del active_assumptions_rate[assumption]
-            else:
+        if current_solution_rate == prev_solution_rate:
+            if brute_force:
+                # give up if the brute force search is exhausted
                 break
-        else:
-            active_assumptions_rate[assumption] = board.solution_rate
+            else:
+                # if stalled with sophisticated selection of cells
+                # do the brute force search
+                LOG.warning('Enabling brute force contradictions mode')
+                brute_force = True
 
     board.set_solved()
     if board.solution_rate != 1:

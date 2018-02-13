@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """Define common solving utilities"""
 
 from __future__ import unicode_literals, print_function

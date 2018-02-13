@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 """
 The program's entry point
 """
@@ -47,7 +47,7 @@ def draw_solution(board_def, every_round=True):
         d_board.on_solution_round_complete = lambda board: board.draw()
 
     try:
-        contradiction_solver.solve(d_board, by_rows=False)
+        contradiction_solver.solve(d_board)
         if not every_round:
             d_board.draw()
     except Exception:

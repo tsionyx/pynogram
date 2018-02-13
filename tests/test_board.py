@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*
+# -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals, print_function
 
@@ -7,7 +7,7 @@ from io import StringIO
 
 import pytest
 
-from pynogram.core.board import Board, make_board, ColoredBoard
+from pynogram.core.board import Board, make_board
 from pynogram.core.solver import (
     line as line_solver,
     contradiction as contradiction_solver,
@@ -280,7 +280,7 @@ class TestContradictions(object):
         assert is_close(board.solution_rate, 0.6)
         # assert is_close(board.solution_rate, 407.0 / 625)
 
-        contradiction_solver.solve(board, propagate_on_row=True)
+        contradiction_solver.solve(board)
         assert board.solution_rate == 1
 
     def test_simple(self):
@@ -303,8 +303,6 @@ class TestContradictions(object):
         assert is_close(board.solution_rate, 7.0 / 9)
 
     def test_chessboard(self):
-        """Just trying all the choices for full coverage"""
-
         # The real chessboard could be defined like this
         #
         # `columns = rows = [[1, 1, 1, 1]] * 8`
@@ -314,19 +312,13 @@ class TestContradictions(object):
         # So we just use simple 2x2 chessboard here
         # with the same effect on test coverage
 
-        columns = rows = [1, 1]
+        columns = rows = [[1, 1, 1, 1]] * 8
         board = Board(columns, rows)
 
         line_solver.solve(board)
         assert board.solution_rate == 0
 
-        contradiction_solver.solve(board, by_rows=False)
-        assert board.solution_rate == 0
-
-        contradiction_solver.solve(board, propagate_on_row=True)
-        assert board.solution_rate == 0
-
-        contradiction_solver.solve(board, by_rows=False, propagate_on_row=True)
+        contradiction_solver.solve(board)
         assert board.solution_rate == 0
 
 
@@ -357,7 +349,7 @@ class TestMakeBoard(object):
 
     # noinspection PyShadowingNames
     def test_colored(self, color_board):
-        assert isinstance(color_board, ColoredBoard)
+        assert color_board.is_colored
 
     def test_bad_make_board(self):
         with pytest.raises(ValueError, match='Bad number of \*args'):
