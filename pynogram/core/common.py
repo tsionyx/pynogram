@@ -148,6 +148,8 @@ def is_list_like(value):
 def is_color_list(value):
     """Whether value is a list-like of list-likes"""
     if is_list_like(value):
+        # to handle both standard types and numpy arrays
+        # pylint: disable=len-as-condition
         if len(value) and is_list_like(value[0]):
             return True
 

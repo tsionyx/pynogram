@@ -4,7 +4,6 @@
 from __future__ import unicode_literals, print_function
 
 import logging
-import os
 import time
 
 from pynogram.core.common import (
@@ -16,14 +15,10 @@ from pynogram.core.solver.base import (
 )
 from pynogram.utils.priority_dict import PriorityDict
 
-_LOG_NAME = __name__
-if _LOG_NAME == '__main__':  # pragma: no cover
-    _LOG_NAME = os.path.basename(__file__)
-
-LOG = logging.getLogger(_LOG_NAME)
+LOG = logging.getLogger(__name__)
 
 
-# pylint: disable=too-many-arguments, too-many-locals
+# pylint: disable=too-many-arguments, too-many-locals, too-many-branches
 def solve_row(board, index, is_column, method,
               contradiction_mode=False):
     """

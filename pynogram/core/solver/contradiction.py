@@ -4,7 +4,6 @@
 from __future__ import unicode_literals, print_function
 
 import logging
-import os
 import time
 from copy import deepcopy
 
@@ -15,11 +14,7 @@ from pynogram.core.solver.base import cache_hit_rate
 from pynogram.core.solver.common import NonogramError
 from pynogram.utils.priority_dict import PriorityDict
 
-_LOG_NAME = __name__
-if _LOG_NAME == '__main__':  # pragma: no cover
-    _LOG_NAME = os.path.basename(__file__)
-
-LOG = logging.getLogger(_LOG_NAME)
+LOG = logging.getLogger(__name__)
 
 USE_CONTRADICTION_RESULTS = True
 
@@ -83,6 +78,7 @@ def probe(board, row_index, column_index, assumption):
     return before_contradiction
 
 
+# pylint: disable=too-many-locals
 def _solution_round(board, ignore_neighbours=False):
     """
     Do the one round of solving with contradictions.
@@ -107,10 +103,7 @@ def _solution_round(board, ignore_neighbours=False):
                 cell_rate = board.row_solution_rate(i) + board.column_solution_rate(j)
                 _add_job((i, j), 4 - cell_rate + no_unsolved)
 
-    while True:
-        if not probe_jobs:
-            return counter_found
-
+    while probe_jobs:
         (i, j), priority = probe_jobs.pop_smallest()
         counter_total += 1
         LOG.info('Probe #%d: %s (%f)', counter_total, (i, j), priority)
@@ -137,6 +130,8 @@ def _solution_round(board, ignore_neighbours=False):
             # add the neighbours of the selected cell into jobs
             for neighbour in board.unsolved_neighbours(i, j):
                 _add_job(neighbour, 0)
+
+    return counter_found
 
 
 def solve(board):

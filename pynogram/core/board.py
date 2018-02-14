@@ -151,6 +151,12 @@ class Board(object):  # pylint: disable=too-many-public-methods
 
     @property
     def is_colored(self):
+        """
+        Whether the board has an ability
+        to store more than black-and-white puzzles.
+
+        That is simpler than do `isinstance(board, ColoredBoard)` every time.
+        """
         return False
 
     def cell_colors(self, i, j):
@@ -283,7 +289,10 @@ class Board(object):  # pylint: disable=too-many-public-methods
         """How many cells in a vertical column are known to be box or space"""
         return self.line_solution_rate(self.get_column(index))
 
-    def cell_solution_rate(self, cell):
+    @classmethod
+    def cell_solution_rate(cls, cell):
+        """Whether the cell solved or not"""
+
         if cell == UNKNOWN:
             return 0
         return 1
@@ -298,6 +307,12 @@ class Board(object):  # pylint: disable=too-many-public-methods
         self._solved = solved
 
     def neighbours(self, row_index, column_index):
+        """
+        For the given cell yield
+        the four possible neighbour cells.
+        When the given cell is on a border,
+        that number can reduce to three or two.
+        """
         if row_index > 0:
             yield row_index - 1, column_index
 
@@ -311,12 +326,20 @@ class Board(object):  # pylint: disable=too-many-public-methods
             yield row_index, column_index + 1
 
     def unsolved_neighbours(self, row_index, column_index):
+        """
+        For the given cell yield the neighbour cells
+        that are not completely solved yet.
+        """
         for cell in self.neighbours(row_index, column_index):
             if not self.cell_solved(*cell):
                 yield cell
 
     @classmethod
     def diff(cls, old_cells, new_cells):
+        """
+        Yield the coordinates of cells that was changed
+        in the second set of cells compared to the first one.
+        """
         assert len(old_cells) == len(new_cells)
         assert len(old_cells[0]) == len(new_cells[0])
 
@@ -334,10 +357,18 @@ class Board(object):  # pylint: disable=too-many-public-methods
                     yield i, j
 
     def changed(self, old_cells):
+        """
+        Yield the coordinates of cells that was changed
+        compared to the given set of cells.
+        """
         return self.diff(old_cells, self.cells)
 
 
 class NumpyBoard(Board):
+    """
+    The board that stores its state in a numpy array
+    """
+
     def __init__(self, columns, rows, **renderer_params):
         import numpy as np
 
