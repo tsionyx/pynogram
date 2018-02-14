@@ -2,6 +2,7 @@
 
 # nohup bash tests/bench.sh {1..2000} 2>&1 >> bench.log & tail -f bench.log
 
+echo "Start at $(date)"
 for i in $@; do
     echo "Solving PBN's puzzle #$i (http://webpbn.com/$i) ..."
     /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final -v 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
@@ -9,6 +10,7 @@ for i in $@; do
     echo
 done
 
+echo "End at $(date)"
 
 function stats() {
   log_file=$1

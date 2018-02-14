@@ -1,7 +1,11 @@
+- simpson refactoring
+- coverage!
+- pylint in CI
+- clean:
+  - check docstrings
+  - check for " (replace with ')
+
 - contradictions:
-  - if one of the choices comes to full solution
-    but another choices all to contradictions:
-    Hooray! It's the only solution we search.
   - if no contradiction, then save repeated solutions
     for all the possible choices and extract intersection
     of that solution
@@ -13,20 +17,10 @@
   - shorter class and id names
   - collapse contiguous block into one long block
 
-
-- clean:
-  - check docstrings
-  - check for " (replace with ')
-
 - tests for Web UI
-
--- github, [PyPi](http://the-hitchhikers-guide-to-packaging.readthedocs.io/en/latest/quickstart.html)
-
 - load board from file
 - load clues from solved board (check for complexity)
-- find next point or line to solve based on some score
 - add heuristics:
-  - which directions to solve first: rows or columns
   - use multiprocessing?
 
 - profile and improve bottlenecks:
