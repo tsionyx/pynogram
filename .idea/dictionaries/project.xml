@@ -8,8 +8,10 @@
       <w>nfsm</w>
       <w>nonogram</w>
       <w>nonograms</w>
+      <w>nonolib</w>
+      <w>pbn</w>
+      <w>pbnsolve</w>
       <w>pynogram</w>
-      <w>pytest</w>
       <w>renderers</w>
       <w>svgwrite</w>
       <w>uptime</w>

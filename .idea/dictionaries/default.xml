@@ -20,6 +20,7 @@
       <w>msvs</w>
       <w>mymodule</w>
       <w>mypackage</w>
+      <w>nohup</w>
       <w>noninfringement</w>
       <w>optparse</w>
       <w>overgeneral</w>
@@ -27,6 +28,7 @@
       <w>pygtk</w>
       <w>pylint</w>
       <w>pylintrc</w>
+      <w>pytest</w>
       <w>rcfile</w>
       <w>rdiv</w>
       <w>realpath</w>

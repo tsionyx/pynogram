@@ -21,7 +21,6 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 
 LOG = logging.getLogger(_LOG_NAME)
 
-
 USE_CONTRADICTION_RESULTS = True
 
 
