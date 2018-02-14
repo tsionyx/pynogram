@@ -1,0 +1,18 @@
+<html>
+<head>
+    <title>Local puzzles</title>
+</head>
+
+<body>
+
+<h1>Local puzzles</h1>
+<ul>
+    {% for file in files %}
+    <li>
+        <a href="/board/local/{{ file }}">{{ file }}</a>
+        <a href="/board/local/source/{{ file }}">(source)</a>
+    </li>
+    {% end %}
+</ul>
+</body>
+</html>

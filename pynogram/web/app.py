@@ -18,7 +18,10 @@ import tornado.web
 
 import pynogram.core.solver.contradiction as contradiction_solver
 from pynogram.core.board import make_board
-from pynogram.reader import read_example, Pbn, PbnNotFoundError
+from pynogram.reader import (
+    read_example, list_examples, read_example_source,
+    Pbn, PbnNotFoundError,
+)
 from pynogram.renderer import (
     StreamRenderer,
     RENDERERS,
@@ -92,6 +95,25 @@ class BoardLocalHandler(BoardHandler):
     @property
     def board_mode(self):
         return 'local'
+
+
+class ListLocalHandler(BaseHandler):
+    """Show the list of local puzzles"""
+
+    def get(self):
+        self.render('local.html', files=list_examples())
+
+
+class BoardLocalSourceHandler(BaseHandler):
+    """Show the source text of a local puzzle"""
+
+    def get(self, _id):
+        self.set_header(str('Content-Type'), 'text/plain')
+        try:
+            self.write(read_example_source(_id))
+        except IOError:
+            raise tornado.web.HTTPError(
+                404, 'File not found: %s', _id)
 
 
 class BoardPbnHandler(BoardHandler):
@@ -195,6 +217,8 @@ class Application(tornado.web.Application):
         self.board_notifiers = dict()
 
         handlers = [
+            (r'/board/local/', ListLocalHandler),
+            (r'/board/local/source/(.+)/?', BoardLocalSourceHandler),
             (r'/board/local/(.+)/?', BoardLocalHandler),
             (r'/board/pbn/([0-9]+)/?', BoardPbnHandler),
             (r'/board/status/(.+)/(.+)/?', BoardStatusHandler),

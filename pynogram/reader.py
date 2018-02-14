@@ -76,6 +76,17 @@ def read_example(board_file):
     return read_ini(example_file(board_file))
 
 
+def list_examples():
+    """Return names of all the local examples"""
+    for __, __, file_names in os.walk(example_file()):
+        return [os.path.splitext(f)[0] for f in file_names]
+
+
+def read_example_source(name):
+    """Return the local example's source (do not parse)"""
+    return open(example_file(name)).read()
+
+
 # pylint: disable=too-few-public-methods
 class MultiLineConfigParser(RawConfigParser, object):
     """
