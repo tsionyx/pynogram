@@ -109,9 +109,12 @@ def read_ini(content):
     parser = MultiLineConfigParser()
 
     if isinstance(content, string_types):
-        if os.path.isfile(content):
-            parser.read(content)
-
+        with open(content) as file:
+            if PY2:
+                parser.readfp(file)
+            else:
+                # readfp is deprecated in future versions
+                parser.read_file(file)
     else:
         parser.readfp(content)
 
