@@ -43,11 +43,9 @@ class BguSolver(object):
         self.solved_line = list(self.line)
 
         line_size = len(line)
-        mat_rows = line_size + 1
-        self.mat_cols = int(line_size / 2) + 2
-        self.memoized = [False] * (mat_rows * self.mat_cols)
-        self.sol = [None] * (mat_rows * self.mat_cols)
-        self.num_both_color_cells = 0
+        positions = line_size + 1
+        self.job_size = len(clue) + 1
+        self.sol = [None] * (self.job_size * positions)
 
     @classmethod
     def solve(cls, clue, line):
@@ -76,13 +74,12 @@ class BguSolver(object):
         The main solver function.
         Return whether the line is solvable.
         """
-        position, job = len(self.line) - 1, len(self.blocks)
-        self.fill_matrix_top_down(position, job)
-        return self.sol[self.get_mat_index(position, job)]
+        position, block = len(self.line) - 1, len(self.blocks)
+        return self.get_sol(position, block)
 
     def get_mat_index(self, row, col):
         """Convert the 2D matrix address into a 1D address"""
-        return row * self.mat_cols + col
+        return row * self.job_size + col
 
     @classmethod
     def calc_block_sum(cls, blocks):
@@ -103,68 +100,68 @@ class BguSolver(object):
 
         return res
 
-    def fill_matrix_top_down(self, position, job):
+    def fill_matrix_top_down(self, position, block):
         """
         fills the solution matrix in a top-down
         using memoization to determine if a recursive call has already been calculated
         :param position: position of cell we're currently trying to fill
-        :param job: current job of the cell
+        :param block: current block of the cell
         """
 
-        if (position < 0) or (job < 0):
+        if (position < 0) or (block < 0):
             return
 
-        # if we have too many jobs to fit this line segment
+        # if we have too many blocks to fit this line segment
         # we can stop the recursion and return false
-        if position < self.block_sums[job]:
-            self.set_sol(position, job, False)
+        if position < self.block_sums[block]:
+            self.set_sol(position, block, False)
             return
 
         # base case
         if position == 0:  # reached the end of the line
-            if (job == 0) and (self.line[position] != BOX):
-                self.set_sol(position, job, True)
+            if (block == 0) and (self.line[position] != BOX):
+                self.set_sol(position, block, True)
                 self.set_line_cell(position, SPACE)
             else:
-                self.set_sol(position, job, False)
+                self.set_sol(position, block, False)
 
             return
 
-        # finished filling all jobs (can still fill whitespace)
-        if job == 0:
-            if (self.line[position] != BOX) and self.get_sol(position - 1, job):
-                self.set_sol(position, job, True)
+        # finished filling all blocks (can still fill whitespace)
+        if block == 0:
+            if (self.line[position] != BOX) and self.get_sol(position - 1, block):
+                self.set_sol(position, block, True)
                 self.set_line_cell(position, SPACE)
             else:
-                self.set_sol(position, job, False)
+                self.set_sol(position, block, False)
 
             return
 
         # recursive case
         if self.line[position] == BOX:  # current cell is BOX
-            self.set_sol(position, job, False)  # can't place a block if the cell is black
+            self.set_sol(position, block, False)  # can't place a block if the cell is black
 
         else:  # current cell is either white or unknown
-            white_ans = self.get_sol(position - 1, job)  # set cell white and continue
+            white_ans = self.get_sol(position - 1, block)  # set cell white and continue
 
+            prev_block_size = self.blocks[block - 1]
             # set cell white, place the current block and continue
-            black_ans = (self.can_place_block(position - self.blocks[job - 1],
-                                              self.blocks[job - 1]) and
-                         self.get_sol(position - self.blocks[job - 1] - 1, job - 1))
+
+            black_ans = False
+            if self.can_place_block(position - prev_block_size, prev_block_size):
+                black_ans = self.get_sol(position - prev_block_size - 1, block - 1)
+
+            if not white_ans and not black_ans:
+                self.set_sol(position, block, False)  # no solution
+                return
 
             if white_ans:
                 self.set_line_cell(position, SPACE)
-                if black_ans:  # both space and block
-                    self.set_sol(position, job, True)
-                    self.set_line_block(position - self.blocks[job - 1], position)
-                else:  # space, but not block
-                    self.set_sol(position, job, True)
+                self.set_sol(position, block, True)
 
-            elif black_ans:  # block, but not space
-                self.set_sol(position, job, True)
-                self.set_line_block(position - self.blocks[job - 1], position)
-            else:
-                self.set_sol(position, job, False)  # no solution
+            if black_ans:  # both space and block
+                self.set_line_block(position - prev_block_size, position)
+                self.set_sol(position, block, True)
 
     def can_place_block(self, position, length):
         """
@@ -172,31 +169,23 @@ class BguSolver(object):
         we check that our partial solution does not negate the line's partial solution
         :param position:  position to place block at
         :param length:  length of block
-        :return: "true" if block can be placed, "false otherwise
         """
         if position < 0:
             return False
 
-        for i in range(length):
-            if self.line[position + i] == 0:
-                return False
-
         # if no negations were found, the block can be placed
-        return True
+        return SPACE not in self.line[position: position + length]
 
     def set_line_cell(self, position, value):
         """sets a cell in the solution matrix"""
 
         cell = self.solved_line[position]
-        if cell == UNKNOWN:
-            self.solved_line[position] = value
-        elif cell == BOTH_COLORS:
+        if cell == BOTH_COLORS:
             pass
+        elif cell == UNKNOWN:
+            self.solved_line[position] = value
         elif cell != value:
-            LOG.info('orig cell color: %s', self.solved_line[position])
-            LOG.info('setting cell %s as both colors', position)
             self.solved_line[position] = BOTH_COLORS
-            self.num_both_color_cells += 1
 
     def set_line_block(self, start_pos, end_pos):
         """
@@ -208,48 +197,37 @@ class BguSolver(object):
 
         # set blacks
         for i in range(start_pos, end_pos):
-            cell = self.solved_line[i]
-            if cell == UNKNOWN:
-                self.solved_line[i] = BOX
-            elif cell == SPACE:
-                LOG.info('orig cell color: %s', self.solved_line[i])
-                LOG.info('setting cell %s as both colors', i)
-                self.solved_line[i] = BOTH_COLORS
-                self.num_both_color_cells += 1
+            self.set_line_cell(i, BOX)
 
-        cell = self.solved_line[end_pos]
-        if cell == UNKNOWN:
-            self.solved_line[end_pos] = SPACE
-        elif cell == BOX:
-            LOG.info('orig cell color: %s', self.solved_line[end_pos])
-            LOG.info('setting cell %s as both colors', end_pos)
-            self.solved_line[end_pos] = BOTH_COLORS
-            self.num_both_color_cells += 1
+        self.set_line_cell(end_pos, SPACE)
 
-    def set_sol(self, position, job, value):
+    def set_sol(self, position, block, value):
         """
         sets a value in the solution matrix
-        also sets cell as TRUE in the memoization matrix
-        (so we wont calculate this value recursively anymore)
+        so we wont calculate this value recursively anymore
         """
         if position < 0:
             return
 
-        self.sol[self.get_mat_index(position, job)] = value
-        self.memoized[self.get_mat_index(position, job)] = True
+        self._set_sol(position, block, value)
 
-    def get_sol(self, position, job):
+    def _set_sol(self, position, block, value):
+        self.sol[self.get_mat_index(position, block)] = value
+
+    def get_sol(self, position, block):
         """
         gets the value from the solution matrix
-        if the value is not memoized yet, we calculate it recursively
-        :return: value of pos,job in the solution matrix
+        if the value is missing, we calculate it recursively
         """
 
         if position == -1:
             # finished placing the last block, exactly at the beginning of the line.
-            return job == 0
+            return block == 0
 
-        if not self.memoized[self.get_mat_index(position, job)]:
-            self.fill_matrix_top_down(position, job)
+        if self._get_sol(position, block) is None:
+            self.fill_matrix_top_down(position, block)
 
-        return self.sol[self.get_mat_index(position, job)]
+        return self._get_sol(position, block)
+
+    def _get_sol(self, position, block):
+        return self.sol[self.get_mat_index(position, block)]
