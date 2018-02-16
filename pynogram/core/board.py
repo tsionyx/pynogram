@@ -8,6 +8,7 @@ from __future__ import unicode_literals, print_function, division
 import logging
 import os
 from collections import defaultdict
+from copy import copy, deepcopy
 
 from six.moves import zip, range
 
@@ -363,6 +364,10 @@ class Board(object):  # pylint: disable=too-many-public-methods
         """
         return self.diff(old_cells, self.cells)
 
+    def make_snapshot(self):
+        """Safely save the current state of a board"""
+        return deepcopy(self.cells)
+
 
 class NumpyBoard(Board):
     """
@@ -384,6 +389,9 @@ class NumpyBoard(Board):
 
         self.cells[:, index] = value
         self.column_updated(index)
+
+    def make_snapshot(self):
+        return copy(self.cells)
 
 
 class ColoredBoard(Board):

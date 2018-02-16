@@ -5,7 +5,6 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import time
-from copy import deepcopy
 
 from six.moves import range
 
@@ -33,7 +32,7 @@ def probe(board, row_index, column_index, assumption):
     if board.cell_solved(row_index, column_index):
         return None
 
-    save = deepcopy(board.cells)
+    save = board.make_snapshot()
 
     try:
         LOG.debug('Pretend that (%i, %i) is %s',
@@ -56,13 +55,14 @@ def probe(board, row_index, column_index, assumption):
 
     except NonogramError:
         LOG.debug('Contradiction', exc_info=True)
-        if USE_CONTRADICTION_RESULTS:
-            before_contradiction = deepcopy(save)
-        else:
-            before_contradiction = None
     finally:
         # rollback solved cells
         board.cells = save
+
+    if USE_CONTRADICTION_RESULTS:
+        before_contradiction = board.make_snapshot()
+    else:
+        before_contradiction = None
 
     LOG.info("Found contradiction at (%i, %i)",
              row_index, column_index)
