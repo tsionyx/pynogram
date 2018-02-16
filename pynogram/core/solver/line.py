@@ -97,7 +97,8 @@ def solve(board, parallel=False,
         if board.is_colored:
             methods = ('reverse_tracking_color',)
         else:
-            methods = ('simpson', 'reverse_tracking')
+            # methods = ('simpson', 'reverse_tracking')
+            methods = ('bgu',)
 
     if not isinstance(methods, (tuple, list)):
         methods = [methods]

@@ -8,6 +8,7 @@ import logging
 from six import iteritems
 
 from pynogram.core.common import normalize_row, normalize_description
+from pynogram.core.solver import bgu
 from pynogram.core.solver import simpson
 from pynogram.core.solver.common import NonogramError, LineSolutionsMeta
 from pynogram.core.solver.machine import (
@@ -39,6 +40,9 @@ def _solver(name):
 
     if name == 'simpson':
         return simpson.FastSolver.solve
+
+    if name == 'bgu':
+        return bgu.BguSolver.solve
 
     raise AttributeError("Cannot find solving method '%s'" % name)
 
