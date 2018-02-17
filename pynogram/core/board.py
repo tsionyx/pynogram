@@ -108,7 +108,7 @@ class Board(object):  # pylint: disable=too-many-public-methods
         self.columns_descriptions = self.normalize(columns)
         self.rows_descriptions = self.normalize(rows)
 
-        init_state = self.init_cell_state()
+        init_state = self.init_cell_state
         self.cells = [[init_state] * self.width for _ in range(self.height)]
         self.validate()
 
@@ -120,8 +120,8 @@ class Board(object):  # pylint: disable=too-many-public-methods
         self.on_solution_round_complete = None
         self._solved = False
 
-    @classmethod
-    def init_cell_state(cls):
+    @property
+    def init_cell_state(self):
         """Initial value of a board cell"""
         return UNKNOWN
 
@@ -405,6 +405,7 @@ class ColoredBoard(Board):
         super(ColoredBoard, self).__init__(columns, rows, **renderer_params)
         self._desc_colors = self._colors(True)
 
+    @property
     def init_cell_state(self):
         return tuple(self.color_map) + (SPACE,)
 

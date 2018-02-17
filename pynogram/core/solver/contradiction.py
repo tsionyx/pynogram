@@ -179,9 +179,10 @@ def solve(board):
                 brute_force = True
 
     board.set_solved()
-    if board.solution_rate != 1:
+    solution_rate = board.solution_rate
+    if solution_rate != 1:
         LOG.warning('The nonogram is not solved full (with contradictions). '
-                    'The rate is %.4f', board.solution_rate)
+                    'The rate is %.4f', solution_rate)
     LOG.info('Full solution: %.6f sec', time.time() - start)
     for method, hit_rate in cache_hit_rate().items():
         LOG.info('Cache hit rate (%s): %.4f%%', method, hit_rate * 100.0)

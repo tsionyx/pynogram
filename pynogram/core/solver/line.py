@@ -177,10 +177,10 @@ def _solve_with_method(
     if not contradiction_mode:
         board.solution_round_completed()
 
-        # self._solved = True
-        if board.solution_rate != 1:
+        solution_rate = board.solution_rate
+        if solution_rate != 1:
             LOG.warning("The nonogram is not solved full ('%s'). The rate is %.4f",
-                        method, board.solution_rate)
+                        method, solution_rate)
         LOG.info('Full solution: %.6f sec', time.time() - start)
         LOG.info('Lines solved: %i', lines_solved)
 
