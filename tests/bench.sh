@@ -28,7 +28,9 @@ function stats() {
   # 0.0069
 
 
-  # no exceptions found!!!
+  # check for exceptions
   grep File ${log_file} | sort | uniq -c | awk '{print $1,$4,$5,$7}'
-  grep -A5 'line 73' ${log_file} | grep -oP '#\K(\d+)' | awk '{print $1-1}'
+
+  # the worst times
+  grep -oP 'Total: \K(.+)' ${log_file} | sort -gr | head
 }
