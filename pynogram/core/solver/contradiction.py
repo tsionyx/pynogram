@@ -50,6 +50,7 @@ def probe(board, row_index, column_index, assumption):
 
         if board.solution_rate == 1:
             LOG.warning("Found one of the solutions!")
+            board.add_solution(copy_=False)
 
         return None
 

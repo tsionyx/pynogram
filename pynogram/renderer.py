@@ -212,10 +212,13 @@ class BaseAsciiRenderer(StreamRenderer):
             rend_row = pad(rend_row, self.side_width, Cell())
             self.cells[rend_i][:self.side_width] = rend_row
 
-    def draw_grid(self):
+    def draw_grid(self, cells=None):
+        if cells is None:
+            cells = self.board.cells
+
         is_colored = self.board.is_colored
 
-        for i, row in enumerate(self.board.cells):
+        for i, row in enumerate(cells):
             rend_i = i + self.header_height
             for j, val in enumerate(row):
                 rend_j = j + self.side_width
@@ -612,7 +615,10 @@ class SvgRenderer(StreamRenderer):
 
         return cell
 
-    def draw_grid(self):  # pylint: disable=too-many-locals
+    def draw_grid(self, cells=None):  # pylint: disable=too-many-locals
+        if cells is None:
+            cells = self.board.cells
+
         drawing = self.drawing
 
         grid_rect = drawing.rect(
@@ -658,7 +664,7 @@ class SvgRenderer(StreamRenderer):
         for cell_value, id_ in iteritems(self.color_symbols):
             cell_groups[cell_value] = drawing.g(class_=id_)
 
-        for j, row in enumerate(self.board.cells):
+        for j, row in enumerate(cells):
             for i, cell in enumerate(row):
                 cell = self._color_code(cell)
 
@@ -701,11 +707,11 @@ class SvgRenderer(StreamRenderer):
         self.drawing.write(self.stream)
         # self._print(self.drawing.tostring())
 
-    def draw(self):
+    def draw(self, cells=None):
         self.drawing.elements = []
         self.drawing.add(self.drawing.defs)
 
-        super(SvgRenderer, self).draw()
+        super(SvgRenderer, self).draw(cells=cells)
 
 
 def _register_renderers():

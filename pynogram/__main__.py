@@ -55,6 +55,8 @@ def draw_solution(board_def, every_round=True):
         d_board.draw()
         raise
 
+    d_board.draw_solutions()
+
 
 def log_level(verbosity):
     """Returns the log level based on given verbosity"""

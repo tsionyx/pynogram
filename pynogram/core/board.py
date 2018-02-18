@@ -71,11 +71,11 @@ class Renderer(object):
         """Actually print out the board"""
         raise NotImplementedError()
 
-    def draw(self):
+    def draw(self, cells=None):
         """Calculate all the cells and draw an image of the board"""
         self.draw_header()
         self.draw_side()
-        self.draw_grid()
+        self.draw_grid(cells=cells)
         self.render()
 
     def draw_header(self):
@@ -90,7 +90,7 @@ class Renderer(object):
         """
         raise NotImplementedError()
 
-    def draw_grid(self):
+    def draw_grid(self, cells=None):
         """
         Changes the internal state to be able to draw a main grid
         """
@@ -119,6 +119,8 @@ class Board(object):  # pylint: disable=too-many-public-methods
         self.on_column_update = None
         self.on_solution_round_complete = None
         self._solved = False
+
+        self.solutions = []
 
     @property
     def init_cell_state(self):
@@ -265,9 +267,9 @@ class Board(object):  # pylint: disable=too-many-public-methods
                 raise ValueError('Cannot allocate row {} in just {} cells'.format(
                     list(row), max_size))
 
-    def draw(self):
+    def draw(self, cells=None):
         """Draws a current state of a board with the renderer"""
-        self.renderer.draw()
+        self.renderer.draw(cells=cells)
 
     def __str__(self):
         return '{}({}x{})'.format(self.__class__.__name__, self.height, self.width)
@@ -368,6 +370,29 @@ class Board(object):  # pylint: disable=too-many-public-methods
         """Safely save the current state of a board"""
         return deepcopy(self.cells)
 
+    def _current_state_in_solutions(self):
+        return self.cells in self.solutions
+
+    def add_solution(self, copy_=True):
+        """Save full solution found with contradictions"""
+
+        if self._current_state_in_solutions():
+            LOG.info('Solution already exists')
+            return
+
+        if copy_:
+            cells = self.make_snapshot()
+        else:
+            cells = self.cells
+
+        self.solutions.append(cells)
+
+    def draw_solutions(self):
+        """Render the solutions"""
+
+        for solution in self.solutions:
+            self.draw(cells=solution)
+
 
 class NumpyBoard(Board):
     """
@@ -392,6 +417,15 @@ class NumpyBoard(Board):
 
     def make_snapshot(self):
         return copy(self.cells)
+
+    def _current_state_in_solutions(self):
+        import numpy as np
+
+        for solution in self.solutions:
+            if np.array_equal(self.cells, solution):
+                return True
+
+        return False
 
 
 class ColoredBoard(Board):
