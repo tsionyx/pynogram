@@ -455,7 +455,7 @@ class SvgRenderer(StreamRenderer):
         self._add_symbol(
             'space', SPACE,
             drawing.circle(
-                r=self.cell_size / 20
+                r=self.cell_size / 10
             ))
 
         self._add_symbol(
