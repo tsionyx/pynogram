@@ -8,10 +8,8 @@ from io import StringIO
 import pytest
 
 from pynogram.core.board import Board, make_board
-from pynogram.core.solver import (
-    line as line_solver,
-    contradiction as contradiction_solver,
-)
+from pynogram.core.solver import line as line_solver
+from pynogram.core.solver.contradiction import Solver
 from pynogram.reader import read_example, Pbn
 from pynogram.renderer import (
     BaseAsciiRenderer,
@@ -280,12 +278,12 @@ class TestContradictions(object):
         assert is_close(board.solution_rate, 0.6)
         # assert is_close(board.solution_rate, 407.0 / 625)
 
-        contradiction_solver.solve(board)
+        Solver(board).solve()
         assert board.solution_rate == 1
 
     def test_simple(self):
         board = tested_board()
-        contradiction_solver.solve(board)
+        Solver(board).solve()
         assert board.solution_rate == 1
         assert board.solved
 
@@ -299,7 +297,7 @@ class TestContradictions(object):
         line_solver.solve(board)
         assert board.solution_rate == 0
 
-        contradiction_solver.solve(board)
+        Solver(board).solve()
         assert is_close(board.solution_rate, 7.0 / 9)
         assert len(board.solutions) == 2
 
@@ -319,7 +317,7 @@ class TestContradictions(object):
         line_solver.solve(board)
         assert board.solution_rate == 0
 
-        contradiction_solver.solve(board)
+        Solver(board).solve()
         assert board.solution_rate == 0
 
 
@@ -470,12 +468,12 @@ class TestColorBoard(object):
         ])
 
     def test_solve(self, board):
-        contradiction_solver.solve(board)
+        Solver(board).solve()
         assert board.solution_rate == 1
         assert board.solved
 
     def test_solve_contradictions(self):
         board = make_board(*Pbn.read(2021))
-        contradiction_solver.solve(board)
+        Solver(board).solve()
         assert board.solution_rate == 1
         assert board.solved

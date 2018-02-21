@@ -15,7 +15,7 @@ from six import PY2
 
 from pynogram.__version__ import __version__
 from pynogram.core.board import make_board
-from pynogram.core.solver import contradiction as contradiction_solver
+from pynogram.core.solver.contradiction import Solver
 from pynogram.reader import read_example, Pbn
 from pynogram.renderer import BaseAsciiRenderer
 
@@ -48,7 +48,7 @@ def draw_solution(board_def, every_round=True):
 
     exc = False
     try:
-        contradiction_solver.solve(d_board)
+        Solver(d_board).solve()
     except BaseException:
         exc = True
         raise
