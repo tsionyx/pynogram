@@ -19,15 +19,19 @@ LOG = logging.getLogger(__name__)
 USE_CONTRADICTION_RESULTS = True
 
 
-def probe(board, row_index, column_index, assumption):
+def probe(board, row_index, column_index, assumption, pretend=False):
     """
     Try to find if the given cell can be in an assumed state.
     If the contradiction is found, set the cell
     in an inverted state and propagate the changes if needed.
+    If `pretend`, do not rollback the solved board after the assumption was made.
 
     Return the pair `(useful, new_info)` where
 
-    useful: whether the assumption led to a contradiction
+    useful: whether the solution rate increased:
+        a) either assumption led to a contradiction
+        b) or we `pretend` that the given assumption
+        is true and try to solve that board
 
     new_info:
       a) when `useful`, it contains the state of the board
@@ -60,11 +64,15 @@ def probe(board, row_index, column_index, assumption):
             LOG.info("Found one of the solutions!")
             board.add_solution(copy_=False)
 
+        if pretend:
+            # pretend that it was a successful contradiction
+            return True, save
+
+        board.cells = save
         return False, rate
 
     except NonogramError:
         LOG.debug('Contradiction', exc_info=True)
-    finally:
         # rollback solved cells
         board.cells = save
 
@@ -104,14 +112,22 @@ def _new_jobs_from_solution(board, job, previous_state):
         yield neighbour, 0
 
 
-def _solve_jobs(board, jobs):
+def _solve_jobs(board, jobs=None, guess_job=None):
     """
     Given a board and a list of jobs try to solve that board
     using the jobs as probes.
 
     Return the number of contradictions found and the
-    best candidate for the following search
+    best candidate for the tree-base search
     """
+
+    guess = False
+
+    if jobs is None:
+        jobs = PriorityDict()
+        if guess_job:
+            jobs[guess_job] = 0
+            guess = True
 
     counter_total, counter_found = 0, 0
     rates = dict()
@@ -122,7 +138,12 @@ def _solve_jobs(board, jobs):
         LOG.info('Probe #%d: %s (%f)', counter_total, (i, j), priority)
 
         for assumption in board.cell_colors(i, j):
-            is_contradiction, info = probe(board, i, j, assumption)
+            is_contradiction, info = probe(
+                board, i, j, assumption, pretend=guess)
+
+            # only the first can be a guess
+            if guess:
+                guess = False
 
             if info is None:
                 continue
@@ -178,7 +199,7 @@ def _solve_without_search(board, every=False):
     return _solve_jobs(board, jobs=probe_jobs)
 
 
-def solve(board):
+def solve(board, **kwargs):
     """
     Solve the nonogram to the most with contradictions
     and the basic `solve` method.
@@ -206,8 +227,7 @@ def solve(board):
     if current_solution_rate < 1:
         # if stalled with sophisticated selection of cells
         # do the brute force search
-        # TODO: add some DFS-routine here
-        depth = 0
+        depth = Searcher.full_search(board, best_candidates, **kwargs)
         LOG.warning('Full search: (max depth %d): %f',
                     depth, current_solution_rate)
 
@@ -219,3 +239,77 @@ def solve(board):
     LOG.info('Full solution: %.6f sec', time.time() - start)
     for method, hit_rate in cache_hit_rate().items():
         LOG.info('Cache hit rate (%s): %.4f%%', method, hit_rate * 100.0)
+
+
+class Searcher(object):
+    """
+    Implements the depth-first search to found all the nonograms solutions
+    """
+
+    def __init__(self, board, max_solutions=None, timeout=None, max_depth=None):
+        self.board = board
+        self.max_solutions = max_solutions
+        self.timeout = timeout
+        self.max_depth = max_depth
+
+        self.depth_reached = 0
+        self.start_time = None
+
+    def enough_solutions(self):
+        """Whether we reached the defined limit for found solutions"""
+        return self.max_solutions and (len(self.board.solutions) >= self.max_solutions)
+
+    def search(self, states, path=()):
+        """Recursively search for solutions"""
+
+        if self.start_time is None:
+            self.start_time = time.time()
+
+        board = self.board
+
+        if self.enough_solutions():
+            return
+
+        # check if timeout has occurred
+        if self.timeout and (time.time() - self.start_time > self.timeout):
+            return
+
+        depth = len(path)
+        if depth > self.depth_reached:
+            self.depth_reached = depth
+
+        if self.max_depth and depth > self.max_depth:
+            LOG.warning('Maximum depth reached: %d', depth)
+            return
+
+        for state in states:
+            save = board.make_snapshot()
+            try:
+                LOG.warning('Trying state: %s (depth=%d, previous=%s)',
+                            state, depth, path)
+                probe_jobs = PriorityDict()
+                probe_jobs[state] = 0
+                try:
+                    __, best_candidates = _solve_jobs(board, guess_job=state)
+                except NonogramError:
+                    LOG.error('Found inconsistency with %s probe', state)
+                    continue
+
+                if self.enough_solutions():
+                    return
+
+                if best_candidates:
+                    self.search(best_candidates, path=path + (state,))
+            finally:
+                board.cells = save
+
+    @classmethod
+    def full_search(cls, board, best_candidate, **kwargs):
+        """
+        Search for solutions of the given board (intelligent brute-force).
+        """
+
+        LOG.warning('Starting DFS')
+        searcher = Searcher(board, **kwargs)
+        searcher.search(best_candidate)
+        return searcher.depth_reached

@@ -301,6 +301,7 @@ class TestContradictions(object):
 
         contradiction_solver.solve(board)
         assert is_close(board.solution_rate, 7.0 / 9)
+        assert len(board.solutions) == 2
 
     def test_chessboard(self):
         # The real chessboard could be defined like this
