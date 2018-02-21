@@ -6,6 +6,7 @@ from __future__ import unicode_literals, print_function
 import logging
 import time
 
+from six import iteritems
 from six.moves import range
 
 from pynogram.core.solver import line
@@ -24,18 +25,24 @@ def probe(board, row_index, column_index, assumption):
     If the contradiction is found, set the cell
     in an inverted state and propagate the changes if needed.
 
-    Returns a snapshot of the board. It contains the state of a board
-    before any assumptions was made. It will help further to determine
-    which cells has changed on that probe.
+    Return the pair `(useful, new_info)` where
+
+    useful: whether the assumption led to a contradiction
+
+    new_info:
+      a) when `useful`, it contains the state of the board
+      before any assumptions was made. It will help further to determine
+      which cells has changed on that probe.
+      b) otherwise it contains the solution rate for the partially solved board
     """
     # already solved
     if board.cell_solved(row_index, column_index):
-        return None
+        return False, None
 
     save = board.make_snapshot()
 
     try:
-        LOG.debug('Pretend that (%i, %i) is %s',
+        LOG.debug('Assume that (%i, %i) is %s',
                   row_index, column_index, assumption)
 
         if board.is_colored:
@@ -48,11 +55,12 @@ def probe(board, row_index, column_index, assumption):
             column_indexes=(column_index,),
             contradiction_mode=True)
 
-        if board.solution_rate == 1:
-            LOG.warning("Found one of the solutions!")
+        rate = board.solution_rate
+        if rate == 1:
+            LOG.info("Found one of the solutions!")
             board.add_solution(copy_=False)
 
-        return None
+        return False, rate
 
     except NonogramError:
         LOG.debug('Contradiction', exc_info=True)
@@ -76,11 +84,78 @@ def probe(board, row_index, column_index, assumption):
         row_indexes=(row_index,),
         column_indexes=(column_index,))
 
-    return before_contradiction
+    return True, before_contradiction
 
 
-# pylint: disable=too-many-locals
-def _solution_round(board, ignore_neighbours=False):
+def _new_jobs_from_solution(board, job, previous_state):
+    # evaluate generator
+    changed = list(board.changed(previous_state))
+    i, j, assumption = job
+    LOG.info('Changed %d cells with %s assumption',
+             len(changed), assumption)
+
+    # add the neighbours of the changed cells into jobs
+    for coord in changed:
+        for neighbour in board.unsolved_neighbours(*coord):
+            yield neighbour, 1
+
+    # add the neighbours of the selected cell into jobs
+    for neighbour in board.unsolved_neighbours(i, j):
+        yield neighbour, 0
+
+
+def _solve_jobs(board, jobs):
+    """
+    Given a board and a list of jobs try to solve that board
+    using the jobs as probes.
+
+    Return the number of contradictions found and the
+    best candidate for the following search
+    """
+
+    counter_total, counter_found = 0, 0
+    rates = dict()
+
+    while jobs:
+        (i, j), priority = jobs.pop_smallest()
+        counter_total += 1
+        LOG.info('Probe #%d: %s (%f)', counter_total, (i, j), priority)
+
+        for assumption in board.cell_colors(i, j):
+            is_contradiction, info = probe(board, i, j, assumption)
+
+            if info is None:
+                continue
+
+            if is_contradiction:
+                counter_found += 1
+                if board.solution_rate == 1:
+                    return counter_found, None
+
+                for new_job, priority in _new_jobs_from_solution(
+                        board, (i, j, assumption), info):
+                    jobs[new_job] = priority
+            else:
+                rates[(i, j, assumption)] = info
+
+    return counter_found, _probes_from_rates(board, rates)
+
+
+def _probes_from_rates(board, rates):
+    best = dict()
+    for (i, j, __), rate in iteritems(rates):
+        cell = (i, j)
+        if board.cell_solved(*cell):
+            continue
+
+        if rate > best.get(cell, 0):
+            best[cell] = rate
+
+    return tuple(k for v, k in sorted(
+        ((v, k) for k, v in iteritems(best)), reverse=True))
+
+
+def _solve_without_search(board, every=False):
     """
     Do the one round of solving with contradictions.
     Returns the number of contradictions found.
@@ -88,51 +163,19 @@ def _solution_round(board, ignore_neighbours=False):
     Based on https://www.cs.bgu.ac.il/~benr/nonograms/
     """
 
-    counter_total, counter_found = 0, 0
-
     probe_jobs = PriorityDict()
-
-    def _add_job(job, _priority):
-        probe_jobs[job] = _priority
 
     for i in range(board.height):
         for j in range(board.width):
             if board.cell_solved(i, j):
                 continue
+
             no_unsolved = len(list(board.unsolved_neighbours(i, j)))
-            if ignore_neighbours or no_unsolved < 4:
+            if every or no_unsolved < 4:
                 cell_rate = board.row_solution_rate(i) + board.column_solution_rate(j)
-                _add_job((i, j), 4 - cell_rate + no_unsolved)
+                probe_jobs[(i, j)] = 4 - cell_rate + no_unsolved
 
-    while probe_jobs:
-        (i, j), priority = probe_jobs.pop_smallest()
-        counter_total += 1
-        LOG.info('Probe #%d: %s (%f)', counter_total, (i, j), priority)
-
-        for assumption in board.cell_colors(i, j):
-            cells = probe(board, i, j, assumption)
-            if cells is None:
-                continue
-
-            counter_found += 1
-            if board.solution_rate == 1:
-                return counter_found
-
-            # evaluate generator
-            changed = list(board.changed(cells))
-            LOG.info('Changed %d cells with %s assumption',
-                     len(changed), assumption)
-
-            # add the neighbours of the changed cells into jobs
-            for coord in changed:
-                for neighbour in board.unsolved_neighbours(*coord):
-                    _add_job(neighbour, 1)
-
-            # add the neighbours of the selected cell into jobs
-            for neighbour in board.unsolved_neighbours(i, j):
-                _add_job(neighbour, 0)
-
-    return counter_found
+    return _solve_jobs(board, jobs=probe_jobs)
 
 
 def solve(board):
@@ -153,31 +196,20 @@ def solve(board):
     board.set_solved(False)
     start = time.time()
 
-    round_number = 0
     # at first, take the number of unknown neighbours into account
-    brute_force = False
+    found_contradictions, best_candidates = _solve_without_search(board)
+    current_solution_rate = board.solution_rate
 
-    while True:
-        prev_solution_rate = board.solution_rate
-        found_contradictions = _solution_round(board, ignore_neighbours=brute_force)
-        current_solution_rate = board.solution_rate
+    LOG.warning('Contradictions: (found %d): %f',
+                found_contradictions, current_solution_rate)
 
-        round_number += 1
-        LOG.warning('Contradiction round #%d (found %d): %f',
-                    round_number, found_contradictions, current_solution_rate)
-
-        if current_solution_rate == 1:
-            break
-
-        if current_solution_rate == prev_solution_rate:
-            if brute_force:
-                # give up if the brute force search is exhausted
-                break
-            else:
-                # if stalled with sophisticated selection of cells
-                # do the brute force search
-                LOG.warning('Enabling brute force contradictions mode')
-                brute_force = True
+    if current_solution_rate < 1:
+        # if stalled with sophisticated selection of cells
+        # do the brute force search
+        # TODO: add some DFS-routine here
+        depth = 0
+        LOG.warning('Full search: (max depth %d): %f',
+                    depth, current_solution_rate)
 
     board.set_solved()
     solution_rate = board.solution_rate
