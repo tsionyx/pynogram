@@ -338,7 +338,7 @@ class Board(object):  # pylint: disable=too-many-public-methods
                 yield cell
 
     @classmethod
-    def diff(cls, old_cells, new_cells):
+    def diff(cls, old_cells, new_cells, have_deletions=False):
         """
         Yield the coordinates of cells that was changed
         in the second set of cells compared to the first one.
@@ -350,14 +350,22 @@ class Board(object):  # pylint: disable=too-many-public-methods
             for j, new_cell in enumerate(row):
                 old_cell = old_cells[i][j]
 
-                if is_list_like(new_cell):
-                    if set(new_cell) < set(old_cell):
+                if have_deletions:
+                    if is_list_like(new_cell):
+                        if set(new_cell) != set(old_cell):
+                            yield i, j
+                    elif new_cell != old_cell:
                         yield i, j
-                    else:
-                        assert set(new_cell) == set(old_cell)
-                elif new_cell != old_cell:
-                    assert old_cell == UNKNOWN
-                    yield i, j
+
+                else:
+                    if is_list_like(new_cell):
+                        if set(new_cell) < set(old_cell):
+                            yield i, j
+                        else:
+                            assert set(new_cell) == set(old_cell)
+                    elif new_cell != old_cell:
+                        assert old_cell == UNKNOWN
+                        yield i, j
 
     def changed(self, old_cells):
         """
@@ -387,11 +395,26 @@ class Board(object):  # pylint: disable=too-many-public-methods
 
         self.solutions.append(cells)
 
-    def draw_solutions(self):
+    def draw_solutions(self, only_logs=False):
         """Render the solutions"""
+        if not self.solutions:
+            return
 
-        for solution in self.solutions:
-            self.draw(cells=solution)
+        LOG.info('Number of full unique solutions: %s', len(self.solutions))
+
+        if not only_logs:
+            for solution in self.solutions:
+                self.draw(cells=solution)
+
+        if len(self.solutions) == 1:
+            return
+
+        LOG.info('Diff')
+        for i, sol1 in enumerate(self.solutions):
+            for j, sol2 in enumerate(self.solutions[i + 1:]):
+                j = j + (i + 1)
+                diff = list(self.diff(sol1, sol2, have_deletions=True))
+                LOG.info('%d vs %d: %d', i, j, len(diff))
 
 
 class NumpyBoard(Board):

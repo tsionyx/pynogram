@@ -46,16 +46,19 @@ def draw_solution(board_def, every_round=True):
     if every_round:
         d_board.on_solution_round_complete = lambda board: board.draw()
 
+    exc = False
     try:
         contradiction_solver.solve(d_board)
-        if not every_round:
-            d_board.draw()
-    except Exception:
-        # draw the last solved cells
-        d_board.draw()
+    except BaseException:
+        exc = True
         raise
+    finally:
+        if exc or not every_round:
+            # draw the last solved cells
+            d_board.draw()
 
-    d_board.draw_solutions()
+        if d_board.solution_rate < 1:
+            d_board.draw_solutions()
 
 
 def log_level(verbosity):
