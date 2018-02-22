@@ -5,7 +5,7 @@
 echo "Start at $(date)"
 for i in $@; do
     echo "Solving PBN's puzzle #$i (http://webpbn.com/$i) ..."
-    /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final -v 3>&- 2>/dev/null 3>&1 1>&2 2>&3 |
+    /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final -v --timeout=1200 --max-solutions=2 2>&1 |
     grep -iP 'contradiction|Total'
     echo
 done
@@ -32,5 +32,9 @@ function stats() {
   grep File ${log_file} | sort | uniq -c | awk '{print $1,$4,$5,$7}'
 
   # the worst times
-  grep -oP 'Total: \K(.+)' ${log_file} | sort -gr | head
+  while read t
+  do
+    id=$(grep -P ${t} ${log_file} -A2 | grep -oP '#\K(\d+)' | awk '{print $1-1}')
+    echo "$id: $t"
+  done < <(grep -oP 'Total: \K(.+)' ${log_file} | sort -gr | head -n20)
 }

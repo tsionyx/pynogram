@@ -310,9 +310,30 @@ class Solver(object):
         for method, hit_rate in cache_hit_rate().items():
             LOG.info('Cache hit rate (%s): %.4f%%', method, hit_rate * 100.0)
 
-    def _enough_solutions(self):
-        """Whether we reached the defined limit for found solutions"""
-        return self.max_solutions and (len(self.board.solutions) >= self.max_solutions)
+    def _limits_reached(self, depth):
+        """
+        Whether we reached the defined limits:
+        1) number of solutions found
+        2) the maximum allowed run time
+        """
+        if self.max_solutions:
+            solutions_number = len(self.board.solutions)
+            if solutions_number >= self.max_solutions:
+                if depth == 0:
+                    # only show log on the top level
+                    LOG.warning('%d solutions is enough', solutions_number)
+
+                return True
+
+        if self.timeout and self.start_time:
+            run_time = time.time() - self.start_time
+            if run_time > self.timeout:
+                if depth == 0:
+                    # only show log on the top level
+                    LOG.warning('Searched too long: %.4fs', run_time)
+                return True
+
+        return False
 
     def search(self, states, path=()):
         """Recursively search for solutions"""
@@ -321,20 +342,16 @@ class Solver(object):
             self.start_time = time.time()
 
         board = self.board
-
-        if self._enough_solutions():
-            return
-
-        # check if timeout has occurred
-        if self.timeout and (time.time() - self.start_time > self.timeout):
-            return
-
         depth = len(path)
+
+        if self._limits_reached(depth):
+            return
+
         if depth > self.depth_reached:
             self.depth_reached = depth
 
         if self.max_depth and depth > self.max_depth:
-            LOG.warning('Maximum depth reached: %d', depth)
+            LOG.warning('%d deeper than max (%d)', depth, self.max_depth)
             return
 
         rate = board.solution_rate
@@ -362,7 +379,7 @@ class Solver(object):
                     for new_job, priority in self._guess(state):
                         probe_jobs[new_job] = priority
 
-                    if self._enough_solutions():
+                    if self._limits_reached(depth):
                         return
 
                     __, best_candidates = self._solve_jobs(probe_jobs)
@@ -378,13 +395,13 @@ class Solver(object):
 
                 LOG.warning('Reached rate %.4f on %s path', board.solution_rate, full_path)
 
-                if self._enough_solutions():
+                if self._limits_reached(depth):
                     return
 
                 if best_candidates:
                     self.search(best_candidates, path=full_path)
 
-                    if self._enough_solutions():
+                    if self._limits_reached(depth):
                         return
 
             finally:

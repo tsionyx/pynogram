@@ -31,6 +31,13 @@ def cli_args():
                         help='board file to solve')
     parser.add_argument('--pbn', type=int,
                         help='ID of a board to solve on the http://webpbn.com')
+    parser.add_argument('--max-solutions', type=int,
+                        help='stop after finding specified number of solutions')
+    parser.add_argument('--timeout', type=int,
+                        help='stop if the searching took too long (in seconds)')
+    parser.add_argument('--max-depth', type=int,
+                        help='try to solve without getting too deep into search')
+
     parser.add_argument('--verbose', '-v', action='count',
                         help='increase logging level')
     parser.add_argument('--draw-final', action='store_true',
@@ -38,7 +45,7 @@ def cli_args():
     return parser.parse_args()
 
 
-def draw_solution(board_def, every_round=True):
+def draw_solution(board_def, every_round=True, **solver_args):
     """Solve the given board in terminal with animation"""
 
     d_board = make_board(*board_def, renderer=BaseAsciiRenderer)
@@ -48,7 +55,8 @@ def draw_solution(board_def, every_round=True):
 
     exc = False
     try:
-        Solver(d_board).solve()
+        solver = Solver(d_board, **solver_args)
+        solver.solve()
     except BaseException:
         exc = True
         raise
@@ -110,7 +118,11 @@ def main():
     else:
         board_def = read_example(args.board)
 
-    draw_solution(board_def, every_round=not args.draw_final)
+    draw_solution(board_def,
+                  every_round=not args.draw_final,
+                  max_solutions=args.max_solutions,
+                  timeout=args.timeout,
+                  max_depth=args.max_depth)
 
 
 if __name__ == '__main__':
