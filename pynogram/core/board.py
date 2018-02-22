@@ -284,8 +284,21 @@ class Board(object):  # pylint: disable=too-many-public-methods
         return '{}({}x{})'.format(self.__class__.__name__, self.height, self.width)
 
     @property
+    def is_solved_full(self):
+        """Whether no unsolved cells in a board left"""
+        for row in self.cells:
+            for cell in row:
+                if self.cell_solution_rate(cell) < 1:
+                    return False
+
+        return True
+
+    @property
     def solution_rate(self):
-        """How many cells in the whole board are known to be box or space"""
+        """How much the board's cells are close to the full solution"""
+        if self.is_solved_full:
+            return 1
+
         return avg(self.line_solution_rate(row) for row in self.cells)
 
     @classmethod

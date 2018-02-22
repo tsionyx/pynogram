@@ -150,9 +150,9 @@ class TestSolution(object):
 
     def test_repeat_solutions(self, board):
         line_solver.solve(board)
-        assert board.solution_rate == 1
+        assert board.is_solved_full
         line_solver.solve(board)
-        assert board.solution_rate == 1
+        assert board.is_solved_full
 
     def test_several_solutions(self, stream):
         columns = [3, None, 1, 1]
@@ -279,12 +279,12 @@ class TestContradictions(object):
         # assert is_close(board.solution_rate, 407.0 / 625)
 
         Solver(board).solve()
-        assert board.solution_rate == 1
+        assert board.is_solved_full
 
     def test_simple(self):
         board = tested_board()
         Solver(board).solve()
-        assert board.solution_rate == 1
+        assert board.is_solved_full
         assert board.is_finished
 
     def test_many_solutions(self):
@@ -469,11 +469,11 @@ class TestColorBoard(object):
 
     def test_solve(self, board):
         Solver(board).solve()
-        assert board.solution_rate == 1
+        assert board.is_solved_full
         assert board.is_finished
 
     def test_solve_contradictions(self):
         board = make_board(*Pbn.read(2021))
         Solver(board).solve()
-        assert board.solution_rate == 1
+        assert board.is_solved_full
         assert board.is_finished

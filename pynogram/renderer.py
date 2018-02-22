@@ -692,7 +692,7 @@ class SvgRenderer(StreamRenderer):
                                         key=lambda x: str(x[0])):
             drawing.add(group)
 
-        if self.board.solution_rate == 1:
+        if self.board.is_solved_full:
             check_icon_size = self.check_icon_size
             left_padding = (self.pixel_side_width - check_icon_size) / 2
             top_padding = (self.pixel_header_height - check_icon_size) / 2

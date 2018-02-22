@@ -65,4 +65,4 @@ class TestBguSolver(object):
         board = Board(columns, rows)
 
         line_solver.solve(board, methods='bgu')
-        assert board.solution_rate == 1
+        assert board.is_solved_full

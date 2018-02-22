@@ -145,7 +145,7 @@ class Solver(object):
 
         assert prev_state is not None
 
-        if board.solution_rate == 1:
+        if board.is_solved_full:
             board.add_solution()
             return ()
 
@@ -187,7 +187,7 @@ class Solver(object):
 
                 if is_contradiction:
                     counter_found += 1
-                    if board.solution_rate == 1:
+                    if board.is_solved_full:
                         board.add_solution()
                         return counter_found, None
 
@@ -259,7 +259,7 @@ class Solver(object):
         board = self.board
 
         line.solve(board)
-        if board.solution_rate == 1:
+        if board.is_solved_full:
             board.set_finished()
             LOG.info('No need to solve with contradictions')
             return
@@ -297,14 +297,15 @@ class Solver(object):
             LOG.warning('Starting DFS (intelligent brute-force)')
             self.search(best_candidates)
 
+            current_solution_rate = board.solution_rate
             LOG.warning('Search completed (depth reached: %d, solutions found: %d)',
                         self.depth_reached, len(board.solutions))
 
-        board.set_finished()
-        solution_rate = board.solution_rate
-        if solution_rate != 1:
+        if current_solution_rate != 1:
             LOG.warning('The nonogram is not solved full (with contradictions). '
-                        'The rate is %.4f', solution_rate)
+                        'The rate is %.4f', current_solution_rate)
+
+        board.set_finished()
         LOG.info('Full solution: %.6f sec', time.time() - start)
         for method, hit_rate in cache_hit_rate().items():
             LOG.info('Cache hit rate (%s): %.4f%%', method, hit_rate * 100.0)

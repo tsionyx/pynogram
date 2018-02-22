@@ -65,7 +65,7 @@ def draw_solution(board_def, every_round=True, **solver_args):
             # draw the last solved cells
             d_board.draw()
 
-        if d_board.solution_rate < 1:
+        if not d_board.is_solved_full:
             d_board.draw_solutions()
 
 

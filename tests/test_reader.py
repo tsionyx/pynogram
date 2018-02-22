@@ -36,7 +36,7 @@ class TestReader(object):
             '  1 1 1 1 1 1 1 1 X . . . X . X . . . . X . X . X . X . X . .',
             '    1 1 2 1 1 3 1 X . . . X . . X X . . X . X . . X X X . . X',
         ])
-        assert board.solution_rate == 1
+        assert board.is_solved_full
         # currently the line solver does not mark the board as finished
         # assert board.is_finished
 
