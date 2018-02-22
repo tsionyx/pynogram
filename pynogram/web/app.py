@@ -139,7 +139,7 @@ class BoardStatusHandler(BaseHandler):
 
         board_notifier.register(self.on_update)
 
-        if board_notifier.board.solved:
+        if board_notifier.board.is_finished:
             board_notifier.notify_callbacks(complete=True)
 
     def on_update(self, **kwargs):

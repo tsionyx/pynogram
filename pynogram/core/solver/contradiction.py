@@ -47,7 +47,7 @@ class Solver(object):
         Try to find if the given cell can be in an assumed state.
         If the contradiction is found, set the cell
         in an inverted state and propagate the changes if needed.
-        If `rollback` the solved board will restore to the previous state
+        If `rollback` then the solved board will restore to the previous state
         after the assumption was made.
 
         Return the pair `(is_contradiction, new_info)` where
@@ -260,12 +260,11 @@ class Solver(object):
 
         line.solve(board)
         if board.solution_rate == 1:
-            board.set_solved()
+            board.set_finished()
             LOG.info('No need to solve with contradictions')
             return
 
         LOG.warning('Trying to solve using contradictions method')
-        board.set_solved(False)
         start = time.time()
 
         # at first, take the number of unknown neighbours into account
@@ -301,7 +300,7 @@ class Solver(object):
             LOG.warning('Search completed (depth reached: %d, solutions found: %d)',
                         self.depth_reached, len(board.solutions))
 
-        board.set_solved()
+        board.set_finished()
         solution_rate = board.solution_rate
         if solution_rate != 1:
             LOG.warning('The nonogram is not solved full (with contradictions). '

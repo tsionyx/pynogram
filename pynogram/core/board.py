@@ -119,7 +119,7 @@ class Board(object):  # pylint: disable=too-many-public-methods
         self.on_column_update = None
         self.on_solution_round_complete = None
         self.on_solution_found = None
-        self._solved = False
+        self._finished = False
 
         self.solutions = []
 
@@ -310,13 +310,13 @@ class Board(object):  # pylint: disable=too-many-public-methods
         return 1
 
     @property
-    def solved(self):
-        """Return whether the nonogram is completely solved"""
-        return self._solved
+    def is_finished(self):
+        """Return whether the solving is finished"""
+        return self._finished
 
-    def set_solved(self, solved=True):
+    def set_finished(self, finished=True):
         """Set the solving status (used by renderers)"""
-        self._solved = solved
+        self._finished = finished
 
     def neighbours(self, row_index, column_index):
         """

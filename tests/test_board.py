@@ -145,8 +145,8 @@ class TestSolution(object):
             '|   | 0 || . | . | . | . | . | . | . | . |',
             '+---+---++---+---+---+---+---+---+---+---+',
         ])
-        # currently simple `solve` method does not mark the board as solved
-        # assert board.solved
+        # currently the line solver does not mark the board as finished
+        # assert board.is_finished
 
     def test_repeat_solutions(self, board):
         line_solver.solve(board)
@@ -179,8 +179,8 @@ class TestSolution(object):
         ])
 
         assert board.solution_rate * 3 == 2.0
-        # currently simple `solve` method does not mark the board as solved
-        # assert board.solved
+        # currently the line solver does not mark the board as finished
+        # assert board.is_finished
 
     def test_bold_lines(self, stream):
         """
@@ -285,7 +285,7 @@ class TestContradictions(object):
         board = tested_board()
         Solver(board).solve()
         assert board.solution_rate == 1
-        assert board.solved
+        assert board.is_finished
 
     def test_many_solutions(self):
         # source: https://en.wikipedia.org/wiki/Nonogram#Contradictions
@@ -470,10 +470,10 @@ class TestColorBoard(object):
     def test_solve(self, board):
         Solver(board).solve()
         assert board.solution_rate == 1
-        assert board.solved
+        assert board.is_finished
 
     def test_solve_contradictions(self):
         board = make_board(*Pbn.read(2021))
         Solver(board).solve()
         assert board.solution_rate == 1
-        assert board.solved
+        assert board.is_finished
