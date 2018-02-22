@@ -18,6 +18,10 @@ LOG = logging.getLogger(__name__)
 
 USE_CONTRADICTION_RESULTS = True
 
+# use the position of a cell (number of neighbours and solution rate of row/column)
+# to adjust its rate when choosing the next probe for DFS
+ADJUST_RATE = True
+
 
 class Solver(object):
     """
@@ -35,26 +39,29 @@ class Solver(object):
 
         self.depth_reached = 0
         self.start_time = None
+        # TODO: do I need it?
+        self.dead_ends = set()
 
-    def probe(self, row_index, column_index, assumption, pretend=False):
+    def probe(self, row_index, column_index, assumption, rollback=True):
         """
         Try to find if the given cell can be in an assumed state.
         If the contradiction is found, set the cell
         in an inverted state and propagate the changes if needed.
-        If `pretend`, do not rollback the solved board after the assumption was made.
+        If `rollback` the solved board will restore to the previous state
+        after the assumption was made.
 
-        Return the pair `(useful, new_info)` where
+        Return the pair `(is_contradiction, new_info)` where
 
-        useful: whether the solution rate increased:
-            a) either assumption led to a contradiction
-            b) or we `pretend` that the given assumption
-            is true and try to solve that board
+        is_contradiction: whether the assumption led to a contradiction
 
         new_info:
-          a) when `useful`, it contains the state of the board
+          a) when contradiction is found, it contains the state of the board
           before any assumptions was made. It will help further to determine
           which cells has changed on that probe.
-          b) otherwise it contains the solution rate for the partially solved board
+          b) if no contradiction found, but `rollback` is False,
+          then we do not restore the board and return the previous state also.
+          c) otherwise it contains the solution rate for the partially
+          solved board (if the assumption made is true)
         """
         board = self.board
 
@@ -82,12 +89,11 @@ class Solver(object):
             if rate == 1:
                 board.add_solution(copy_=False)
 
-            if pretend:
-                # pretend that it was a successful contradiction
-                return True, save
+            if rollback:
+                board.cells = save
+                return False, rate
 
-            board.cells = save
-            return False, rate
+            return False, save
 
         except NonogramError:
             LOG.debug('Contradiction', exc_info=True)
@@ -130,7 +136,22 @@ class Solver(object):
         for neighbour in board.unsolved_neighbours(i, j):
             yield neighbour, 0
 
-    def _solve_jobs(self, jobs=None, guess_job=None):
+    def _guess(self, state):
+        board = self.board
+        is_contradiction, prev_state = self.probe(*state, rollback=False)
+
+        if is_contradiction:
+            LOG.warning('Real contradiction was found: %s', state)
+
+        assert prev_state is not None
+
+        if board.solution_rate == 1:
+            board.add_solution()
+            return ()
+
+        return self._new_jobs_from_solution(state, prev_state)
+
+    def _solve_jobs(self, jobs):
         """
         Given a board and a list of jobs try to solve that board
         using the jobs as probes.
@@ -139,31 +160,27 @@ class Solver(object):
         best candidate for the tree-base search
         """
 
-        guess = False
-
-        if jobs is None:
-            jobs = PriorityDict()
-            if guess_job:
-                jobs[guess_job] = 0
-                guess = True
-
         counter_total, counter_found = 0, 0
         rates = dict()
 
         board = self.board
 
         while jobs:
-            (i, j), priority = jobs.pop_smallest()
+            job, priority = jobs.pop_smallest()
             counter_total += 1
-            LOG.info('Probe #%d: %s (%f)', counter_total, (i, j), priority)
+            LOG.info('Probe #%d: %s (%f)', counter_total, job, priority)
 
-            for assumption in board.cell_colors(i, j):
-                is_contradiction, info = self.probe(
-                    i, j, assumption, pretend=guess)
+            # if the job is only coordinates
+            # then try all the possible colors
+            if len(job) == 2:
+                i, j = job
+                assumptions = board.cell_colors(i, j)
+            else:
+                i, j, color = job
+                assumptions = (color,)
 
-                # only the first can be a guess
-                if guess:
-                    guess = False
+            for assumption in assumptions:
+                is_contradiction, info = self.probe(i, j, assumption)
 
                 if info is None:
                     continue
@@ -171,28 +188,57 @@ class Solver(object):
                 if is_contradiction:
                     counter_found += 1
                     if board.solution_rate == 1:
+                        board.add_solution()
                         return counter_found, None
 
                     for new_job, priority in self._new_jobs_from_solution(
                             (i, j, assumption), info):
                         jobs[new_job] = priority
                 else:
-                    rates[(i, j, assumption)] = info
+                    rates[(i, j, assumption)] = (info, priority)
 
         return counter_found, self._probes_from_rates(rates)
 
     def _probes_from_rates(self, rates):
         best = dict()
-        for (i, j, __), rate in iteritems(rates):
-            cell = (i, j)
+        for job, (rate, priority) in iteritems(rates):
+            cell = job[:2]
             if self.board.cell_solved(*cell):
                 continue
 
-            if rate > best.get(cell, 0):
-                best[cell] = rate
+            # the more priority the less desired that job
+            # priority is in the range [0, 8]
+            if ADJUST_RATE:
+                rate += (10 - priority)
+            # if rate > best.get(job, 0):
+            best[job] = rate
 
-        return tuple(k for v, k in sorted(
-            ((v, k) for k, v in iteritems(best)), reverse=True))
+        # the biggest rate appears first
+        best = sorted(iteritems(best), key=lambda x: x[1], reverse=True)
+        LOG.debug('\n'.join(map(str, best)))
+
+        # but return only the jobs, not rates
+        return tuple(job for job, rate in best)
+
+    def _get_all_unsolved_jobs(self, skip_low_rated=False):
+        board = self.board
+
+        probe_jobs = PriorityDict()
+        # add every cell
+        for i in range(board.height):
+            for j in range(board.width):
+                if board.cell_solved(i, j):
+                    continue
+
+                no_unsolved = len(list(board.unsolved_neighbours(i, j)))
+
+                if no_unsolved >= 4 and skip_low_rated:
+                    continue
+
+                cell_rate = board.row_solution_rate(i) + board.column_solution_rate(j)
+                probe_jobs[(i, j)] = 4 - cell_rate + no_unsolved
+
+        return probe_jobs
 
     def _solve_without_search(self, every=False):
         """
@@ -202,19 +248,7 @@ class Solver(object):
         Based on https://www.cs.bgu.ac.il/~benr/nonograms/
         """
 
-        probe_jobs = PriorityDict()
-        board = self.board
-
-        for i in range(board.height):
-            for j in range(board.width):
-                if board.cell_solved(i, j):
-                    continue
-
-                no_unsolved = len(list(board.unsolved_neighbours(i, j)))
-                if every or no_unsolved < 4:
-                    cell_rate = board.row_solution_rate(i) + board.column_solution_rate(j)
-                    probe_jobs[(i, j)] = 4 - cell_rate + no_unsolved
-
+        probe_jobs = self._get_all_unsolved_jobs(skip_low_rated=not every)
         return self._solve_jobs(probe_jobs)
 
     def solve(self):
@@ -237,17 +271,35 @@ class Solver(object):
         # at first, take the number of unknown neighbours into account
         found_contradictions, best_candidates = self._solve_without_search()
         current_solution_rate = board.solution_rate
-
         LOG.warning('Contradictions: (found %d): %f',
                     found_contradictions, current_solution_rate)
+
+        round_number = 2
+        # prev_found = None
+        # while True:
+        #     if current_solution_rate == 1:
+        #         break
+        if current_solution_rate < 1:
+            # then, solve every cell that is left
+            found_contradictions, best_candidates = self._solve_without_search(every=True)
+            current_solution_rate = board.solution_rate
+            LOG.warning('Contradictions (%d): (found %d): %f',
+                        round_number, found_contradictions, current_solution_rate)
+
+            # if found_contradictions in (prev_found, 0):
+            #     break
+            #
+            # prev_found = found_contradictions
+            # round_number += 1
 
         if current_solution_rate < 1:
             # if stalled with sophisticated selection of cells
             # do the brute force search
             LOG.warning('Starting DFS (intelligent brute-force)')
             self.search(best_candidates)
-            LOG.warning('Full search: (max depth %d): %f',
-                        self.depth_reached, current_solution_rate)
+
+            LOG.warning('Search completed (depth reached: %d, solutions found: %d)',
+                        self.depth_reached, len(board.solutions))
 
         board.set_solved()
         solution_rate = board.solution_rate
@@ -285,23 +337,55 @@ class Solver(object):
             LOG.warning('Maximum depth reached: %d', depth)
             return
 
-        for state in states:
+        rate = board.solution_rate
+
+        number_of_states_to_try = len(states)
+
+        for i, state in enumerate(states):
+            if state in path:
+                continue
+
+            full_path = path + (state,)
+            if full_path in self.dead_ends:
+                LOG.info('The path %s already explored', full_path)
+                continue
+
             save = board.make_snapshot()
             try:
-                LOG.warning('Trying state: %s (depth=%d, previous=%s)',
-                            state, depth, path)
-                probe_jobs = PriorityDict()
-                probe_jobs[state] = 0
+                LOG.warning('Trying state (%d/%d): %s (depth=%d, rate=%.4f, previous=%s)',
+                            i + 1, number_of_states_to_try, state, depth, rate, path)
                 try:
-                    __, best_candidates = self._solve_jobs(guess_job=state)
+                    # add every cell
+                    probe_jobs = self._get_all_unsolved_jobs()
+
+                    # update with more prioritized cells
+                    for new_job, priority in self._guess(state):
+                        probe_jobs[new_job] = priority
+
+                    if self._enough_solutions():
+                        return
+
+                    __, best_candidates = self._solve_jobs(probe_jobs)
+
+                    cells_left = round((1 - board.solution_rate) * board.width * board.height)
+                    if cells_left > 0:
+                        LOG.info('Unsolved cells left: %d', cells_left)
+
                 except NonogramError:
-                    LOG.error('Found inconsistency with %s probe', state)
+                    self.dead_ends.add(full_path)
+                    LOG.warning('Dead end found: %s', full_path)
                     continue
+
+                LOG.warning('Reached rate %.4f on %s path', board.solution_rate, full_path)
 
                 if self._enough_solutions():
                     return
 
                 if best_candidates:
-                    self.search(best_candidates, path=path + (state,))
+                    self.search(best_candidates, path=full_path)
+
+                    if self._enough_solutions():
+                        return
+
             finally:
                 board.cells = save
