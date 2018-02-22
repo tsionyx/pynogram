@@ -118,6 +118,7 @@ class Board(object):  # pylint: disable=too-many-public-methods
         self.on_row_update = None
         self.on_column_update = None
         self.on_solution_round_complete = None
+        self.on_solution_found = None
         self._solved = False
 
         self.solutions = []
@@ -217,6 +218,14 @@ class Board(object):  # pylint: disable=too-many-public-methods
         """
         if self.on_solution_round_complete and callable(self.on_solution_round_complete):
             self.on_solution_round_complete(board=self)
+
+    # pylint: disable=not-callable
+    def solution_found(self, solution):
+        """
+        Runs each time a new unique solution gets found
+        """
+        if self.on_solution_found and callable(self.on_solution_found):
+            self.on_solution_found(solution)
 
     @classmethod
     def normalize(cls, rows):
@@ -384,6 +393,8 @@ class Board(object):  # pylint: disable=too-many-public-methods
     def add_solution(self, copy_=True):
         """Save full solution found with contradictions"""
 
+        LOG.info("Found one of the solutions!")
+
         if self._current_state_in_solutions():
             LOG.info('Solution already exists')
             return
@@ -393,6 +404,7 @@ class Board(object):  # pylint: disable=too-many-public-methods
         else:
             cells = self.cells
 
+        self.solution_found(cells)
         self.solutions.append(cells)
 
     def draw_solutions(self, only_logs=False):

@@ -80,7 +80,6 @@ class Solver(object):
 
             rate = board.solution_rate
             if rate == 1:
-                LOG.info("Found one of the solutions!")
                 board.add_solution(copy_=False)
 
             if pretend:
