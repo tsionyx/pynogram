@@ -401,7 +401,16 @@ class Board(object):  # pylint: disable=too-many-public-methods
         return deepcopy(self.cells)
 
     def _current_state_in_solutions(self):
-        return self.cells in self.solutions
+        for i, sol in enumerate(self.solutions):
+            diff = list(self.diff(sol, self.cells, have_deletions=True))
+            if diff:
+                LOG.info('The solution differs from %d-th one: %s cells',
+                         i, len(diff))
+            else:
+                LOG.info('The solution is the same as the %d-th', i)
+                return True
+
+        return False
 
     def add_solution(self, copy_=True):
         """Save full solution found with contradictions"""
