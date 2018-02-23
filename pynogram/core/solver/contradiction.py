@@ -118,14 +118,15 @@ class Solver(object):
 
         return True, before_contradiction
 
-    def _new_jobs_from_solution(self, job, previous_state):
+    def _new_jobs_from_solution(self, job, previous_state, is_contradiction):
         board = self.board
 
         # evaluate generator
         changed = list(board.changed(previous_state))
         i, j, assumption = job
-        LOG.info('Changed %d cells with %s assumption',
-                 len(changed), assumption)
+        log_contradiction = '(not) ' if is_contradiction else ''
+        LOG.info('Changed %d cells with %s%s assumption',
+                 len(changed), log_contradiction, assumption)
 
         # add the neighbours of the changed cells into jobs
         for coord in changed:
@@ -149,7 +150,7 @@ class Solver(object):
             board.add_solution()
             return ()
 
-        return self._new_jobs_from_solution(state, prev_state)
+        return self._new_jobs_from_solution(state, prev_state, is_contradiction)
 
     def _solve_jobs(self, jobs):
         """
@@ -192,7 +193,7 @@ class Solver(object):
                         return counter_found, None
 
                     for new_job, priority in self._new_jobs_from_solution(
-                            (i, j, assumption), info):
+                            (i, j, assumption), info, is_contradiction):
                         jobs[new_job] = priority
                 else:
                     rates[(i, j, assumption)] = (info, priority)
