@@ -339,6 +339,44 @@ class Solver(object):
 
         return False
 
+    def _try_state(self, state, path):
+        board = self.board
+
+        depth = len(path)
+        full_path = path + (state,)
+
+        try:
+            # add every cell
+            probe_jobs = self._get_all_unsolved_jobs()
+
+            # update with more prioritized cells
+            for new_job, priority in self._guess(state):
+                probe_jobs[new_job] = priority
+
+            if self._limits_reached(depth):
+                return True
+
+            __, best_candidates = self._solve_jobs(probe_jobs)
+
+            cells_left = round((1 - board.solution_rate) * board.width * board.height)
+            if cells_left > 0:
+                LOG.info('Unsolved cells left: %d', cells_left)
+
+        except NonogramError:
+            self.dead_ends.add(full_path)
+            LOG.warning('Dead end found: %s', full_path)
+            return False
+
+        LOG.warning('Reached rate %.4f on %s path', board.solution_rate, full_path)
+
+        if self._limits_reached(depth):
+            return True
+
+        if best_candidates:
+            self.search(best_candidates, path=full_path)
+
+        return True
+
     def search(self, states, path=()):
         """Recursively search for solutions"""
 
@@ -365,6 +403,9 @@ class Solver(object):
         number_of_states_to_try = len(states)
 
         for i, state in enumerate(states):
+            if self._limits_reached(depth):
+                return
+
             if state in path:
                 continue
 
@@ -377,38 +418,9 @@ class Solver(object):
             try:
                 LOG.warning('Trying state (%d/%d): %s (depth=%d, rate=%.4f, previous=%s)',
                             i + 1, number_of_states_to_try, state, depth, rate, path)
-                try:
-                    # add every cell
-                    probe_jobs = self._get_all_unsolved_jobs()
-
-                    # update with more prioritized cells
-                    for new_job, priority in self._guess(state):
-                        probe_jobs[new_job] = priority
-
-                    if self._limits_reached(depth):
-                        return
-
-                    __, best_candidates = self._solve_jobs(probe_jobs)
-
-                    cells_left = round((1 - board.solution_rate) * board.width * board.height)
-                    if cells_left > 0:
-                        LOG.info('Unsolved cells left: %d', cells_left)
-
-                except NonogramError:
-                    self.dead_ends.add(full_path)
-                    LOG.warning('Dead end found: %s', full_path)
+                success = self._try_state(state, path)
+                if not success:
                     continue
-
-                LOG.warning('Reached rate %.4f on %s path', board.solution_rate, full_path)
-
-                if self._limits_reached(depth):
-                    return
-
-                if best_candidates:
-                    self.search(best_candidates, path=full_path)
-
-                    if self._limits_reached(depth):
-                        return
 
             finally:
                 board.cells = save
