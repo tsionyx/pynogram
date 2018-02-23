@@ -72,7 +72,7 @@ def assert_match(row_desc, row):
     """
     nfsm = make_nfsm(row_desc)
     if not nfsm.match(row):
-        raise NonogramError("The row '{}' cannot fit".format(row))
+        raise NonogramError("The row '{}' cannot fit in clue '{}'".format(row, row_desc))
 
 
 def cache_hit_rate():

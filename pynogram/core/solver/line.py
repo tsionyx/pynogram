@@ -121,7 +121,7 @@ def _solve_with_method(
         contradiction_mode=False):
     """Solve the nonogram to the most using given method"""
 
-    if board.is_solved_full:
+    if board.is_solved_full and not contradiction_mode:
         return ()
 
     lines_solved = 0

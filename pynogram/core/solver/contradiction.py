@@ -87,7 +87,7 @@ class Solver(object):
 
             rate = board.solution_rate
             if rate == 1:
-                board.add_solution(copy_=False)
+                self._add_solution()
 
             if rollback:
                 board.cells = save
@@ -147,7 +147,6 @@ class Solver(object):
         assert prev_state is not None
 
         if board.is_solved_full:
-            board.add_solution()
             return ()
 
         return self._new_jobs_from_solution(state, prev_state, is_contradiction)
@@ -189,7 +188,7 @@ class Solver(object):
                 if is_contradiction:
                     counter_found += 1
                     if board.is_solved_full:
-                        board.add_solution()
+                        self._add_solution()
                         return counter_found, None
 
                     for new_job, priority in self._new_jobs_from_solution(
@@ -199,6 +198,10 @@ class Solver(object):
                     rates[(i, j, assumption)] = (info, priority)
 
         return counter_found, self._probes_from_rates(rates)
+
+    def _add_solution(self):
+        line.solve(self.board, contradiction_mode=True)
+        self.board.add_solution()
 
     def _probes_from_rates(self, rates):
         best = dict()

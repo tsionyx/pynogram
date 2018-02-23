@@ -274,6 +274,21 @@ class NonogramFSM(fsm.FiniteStateMachine):
         FastSolver.solutions_cache.save((self.description, row), solved_row)
         return solved_row
 
+    def match(self, word):
+        # special case for an empty description
+        if not self.description:
+            word = tuple(set(word))
+            if len(word) == 1:
+                space = word[0]
+                if space == SPACE:
+                    return True
+
+                if is_list_like(space):
+                    if len(space) == 1 and space[0] == SPACE:
+                        return True
+
+        return super(NonogramFSM, self).match(word)
+
 
 class _StepState(object):  # pylint: disable=too-few-public-methods
     """
