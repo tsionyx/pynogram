@@ -33,6 +33,8 @@ class Solver(object):
         :type board: Board
         """
         self.board = board
+        self.colors = tuple(board.colors())
+
         self.max_solutions = max_solutions
         self.timeout = timeout
         self.max_depth = max_depth
@@ -42,13 +44,36 @@ class Solver(object):
         # TODO: do I need it?
         self.dead_ends = set()
 
-    def probe(self, row_index, column_index, assumption, rollback=True):
+    def _solve_with_guess(self, row_index, column_index, assumption):
+        board = self.board
+        LOG.debug('Assume that (%i, %i) is %s',
+                  row_index, column_index, assumption)
+
+        if board.is_colored:
+            assumption = [assumption]
+
+        board.cells[row_index][column_index] = assumption
+        line.solve(
+            board,
+            row_indexes=(row_index,),
+            column_indexes=(column_index,),
+            contradiction_mode=True)
+
+        rate = board.solution_rate
+        if rate == 1:
+            self._add_solution()
+
+        return rate
+
+    def probe(self, row_index, column_index, assumption, rollback=True, force=False):
         """
         Try to find if the given cell can be in an assumed state.
         If the contradiction is found, set the cell
         in an inverted state and propagate the changes if needed.
         If `rollback` then the solved board will restore to the previous state
         after the assumption was made.
+        If `force`, try to solve it anyway, even if the cell is already solved
+        (to rerun the line solver).
 
         Return the pair `(is_contradiction, new_info)` where
 
@@ -67,28 +92,13 @@ class Solver(object):
 
         # already solved
         if board.cell_solved(row_index, column_index):
-            return False, None
+            if not force:
+                return False, None
 
         save = board.make_snapshot()
 
         try:
-            LOG.debug('Assume that (%i, %i) is %s',
-                      row_index, column_index, assumption)
-
-            if board.is_colored:
-                assumption = [assumption]
-
-            board.cells[row_index][column_index] = assumption
-            line.solve(
-                board,
-                row_indexes=(row_index,),
-                column_indexes=(column_index,),
-                contradiction_mode=True)
-
-            rate = board.solution_rate
-            if rate == 1:
-                self._add_solution()
-
+            rate = self._solve_with_guess(row_index, column_index, assumption)
             if rollback:
                 board.cells = save
                 return False, rate
@@ -139,12 +149,14 @@ class Solver(object):
 
     def _guess(self, state):
         board = self.board
-        is_contradiction, prev_state = self.probe(*state, rollback=False)
+        is_contradiction, prev_state = self.probe(*state, rollback=False, force=True)
 
         if is_contradiction:
             LOG.warning('Real contradiction was found: %s', state)
 
-        assert prev_state is not None
+        if prev_state is None:
+            LOG.warning("The probe for state '%s' does not return anything new", state)
+            return ()
 
         if board.is_solved_full:
             return ()
@@ -271,29 +283,28 @@ class Solver(object):
         LOG.warning('Trying to solve using contradictions method')
         start = time.time()
 
-        # at first, take the number of unknown neighbours into account
-        found_contradictions, best_candidates = self._solve_without_search()
-        current_solution_rate = board.solution_rate
-        LOG.warning('Contradictions: (found %d): %f',
-                    found_contradictions, current_solution_rate)
+        round_number = 1
 
-        round_number = 2
-        # prev_found = None
-        # while True:
-        #     if current_solution_rate == 1:
-        #         break
-        if current_solution_rate < 1:
-            # then, solve every cell that is left
-            found_contradictions, best_candidates = self._solve_without_search(every=True)
+        while True:
+            # at first, take only high rated cells into account
+            if round_number == 1:
+                every = False
+            else:
+                # then, solve every cell that is left
+                every = True
+
+            found_contradictions, best_candidates = self._solve_without_search(every=every)
             current_solution_rate = board.solution_rate
             LOG.warning('Contradictions (%d): (found %d): %f',
                         round_number, found_contradictions, current_solution_rate)
 
-            # if found_contradictions in (prev_found, 0):
-            #     break
-            #
-            # prev_found = found_contradictions
-            # round_number += 1
+            if found_contradictions == 0:
+                break
+
+            if current_solution_rate == 1:
+                break
+
+            round_number += 1
 
         if current_solution_rate < 1:
             # if stalled with sophisticated selection of cells
@@ -364,7 +375,7 @@ class Solver(object):
 
         except NonogramError:
             self.dead_ends.add(full_path)
-            LOG.warning('Dead end found: %s', full_path)
+            LOG.error('Dead end found: %s', full_path)
             return False
 
         LOG.warning('Reached rate %.4f on %s path', board.solution_rate, full_path)
@@ -376,6 +387,32 @@ class Solver(object):
             self.search(best_candidates, path=full_path)
 
         return True
+
+    # TODO: such a mapping should appear inside a ColoredBoard implementation:
+    # the operations with integers always faster than with the strings.
+    def _push_state(self, queue, state, priority):
+        """
+        Prevents annoying error for colored puzzles:
+        'TypeError: unorderable types: bool() < str()'
+
+        The state is a triple (x, y, color) which represent
+        a single assumption about the next search direction.
+        The error appears because of the color
+        can be a string instance or 'False' (which is SPACE).
+        That is why we move from a color name to a color index.
+        """
+        color = state[2]
+        color_id = self.colors.index(color)
+        state = tuple(state[:2]) + (color_id,)
+        queue[state] = priority
+
+    def _get_next_state(self, queue):
+        """
+        Transform the color index of a state to usable color name
+        """
+        state = list(queue.pop_smallest()[0])
+        state[2] = self.colors[state[2]]
+        return tuple(state)
 
     def search(self, states, path=()):
         """Recursively search for solutions"""
@@ -400,27 +437,69 @@ class Solver(object):
 
         rate = board.solution_rate
 
-        number_of_states_to_try = len(states)
+        search_directions = PriorityDict()
+        for state in states:
+            self._push_state(search_directions, state, 1)
 
-        for i, state in enumerate(states):
-            if self._limits_reached(depth):
-                return
+        i = 0
+        save = board.make_snapshot()
+        try:
+            while search_directions:
+                total_number_of_directions = len(search_directions)
+                state = self._get_next_state(search_directions)
+                i += 1
 
-            if state in path:
-                continue
+                if self._limits_reached(depth):
+                    return
 
-            full_path = path + (state,)
-            if full_path in self.dead_ends:
-                LOG.info('The path %s already explored', full_path)
-                continue
+                if self._limits_reached(depth):
+                    return
 
-            save = board.make_snapshot()
-            try:
-                LOG.warning('Trying state (%d/%d): %s (depth=%d, rate=%.4f, previous=%s)',
-                            i + 1, number_of_states_to_try, state, depth, rate, path)
-                success = self._try_state(state, path)
-                if not success:
+                if state in path:
                     continue
 
-            finally:
-                board.cells = save
+                x, y, assumption = state
+                cell = x, y
+                cell_colors = board.cell_colors(*cell)
+
+                if assumption not in cell_colors:
+                    LOG.error("The assumption '%s' is already expired. "
+                              "Possible colors for %s are %s",
+                              assumption, cell, cell_colors)
+                    continue
+
+                full_path = path + (state,)
+                if full_path in self.dead_ends:
+                    LOG.info('The path %s already explored', full_path)
+                    continue
+
+                guess_save = board.make_snapshot()
+                try:
+                    LOG.warning('Trying state (%d/%d): %s (depth=%d, rate=%.4f, previous=%s)',
+                                i, total_number_of_directions, state, depth, rate, path)
+                    success = self._try_state(state, path)
+                finally:
+                    board.cells = guess_save
+                    self.dead_ends.add(full_path)
+
+                if not success:
+                    # the whole `path` branch of a search tree is a dead end
+                    if board.cell_colors(*cell) == {assumption}:
+                        LOG.error(
+                            "The last possible color '%s' for the cell '%s' "
+                            "lead to the contradiction. "
+                            "The path %s is invalid", assumption, cell, path)
+                        return
+
+                    board.unset_state(assumption, *cell)
+                    # immediately try the other colors as well
+                    # if all of them goes to the dead end,
+                    # then the parent path is a dead end
+                    for color in cell_colors:
+                        if color == assumption:
+                            continue
+                        self._push_state(search_directions, cell + (color,), 0)
+
+        finally:
+            board.cells = save
+            self.dead_ends.add(path)
