@@ -351,12 +351,14 @@ class Solver(object):
         if self._limits_reached(depth):
             return
 
-        if depth > self.depth_reached:
-            self.depth_reached = depth
-
-        if self.max_depth and depth > self.max_depth:
-            LOG.warning('%d deeper than max (%d)', depth, self.max_depth)
+        if self.max_depth and depth >= self.max_depth:
+            LOG.warning('Next step on the depth %d is deeper than the max (%d)',
+                        depth, self.max_depth)
             return
+
+        # going to dive deeper, so increment it (full_path's length)
+        if depth + 1 > self.depth_reached:
+            self.depth_reached = depth + 1
 
         rate = board.solution_rate
 
