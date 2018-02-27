@@ -1,4 +1,4 @@
-- simpson refactoring
+- simpson refactoring: use regexp, `assert_match` with it
 - coverage!
 - pylint in CI
 - clean:
@@ -9,6 +9,9 @@
   - if no contradiction, then save repeated solutions
     for all the possible choices and extract intersection
     of that solution
+
+- searching:
+  - if the last contradiction round found more than previous one, do it again (22949)
   - check on pbn=16838
 
 - SVG:
@@ -22,6 +25,9 @@
 - load clues from solved board (check for complexity)
 - add heuristics:
   - use multiprocessing?
+
+- solve blotted:
+  19440, 19629, 19686, 19887, 20742, 20758, 20796, 21151, 21339, 22035, 22385, 22591
 
 - profile and improve bottlenecks:
 

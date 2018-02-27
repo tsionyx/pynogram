@@ -1,11 +1,13 @@
-#!/bin/bash
+#!/bin/bash -e
 
-# nohup bash tests/bench.sh {1..2000} 2>&1 >> bench.log & tail -f bench.log
+# nohup bash tests/bench.sh {1..23000} 2>&1 >> bench.log & tail -f bench.log
+
+mkdir -p solutions
 
 echo "Start at $(date)"
 for i in $@; do
     echo "Solving PBN's puzzle #$i (http://webpbn.com/$i) ..."
-    /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final -v --timeout=1200 --max-solutions=2 2>&1 |
+    /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final -v --timeout=1200 --max-solutions=2 2>&1 1>solutions/${i} |
     grep -iP 'contradiction|Total'
     echo
 done
@@ -31,10 +33,10 @@ function stats() {
   # check for exceptions
   grep File ${log_file} | sort | uniq -c | awk '{print $1,$4,$5,$7}'
 
-  # the worst times
+  # the puzzles that solves too long (more than 5 minutes)
   while read t
   do
     id=$(grep -P ${t} ${log_file} -A2 | grep -oP '#\K(\d+)' | awk '{print $1-1}')
     echo "$id: $t"
-  done < <(grep -oP 'Total: \K(.+)' ${log_file} | sort -gr | head -n20)
+  done < <(grep -oP 'Total: \K(.+)' ${log_file} | sort -gr | awk '$1 > 300')
 }
