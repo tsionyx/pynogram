@@ -41,8 +41,7 @@ class Solver(object):
 
         self.depth_reached = 0
         self.start_time = None
-        # TODO: do I need it?
-        self.dead_ends = set()
+        self.explored_paths = set()
 
     def _solve_with_guess(self, row_index, column_index, assumption):
         board = self.board
@@ -374,7 +373,6 @@ class Solver(object):
                 LOG.info('Unsolved cells left: %d', cells_left)
 
         except NonogramError:
-            self.dead_ends.add(full_path)
             LOG.error('Dead end found: %s', full_path)
             return False
 
@@ -414,8 +412,17 @@ class Solver(object):
         state[2] = self.colors[state[2]]
         return tuple(state)
 
+    def _set_explored(self, path):
+        self.explored_paths.add(tuple(sorted(path)))
+
+    def _is_explored(self, path):
+        return tuple(sorted(path)) in self.explored_paths
+
     def search(self, states, path=()):
         """Recursively search for solutions"""
+
+        if self._is_explored(path):
+            return
 
         if self.start_time is None:
             self.start_time = time.time()
@@ -469,7 +476,7 @@ class Solver(object):
                     continue
 
                 full_path = path + (state,)
-                if full_path in self.dead_ends:
+                if self._is_explored(full_path):
                     LOG.info('The path %s already explored', full_path)
                     continue
 
@@ -480,7 +487,7 @@ class Solver(object):
                     success = self._try_state(state, path)
                 finally:
                     board.cells = guess_save
-                    self.dead_ends.add(full_path)
+                    self._set_explored(full_path)
 
                 if not success:
                     # the whole `path` branch of a search tree is a dead end
@@ -502,4 +509,4 @@ class Solver(object):
 
         finally:
             board.cells = save
-            self.dead_ends.add(path)
+            self._set_explored(path)
