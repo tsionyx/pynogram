@@ -382,7 +382,7 @@ class Solver(object):
             return True
 
         if best_candidates:
-            self.search(best_candidates, path=full_path)
+            return self.search(best_candidates, path=full_path)
 
         return True
 
@@ -419,10 +419,14 @@ class Solver(object):
         return tuple(sorted(path)) in self.explored_paths
 
     def search(self, states, path=()):
-        """Recursively search for solutions"""
+        """
+        Recursively search for solutions
+
+        Return False if the given path is a dead end (no solutions can be found)
+        """
 
         if self._is_explored(path):
-            return
+            return True
 
         if self.start_time is None:
             self.start_time = time.time()
@@ -431,12 +435,12 @@ class Solver(object):
         depth = len(path)
 
         if self._limits_reached(depth):
-            return
+            return True
 
         if self.max_depth and depth >= self.max_depth:
             LOG.warning('Next step on the depth %d is deeper than the max (%d)',
                         depth, self.max_depth)
-            return
+            return True
 
         # going to dive deeper, so increment it (full_path's length)
         if depth + 1 > self.depth_reached:
@@ -457,10 +461,7 @@ class Solver(object):
                 i += 1
 
                 if self._limits_reached(depth):
-                    return
-
-                if self._limits_reached(depth):
-                    return
+                    return True
 
                 if state in path:
                     continue
@@ -496,7 +497,7 @@ class Solver(object):
                             "The last possible color '%s' for the cell '%s' "
                             "lead to the contradiction. "
                             "The path %s is invalid", assumption, cell, path)
-                        return
+                        return False
 
                     board.unset_state(assumption, *cell)
                     # immediately try the other colors as well
@@ -510,3 +511,5 @@ class Solver(object):
         finally:
             board.cells = save
             self._set_explored(path)
+
+        return True
