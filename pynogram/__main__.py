@@ -16,7 +16,7 @@ from six import PY2
 from pynogram.__version__ import __version__
 from pynogram.core.board import make_board
 from pynogram.core.solver.contradiction import Solver
-from pynogram.reader import read_example, Pbn
+from pynogram.reader import read_example, Pbn, PbnLocal
 from pynogram.renderer import BaseAsciiRenderer
 
 
@@ -27,10 +27,15 @@ def cli_args():
 
     parser.add_argument('--version', action='store_true',
                         help='show version and exit')
-    parser.add_argument('-b', '--board', default='hello',
-                        help='board file to solve')
-    parser.add_argument('--pbn', type=int,
-                        help='ID of a board to solve on the http://webpbn.com')
+
+    puzzle_source = parser.add_mutually_exclusive_group()
+    puzzle_source.add_argument('-b', '--board', default='hello',
+                               help='board file to solve')
+    puzzle_source.add_argument('--pbn', type=int,
+                               help='ID of a board to solve on the http://webpbn.com')
+    puzzle_source.add_argument('--local-pbn',
+                               help='read PBN-formatted puzzle from a local file')
+
     parser.add_argument('--max-solutions', type=int,
                         help='stop after finding specified number of solutions')
     parser.add_argument('--timeout', type=int,
@@ -115,6 +120,8 @@ def main():
 
     if args.pbn:
         board_def = Pbn.read(args.pbn)
+    elif args.local_pbn:
+        board_def = PbnLocal.read(args.local_pbn)
     else:
         board_def = read_example(args.board)
 

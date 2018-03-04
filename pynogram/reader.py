@@ -215,3 +215,9 @@ class Pbn(object):
             return columns, rows, colors
 
         return columns, rows
+
+
+class PbnLocal(Pbn):
+    @classmethod
+    def _get_puzzle_xml(cls, _id):
+        return open(_id)
