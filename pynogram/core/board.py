@@ -528,19 +528,19 @@ class ColoredBoard(Board):
         return {cell}
 
     def unset_state(self, bad_state, row_index, column_index):
-        colors = self.cells[row_index][column_index]
+        colors = self.cell_colors(row_index, column_index)
         if not is_list_like(bad_state):
             bad_state = [bad_state]
+        bad_state = set(bad_state)
         LOG.debug('(%d, %d) previous state: %s',
                   row_index, column_index, colors)
         LOG.debug('Bad states: %s', bad_state)
 
-        if set(bad_state).intersection(set(colors)):
-            new_value = [color for color in colors if color not in bad_state]
-
+        new_value = colors - bad_state
+        if set() < new_value < colors:
             LOG.debug('(%d, %d) new state: %s',
                       row_index, column_index, new_value)
-            self.cells[row_index][column_index] = new_value
+            self.cells[row_index][column_index] = tuple(new_value)
         else:
             raise ValueError("Cannot unset the colors '%s' from cell %s (%s)" %
                              (bad_state, (row_index, column_index), colors))

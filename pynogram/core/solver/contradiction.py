@@ -94,6 +94,10 @@ class Solver(object):
             if not force:
                 return False, None
 
+        if assumption not in board.cell_colors(row_index, column_index):
+            LOG.warning("The probe is useless: color '%s' already unset", assumption)
+            return False, None
+
         save = board.make_snapshot()
 
         try:
