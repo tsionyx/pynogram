@@ -175,6 +175,8 @@ class Board(object):  # pylint: disable=too-many-public-methods
         Drop the state from the list of possible states
         for a given cell
         """
+        if self.cells[row_index][column_index] != UNKNOWN:
+            raise ValueError('Cannot unset already set cell %s' % ([row_index, column_index]))
         self.cells[row_index][column_index] = invert(bad_state)
 
     def get_row(self, index):
@@ -386,7 +388,7 @@ class Board(object):  # pylint: disable=too-many-public-methods
                         else:
                             assert set(new_cell) == set(old_cell)
                     elif new_cell != old_cell:
-                        assert old_cell == UNKNOWN
+                        assert old_cell == UNKNOWN  # '%s: %s --> %s' % ((i, j), old_cell, new_cell)
                         yield i, j
 
     def changed(self, old_cells):
@@ -539,6 +541,9 @@ class ColoredBoard(Board):
             LOG.debug('(%d, %d) new state: %s',
                       row_index, column_index, new_value)
             self.cells[row_index][column_index] = new_value
+        else:
+            raise ValueError("Cannot unset the colors '%s' from cell %s (%s)" %
+                             (bad_state, (row_index, column_index), colors))
 
     def cell_solution_rate(self, cell):
         """

@@ -116,7 +116,10 @@ class Solver(object):
 
         LOG.info("Found contradiction at (%i, %i)",
                  row_index, column_index)
-        board.unset_state(assumption, row_index, column_index)
+        try:
+            board.unset_state(assumption, row_index, column_index)
+        except ValueError as e:
+            raise NonogramError(str(e))
 
         # try to solve with additional info
         # solve with only one cell as new info
