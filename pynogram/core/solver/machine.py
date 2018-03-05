@@ -266,13 +266,16 @@ class NonogramFSM(fsm.FiniteStateMachine):
 
         assert len(solved_row) == len(row)
 
+        self._save_in_cache(row, solved_row)
+        return solved_row
+
+    def _save_in_cache(self, before, after):
         # pylint: disable=no-member
-        self.solutions_cache.save((self.description, row), solved_row)
+        self.solutions_cache.save((self.description, before), after)
 
         # it's a complete solution, so other solvers can use it too
         # pylint: disable=no-member
-        FastSolver.solutions_cache.save((self.description, row), solved_row)
-        return solved_row
+        FastSolver.solutions_cache.save((self.description, before), after)
 
     def match(self, word):
         # special case for an empty description
@@ -409,6 +412,13 @@ class NonogramFSMColored(NonogramFSM):
             one_color_word.append(letter)
 
         return super(NonogramFSMColored, self).match(one_color_word)
+
+    def _save_in_cache(self, before, after):
+        # pylint: disable=no-member
+        self.solutions_cache.save((self.description, before), after)
+
+        # do not store in FastSolver's cache because it cannot handle the color puzzles
+        # FastSolver.solutions_cache.save((self.description, before), after)
 
 
 _FSM_CACHE = Cache(1000)

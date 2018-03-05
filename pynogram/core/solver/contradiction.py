@@ -329,7 +329,8 @@ class Solver(object):
         board.set_finished()
         LOG.info('Full solution: %.6f sec', time.time() - start)
         for method, hit_rate in cache_hit_rate().items():
-            LOG.info('Cache hit rate (%s): %.4f%%', method, hit_rate * 100.0)
+            if hit_rate > 0:
+                LOG.warning('Cache hit rate (%s): %.4f%%', method, hit_rate * 100.0)
 
     def _limits_reached(self, depth):
         """

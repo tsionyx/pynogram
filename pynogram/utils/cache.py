@@ -25,11 +25,25 @@ class Cache(object):
 
     # TODO: make thread to expire objects
 
-    def __init__(self, max_size=10 ** 5):
+    def __init__(self, max_size=10 ** 5, increase=False, do_not_increase_after=10 ** 6):
+        """
+        :param max_size: maximum number of items that the cache can store
+        :param increase: whether to increase the size dynamically when reached the max.
+        If you specify the True, the size will simply doubled. If you specify a number,
+        the size will be multiplied by that amount.
+        :param do_not_increase_after: prevent the cache from growing
+        at certain number of items
+        """
         self._storage = dict()
+        self.init_size = max_size
         self.max_size = max_size
         self.hits = 0
         self.total_queries = 0
+
+        if increase is True:
+            increase = 2
+        self.increase = increase
+        self.do_not_increase_after = do_not_increase_after
 
     def save(self, name, value, _time=None):
         """
@@ -40,6 +54,7 @@ class Cache(object):
             LOG.warning('Maximum size for cache reached (%s).', self.max_size)
 
             self._storage.clear()
+            self._increase_size()
 
         self._storage[name] = (time(), _time, value)
 
@@ -62,6 +77,16 @@ class Cache(object):
                 self.delete(name)
 
             return value
+
+    def _increase_size(self):
+        if self.max_size >= self.do_not_increase_after:
+            return
+
+        if self.increase and self.increase > 1:
+            new_max = self.max_size * self.increase
+            self.max_size = min(new_max, self.do_not_increase_after)
+        else:
+            LOG.info('Bad increase multiplier: %s', self.increase)
 
     def delete(self, name):
         """Just drop the value from a cache"""
