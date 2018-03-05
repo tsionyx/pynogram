@@ -454,8 +454,6 @@ class Solver(object):
         if depth + 1 > self.depth_reached:
             self.depth_reached = depth + 1
 
-        rate = board.solution_rate
-
         search_directions = PriorityDict()
         for state in states:
             self._push_state(search_directions, state, 1)
@@ -489,6 +487,7 @@ class Solver(object):
                     LOG.info('The path %s already explored', full_path)
                     continue
 
+                rate = board.solution_rate
                 guess_save = board.make_snapshot()
                 try:
                     LOG.warning('Trying state (%d/%d): %s (depth=%d, rate=%.4f, previous=%s)',
@@ -517,7 +516,9 @@ class Solver(object):
                         self._push_state(search_directions, cell + (color,), 0)
 
         finally:
-            board.cells = save
-            self._set_explored(path)
+            # do not restore the solved cells on a root path - they are really solved!
+            if path:
+                board.cells = save
+                self._set_explored(path)
 
         return True
