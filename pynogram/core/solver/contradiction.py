@@ -153,12 +153,12 @@ class Solver(object):
         for neighbour in board.unsolved_neighbours(i, j):
             yield neighbour, 0
 
-    def _guess(self, state):
+    def _set_probe(self, state):
         board = self.board
         is_contradiction, prev_state = self.probe(*state, rollback=False, force=True)
 
         if is_contradiction:
-            LOG.warning('Real contradiction was found: %s', state)
+            raise NonogramError('Real contradiction was found: %s' % (state,))
 
         if prev_state is None:
             LOG.warning("The probe for state '%s' does not return anything new", state)
@@ -358,36 +358,43 @@ class Solver(object):
         return False
 
     def _try_state(self, state, path):
+        """
+        Trying to search for solutions in the given direction.
+        At first it set the given state and get a list of the
+        further jobs for finding the contradictions.
+        Later that jobs will be used as candidates for a deeper search.
+
+        :param state: the next cell and color to set
+        :param path: the path that already have done
+        """
         board = self.board
 
         depth = len(path)
         full_path = path + (state,)
 
+        # add every cell to the jobs queue
+        probe_jobs = self._get_all_unsolved_jobs()
         try:
-            # add every cell
-            probe_jobs = self._get_all_unsolved_jobs()
-
             # update with more prioritized cells
-            for new_job, priority in self._guess(state):
+            for new_job, priority in self._set_probe(state):
                 probe_jobs[new_job] = priority
 
             if self._limits_reached(depth):
                 return True
 
             __, best_candidates = self._solve_jobs(probe_jobs)
-
-            cells_left = round((1 - board.solution_rate) * board.width * board.height)
-            if cells_left > 0:
-                LOG.info('Unsolved cells left: %d', cells_left)
-
-        except NonogramError:
-            LOG.error('Dead end found: %s', full_path)
+        except NonogramError as e:
+            LOG.error('Dead end found (%s): %s', full_path, str(e))
             return False
 
-        LOG.warning('Reached rate %.4f on %s path', board.solution_rate, full_path)
+        rate = board.solution_rate
+        LOG.warning('Reached rate %.4f on %s path', rate, full_path)
 
-        if self._limits_reached(depth):
+        if rate == 1 or self._limits_reached(depth):
             return True
+
+        cells_left = round((1 - rate) * board.width * board.height)
+        LOG.info('Unsolved cells left: %d', cells_left)
 
         if best_candidates:
             return self.search(best_candidates, path=full_path)
@@ -493,20 +500,23 @@ class Solver(object):
                     LOG.warning('Trying state (%d/%d): %s (depth=%d, rate=%.4f, previous=%s)',
                                 i, total_number_of_directions, state, depth, rate, path)
                     success = self._try_state(state, path)
+                    is_solved = board.is_solved_full
                 finally:
                     board.cells = guess_save
                     self._set_explored(full_path)
 
                 if not success:
-                    # the whole `path` branch of a search tree is a dead end
-                    if board.cell_colors(*cell) == {assumption}:
+                    try:
+                        board.unset_state(assumption, *cell)
+                    except ValueError:
+                        # the whole `path` branch of a search tree is a dead end
                         LOG.error(
                             "The last possible color '%s' for the cell '%s' "
                             "lead to the contradiction. "
                             "The path %s is invalid", assumption, cell, path)
                         return False
 
-                    board.unset_state(assumption, *cell)
+                if not success or is_solved:
                     # immediately try the other colors as well
                     # if all of them goes to the dead end,
                     # then the parent path is a dead end
