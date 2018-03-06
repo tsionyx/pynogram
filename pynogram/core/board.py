@@ -298,8 +298,8 @@ class Board(object):  # pylint: disable=too-many-public-methods
     @property
     def solution_rate(self):
         """How much the board's cells are close to the full solution"""
-        if self.is_solved_full:
-            return 1
+        # if self.is_solved_full:
+        #     return 1
 
         return avg(self.line_solution_rate(row) for row in self.cells)
 
@@ -568,8 +568,17 @@ class ColoredBoard(Board):
             cell_colors = {cell}
 
         full_colors = self.colors()
-        rate = len(full_colors) - len(cell_colors & full_colors)
-        normalized_rate = rate / (len(full_colors) - 1)
+        cell_colors &= full_colors
+
+        current_size, full_size = len(cell_colors), len(full_colors)
+
+        if current_size == 1:
+            return 1
+
+        assert current_size > 1
+
+        rate = full_size - current_size
+        normalized_rate = rate / (full_size - 1)
 
         assert 0 <= normalized_rate <= 1, 'Full: {}, Cell: {}'.format(full_colors, cell_colors)
         return normalized_rate
