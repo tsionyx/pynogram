@@ -232,7 +232,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
     def test_solve(self, description, input_row, expected):
         # both arguments passes work
         # assert solve_row((description, input_row)) == expected
-        assert solve_line(description, input_row, method='partial_match') == expected
+        assert solve_line(description, input_row, method='partial_match') == tuple(expected)
 
 
 class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
@@ -240,8 +240,8 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
                              TestNonogramFSMPartialMatch.SOLVED_ROWS)
     def test_solve(self, description, input_row, expected):
         # both arguments passes work
-        assert solve_line((description, input_row)) == expected
-        assert solve_line(description, input_row, method='reverse_tracking') == expected
+        assert solve_line((description, input_row)) == tuple(expected)
+        assert solve_line(description, input_row, method='reverse_tracking') == tuple(expected)
 
     def test_transition_table(self):
         description, row = '2 2', '___0X_____'

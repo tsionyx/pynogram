@@ -55,7 +55,7 @@ BAD_CASES = [
 class TestFastSolver(object):
     @pytest.mark.parametrize('description,input_row,expected', CASES)
     def test_solve(self, description, input_row, expected):
-        assert solve_line(description, input_row, method='simpson') == expected
+        assert solve_line(description, input_row, method='simpson') == tuple(expected)
 
     @pytest.mark.parametrize('description,input_row,error', BAD_CASES)
     def test_solve_bad_row(self, description, input_row, error):

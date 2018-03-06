@@ -325,6 +325,7 @@ class FastSolver(object):
         k = line_size
         work[j: k] = [SPACE] * (k - j)
 
+        work = tuple(work)
         # pylint: disable=no-member
         cls.solutions_cache.save((clue, line), work)
         return work
