@@ -7,8 +7,7 @@ mkdir -p solutions
 echo "Start at $(date)"
 for i in $@; do
     echo "Solving PBN's puzzle #$i (http://webpbn.com/$i) ..."
-    /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final -v --timeout=1200 --max-solutions=2 2>&1 1>solutions/${i} |
-    grep -iP 'contradiction|Total'
+    /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final -v --timeout=1200 --max-solutions=2 2>&1 1>solutions/${i}
     echo
 done
 
