@@ -218,6 +218,8 @@ class Pbn(object):
 
 
 class PbnLocal(Pbn):
+    """Read locally saved puzzled from http://webpbn.com/"""
+
     @classmethod
     def _get_puzzle_xml(cls, _id):
         return open(_id)

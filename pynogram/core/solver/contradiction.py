@@ -122,8 +122,8 @@ class Solver(object):
                  row_index, column_index)
         try:
             board.unset_state(assumption, row_index, column_index)
-        except ValueError as e:
-            raise NonogramError(str(e))
+        except ValueError as ex:
+            raise NonogramError(str(ex))
 
         # try to solve with additional info
         # solve with only one cell as new info
@@ -383,8 +383,8 @@ class Solver(object):
                 return True
 
             __, best_candidates = self._solve_jobs(probe_jobs)
-        except NonogramError as e:
-            LOG.error('Dead end found (%s): %s', full_path, str(e))
+        except NonogramError as ex:
+            LOG.error('Dead end found (%s): %s', full_path, str(ex))
             return False
 
         rate = board.solution_rate
@@ -465,13 +465,13 @@ class Solver(object):
         for state in states:
             self._push_state(search_directions, state, 1)
 
-        i = 0
+        search_counter = 0
         save = board.make_snapshot()
         try:
             while search_directions:
                 total_number_of_directions = len(search_directions)
                 state = self._get_next_state(search_directions)
-                i += 1
+                search_counter += 1
 
                 if self._limits_reached(depth):
                     return True
@@ -479,8 +479,8 @@ class Solver(object):
                 if state in path:
                     continue
 
-                x, y, assumption = state
-                cell = x, y
+                i, j, assumption = state
+                cell = i, j
                 cell_colors = board.cell_colors(*cell)
 
                 if assumption not in cell_colors:
@@ -498,7 +498,8 @@ class Solver(object):
                 guess_save = board.make_snapshot()
                 try:
                     LOG.warning('Trying state (%d/%d): %s (depth=%d, rate=%.4f, previous=%s)',
-                                i, total_number_of_directions, state, depth, rate, path)
+                                search_counter, total_number_of_directions,
+                                state, depth, rate, path)
                     success = self._try_state(state, path)
                     is_solved = board.is_solved_full
                 finally:
