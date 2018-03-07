@@ -320,6 +320,19 @@ class TestContradictions(object):
         Solver(board).solve()
         assert board.solution_rate == 0
 
+    def test_depth_search(self):
+        board = make_board(*Pbn.read(3469))
+
+        line_solver.solve(board)
+        assert board.solution_rate == 0
+        assert len(board.solutions) == 0
+
+        Solver(board, max_solutions=2, timeout=600).solve()
+        assert is_close(board.solution_rate, 0.19)
+        assert len(board.solutions) == 1
+
+        assert board.is_finished
+
 
 def color_board_def():
     columns = [['1r', (1, 'b')]] * 3
