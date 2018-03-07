@@ -441,7 +441,7 @@ class SvgRenderer(StreamRenderer):
         ))
 
         if self.board.is_colored:
-            for color_name in self.board.color_map:
+            for color_name in sorted(self.board.color_map):
                 self._add_symbol(
                     'color-%s' % color_name, color_name,
                     drawing.rect(

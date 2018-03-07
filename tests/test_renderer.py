@@ -6,15 +6,16 @@ from io import StringIO
 
 import pytest
 
-from pynogram.core.board import Board
+from pynogram.core.board import Board, make_board
 from pynogram.core.common import BOX, SPACE
+from pynogram.core.solver import line as line_solver
 from pynogram.renderer import (
     Renderer,
     BaseAsciiRenderer,
     AsciiRenderer,
     SvgRenderer,
 )
-from .test_board import tested_board
+from .test_board import tested_board, color_board_def
 
 
 @pytest.fixture
@@ -338,3 +339,101 @@ class TestSvg(object):
         assert table[0] == '<?xml version="1.0" encoding="utf-8" ?>'
         assert table[1] == ''.join([
             line for line in [line.strip() for line in svg_def.split('\n')] if line])
+
+    def test_color_solved(self, stream):
+        b = make_board(*color_board_def(), renderer=SvgRenderer, stream=stream)
+        line_solver.solve(b)
+
+        b.draw()
+        table = [line.strip() for line in stream.getvalue().split('\n')]
+
+        svg_def = """
+            <svg baseProfile="full" height="90" version="1.1" width="75" xmlns="
+            http://www.w3.org/2000/svg" xmlns:ev=
+            "http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <defs>
+                    <style type="text/css">
+                        <![CDATA[
+                            g.grid-lines line {
+                            stroke-width: 1} g.grid-lines line.bold {
+                            stroke-width: 2} g.header-clues text, g.side-clues text {
+                            font-size: 9.000000} ]]>
+                    </style>
+
+                    <symbol id="color-b">
+                        <rect fill="blue" height="15" width="15" x="0" y="0" />
+                    </symbol>
+                    <symbol id="color-black">
+                        <rect fill="rgb(0,0,0)" height="15" width="15" x="0" y="0" />
+                    </symbol>
+                    <symbol id="color-r">
+                        <rect fill="red" height="15" width="15" x="0" y="0" />
+                    </symbol>
+                    <symbol id="space"><circle cx="0" cy="0" r="1.5" /></symbol>
+
+                    <symbol fill="none" id="check" stroke="green">
+                        <circle cx="50" cy="50" r="40" stroke-width="10" />
+                        <polyline points="35,35 35,55 75,55" stroke-width="
+                        12" transform="rotate(-45 50 50)" />
+                    </symbol>
+                </defs>
+
+                <rect class="nonogram-thumbnail" height="30" width="15" x="0" y="0" />
+
+                <rect class="nonogram-header" height="30" width="45" x="15" y="0" />
+                <g class="header-clues">
+                    <rect class="solved" height="30" width="15" x="15" y="0" />
+                    <text fill="blue" x="27.75" y="25.5">1</text>
+                    <text fill="red" x="27.75" y="10.5">1</text>
+                    <rect class="solved" height="30" width="15" x="30" y="0" />
+                    <text fill="blue" x="42.75" y="25.5">1</text>
+                    <text fill="red" x="42.75" y="10.5">1</text>
+                    <rect class="solved" height="30" width="15" x="45" y="0" />
+                    <text fill="blue" x="57.75" y="25.5">1</text>
+                    <text fill="red" x="57.75" y="10.5">1</text>
+                </g>
+
+                <rect class="nonogram-side" height="45" width="15" x="0" y="30" />
+                <g class="side-clues">
+                    <rect class="solved" height="15" width="15" x="0" y="30" />
+                    <text fill="red" x="10.5" y="41.25">3</text>
+                    <rect class="solved" height="15" width="15" x="0" y="45" />
+                    <rect class="solved" height="15" width="15" x="0" y="60" />
+                    <text fill="blue" x="10.5" y="71.25">3</text>
+                </g>
+
+                <rect class="nonogram-grid" height="45" width="45" x="15" y="30" />
+                <g class="grid-lines">
+                    <line class="bold" x1="0" x2="60" y1="30" y2="30" />
+                    <line x1="0" x2="60" y1="45" y2="45" />
+                    <line x1="0" x2="60" y1="60" y2="60" />
+                    <line class="bold" x1="0" x2="60" y1="75" y2="75" />
+                    <line class="bold" x1="15" x2="15" y1="0" y2="75" />
+                    <line x1="30" x2="30" y1="0" y2="75" />
+                    <line x1="45" x2="45" y1="0" y2="75" />
+                    <line class="bold" x1="60" x2="60" y1="0" y2="75" />
+                </g>
+                <g class="space">
+                    <use x="22.5" xlink:href="#space" y="52.5" />
+                    <use x="37.5" xlink:href="#space" y="52.5" />
+                    <use x="52.5" xlink:href="#space" y="52.5" />
+                </g>
+                <g class="color-b">
+                    <use x="15" xlink:href="#color-b" y="60" />
+                    <use x="30" xlink:href="#color-b" y="60" />
+                    <use x="45" xlink:href="#color-b" y="60" />
+                </g>
+                <g class="color-black" />
+                <g class="color-r">
+                    <use x="15" xlink:href="#color-r" y="30" />
+                    <use x="30" xlink:href="#color-r" y="30" />
+                    <use x="45" xlink:href="#color-r" y="30" />
+                </g>
+
+                <use x="0" xlink:href="#check" y="0" />
+            </svg>"""
+
+        assert table[0] == '<?xml version="1.0" encoding="utf-8" ?>'
+        svg_def = ''.join([
+            line for line in [line.strip() for line in svg_def.split('\n')] if line])
+        assert table[1] == svg_def
