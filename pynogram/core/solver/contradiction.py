@@ -37,7 +37,17 @@ class Solver(object):
 
         self.max_solutions = max_solutions
         self.timeout = timeout
-        self.max_depth = max_depth
+        if max_depth is None:
+            # why 400?
+            # I simply searched for some value that will be somehow bigger
+            # than 351 (the maximum useful search depth reached on the test set so far)
+            # but still reachable for recursion calls.
+            #
+            # NB: in current implementation depth=444 fails with
+            # 'RuntimeError: maximum recursion depth exceeded'
+            self.max_depth = 400
+        else:
+            self.max_depth = max_depth
 
         self.depth_reached = 0
         self.start_time = None
