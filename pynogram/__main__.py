@@ -7,6 +7,7 @@ The program's entry point
 from __future__ import unicode_literals, print_function
 
 import codecs
+import json
 import logging
 import sys
 from argparse import ArgumentParser
@@ -58,9 +59,10 @@ def draw_solution(board_def, every_round=True, **solver_args):
     if every_round:
         d_board.on_solution_round_complete = lambda board: board.draw()
 
+    solver = Solver(d_board, **solver_args)
+
     exc = False
     try:
-        solver = Solver(d_board, **solver_args)
         solver.solve()
     except BaseException:
         exc = True
@@ -72,6 +74,9 @@ def draw_solution(board_def, every_round=True, **solver_args):
 
         if not d_board.is_solved_full:
             d_board.draw_solutions()
+
+        if solver.search_map:
+            print(json.dumps(solver.search_map.to_dict(), indent=1))
 
 
 def log_level(verbosity):

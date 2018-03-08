@@ -5,6 +5,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import time
+from collections import OrderedDict
 
 from six import iteritems
 from six.moves import range
@@ -21,6 +22,24 @@ USE_CONTRADICTION_RESULTS = True
 # use the position of a cell (number of neighbours and solution rate of row/column)
 # to adjust its rate when choosing the next probe for DFS
 ADJUST_RATE = True
+
+
+class _SearchNode(object):
+    def __init__(self, value):
+        self.value = value
+        self.children = OrderedDict()
+
+    def to_dict(self):
+        if not self.children:
+            return self.value
+
+        return {
+            'value': self.value,
+            'children': OrderedDict(
+                (str(k), v.to_dict())
+                for k, v in iteritems(self.children)
+            )
+        }
 
 
 class Solver(object):
@@ -52,6 +71,34 @@ class Solver(object):
         self.depth_reached = 0
         self.start_time = None
         self.explored_paths = set()
+        self.search_map = None
+
+    def _add_search_result(self, path, score):
+        if isinstance(score, float):
+            score = round(score, 4)
+
+        if not path:
+            if not self.search_map:
+                self.search_map = _SearchNode(score)
+            else:
+                self.search_map.value = score
+            return
+
+        current = self.search_map
+
+        for i, node in enumerate(path):
+            # node = (i + 1, node)
+            if i == len(path) - 1:
+                val = score
+            else:
+                val = None
+
+            if node not in current.children:
+                current.children[node] = _SearchNode(val)
+
+            current = current.children[node]
+
+        current.value = score
 
     def _solve_with_guess(self, row_index, column_index, assumption):
         board = self.board
@@ -395,10 +442,12 @@ class Solver(object):
             __, best_candidates = self._solve_jobs(probe_jobs)
         except NonogramError as ex:
             LOG.error('Dead end found (%s): %s', full_path, str(ex))
+            self._add_search_result(full_path, False)
             return False
 
         rate = board.solution_rate
         LOG.warning('Reached rate %.4f on %s path', rate, full_path)
+        self._add_search_result(full_path, rate)
 
         if rate == 1 or self._limits_reached(depth):
             return True
@@ -535,6 +584,7 @@ class Solver(object):
                     LOG.warning('Trying state (%d/%d): %s (depth=%d, rate=%.4f, previous=%s)',
                                 search_counter, total_number_of_directions,
                                 state, depth, rate, path)
+                    self._add_search_result(path, rate)
                     success = self._try_state(state, path)
                     is_solved = board.is_solved_full
                 finally:
@@ -551,9 +601,12 @@ class Solver(object):
                             "The last possible color '%s' for the cell '%s' "
                             "lead to the contradiction. "
                             "The path %s is invalid", assumption, cell, path)
+                        # self._add_search_result(path, False)
                         return False
 
-                    if board.is_solved_full:
+                    rate = board.solution_rate
+                    # self._add_search_result(path, rate)
+                    if rate == 1:
                         self._add_solution()
                         LOG.warning(
                             "The negation of color '%s' for the cell '%s' lead to full solution. "
