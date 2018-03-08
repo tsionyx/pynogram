@@ -26,7 +26,7 @@ function requestBoard() {
 
             if (!jQuery.isEmptyObject(result)) {
                 console.log(result);
-                $("#extra").append("<div>"+ JSON.stringify(result) + "</div>");
+                // $("#extra").append("<div>"+ JSON.stringify(result) + "</div>");
             }
 
             var timeout = 0;
