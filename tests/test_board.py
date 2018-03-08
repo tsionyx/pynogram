@@ -328,7 +328,7 @@ class TestContradictions(object):
         assert len(board.solutions) == 0
 
         Solver(board, max_solutions=2, timeout=600).solve()
-        assert is_close(board.solution_rate, 0.19)
+        assert board.is_solved_full
         assert len(board.solutions) == 1
 
         assert board.is_finished

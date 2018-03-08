@@ -499,6 +499,31 @@ class Solver(object):
                               assumption, cell, cell_colors)
                     continue
 
+                if len(cell_colors) == 1:
+                    LOG.error("Only one color for cell '%s' left: %s. Solve it unconditionally",
+                              cell, assumption)
+                    assert assumption == tuple(cell_colors)[0]
+                    try:
+                        self._solve_without_search(every=True)
+                    except NonogramError:
+                        # the whole `path` branch of a search tree is a dead end
+                        LOG.error(
+                            "The last possible color '%s' for the cell '%s' "
+                            "lead to the contradiction. "
+                            "The path %s is invalid", assumption, cell, path)
+                        # self._add_search_result(path, False)
+                        return False
+
+                    rate = board.solution_rate
+                    # self._add_search_result(path, rate)
+                    if rate == 1:
+                        self._add_solution()
+                        LOG.warning(
+                            "The only color '%s' for the cell '%s' lead to full solution. "
+                            "No need to traverse the path %s anymore", assumption, cell, path)
+                        return True
+                    continue
+
                 full_path = path + (state,)
                 if self._is_explored(full_path):
                     LOG.info('The path %s already explored', full_path)
@@ -519,6 +544,7 @@ class Solver(object):
                 if not success:
                     try:
                         board.unset_state(assumption, *cell)
+                        self._solve_without_search(every=True)
                     except ValueError:
                         # the whole `path` branch of a search tree is a dead end
                         LOG.error(
@@ -526,6 +552,13 @@ class Solver(object):
                             "lead to the contradiction. "
                             "The path %s is invalid", assumption, cell, path)
                         return False
+
+                    if board.is_solved_full:
+                        self._add_solution()
+                        LOG.warning(
+                            "The negation of color '%s' for the cell '%s' lead to full solution. "
+                            "No need to traverse the path %s anymore", assumption, cell, path)
+                        return True
 
                 if not success or is_solved:
                     # immediately try the other colors as well
