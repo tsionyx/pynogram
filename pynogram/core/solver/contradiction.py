@@ -5,7 +5,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import time
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 
 from six import iteritems
 from six.moves import range
@@ -279,9 +279,11 @@ class Solver(object):
         self.board.add_solution()
 
     def _probes_from_rates(self, rates):
-        best = dict()
+        jobs_with_rates = defaultdict(dict)
+
         for job, (rate, priority) in iteritems(rates):
             cell = job[:2]
+            color = job[-1]
             if self.board.cell_solved(*cell):
                 continue
 
@@ -289,15 +291,22 @@ class Solver(object):
             # priority is in the range [0, 8]
             if ADJUST_RATE:
                 rate += (10 - priority)
-            # if rate > best.get(job, 0):
-            best[job] = rate
+            # if rate > jobs_with_rates.get(job, 0):
+            jobs_with_rates[cell][color] = rate
 
+        max_rate = {k: max(v.values()) for k, v in iteritems(jobs_with_rates)}
         # the biggest rate appears first
-        best = sorted(iteritems(best), key=lambda x: x[1], reverse=True)
+        best = sorted(iteritems(max_rate), key=lambda x: x[1], reverse=True)
         LOG.debug('\n'.join(map(str, best)))
 
-        # but return only the jobs, not rates
-        return tuple(job for job, rate in best)
+        jobs = []
+        for cell, max_rate in best:
+            job = cell
+            colors = sorted(iteritems(jobs_with_rates[cell]), key=lambda x: x[1], reverse=True)
+            for color, rate in colors:
+                jobs.append(job + (color,))
+
+        return tuple(jobs)
 
     def _get_all_unsolved_jobs(self, skip_low_rated=False):
         board = self.board
@@ -617,10 +626,20 @@ class Solver(object):
                     # immediately try the other colors as well
                     # if all of them goes to the dead end,
                     # then the parent path is a dead end
+                    states_to_try = []
                     for color in cell_colors:
                         if color == assumption:
                             continue
-                        self._push_state(search_directions, cell + (color,), 0)
+
+                        states_to_try.append(cell + (color,))
+
+                    # if all(self._is_explored(path + (state,)) for state in states_to_try):
+                    #     LOG.error('All other colors (%s) of cell %s already explored',
+                    #               states_to_try, cell)
+                    #     return True
+
+                    for state in states_to_try:
+                        self._push_state(search_directions, state, 0)
 
         finally:
             # do not restore the solved cells on a root path - they are really solved!
