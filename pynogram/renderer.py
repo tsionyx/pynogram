@@ -114,7 +114,8 @@ class GridCell(Cell):  # pylint: disable=too-few-public-methods
                 # multiple colors
                 value = UNKNOWN
 
-        if value in self.renderer.board.color_map:
+        value = self.renderer.board.color_name_by_id(value)
+        if value in self.renderer.board.color_defs:
             return self.renderer.board.char_for_color(value)
 
         return icons.get(value, self.DEFAULT_ICON)
@@ -423,6 +424,9 @@ class SvgRenderer(StreamRenderer):
             symbol.add(part)
 
         if color is not None:
+            if self.board.is_colored:
+                color = self.board.color_id_by_name(color)
+
             self.color_symbols[color] = id_
         drawing.defs.add(symbol)
 
@@ -441,7 +445,7 @@ class SvgRenderer(StreamRenderer):
         ))
 
         if self.board.is_colored:
-            for color_name in sorted(self.board.color_map):
+            for color_name in sorted(self.board.color_defs):
                 self._add_symbol(
                     'color-%s' % color_name, color_name,
                     drawing.rect(
@@ -534,8 +538,8 @@ class SvgRenderer(StreamRenderer):
 
         if isinstance(value, (list, tuple)):
             # colored board
-            value, color_name = value[:2]
-            color = self._color_from_name(color_name)
+            value, color_id = value[:2]
+            color = self._color_from_name(color_id)
         else:
             color = 'currentColor'
 

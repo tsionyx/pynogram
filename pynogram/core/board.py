@@ -493,14 +493,22 @@ class ColoredBoard(Board):
     """
 
     def __init__(self, columns, rows, color_map, **renderer_params):
-        self.color_map = color_map
-        self.color_map[DEFAULT_COLOR_NAME] = DEFAULT_COLOR
+        self.color_defs = color_map
+        self.color_defs[DEFAULT_COLOR_NAME] = DEFAULT_COLOR
+        colors_as_strings = [SPACE] + sorted(self.color_defs)
+        self._color_id_to_name = dict(enumerate(colors_as_strings))
+        self._color_name_to_id = {v: k for k, v in self._color_id_to_name.items()}
+
         super(ColoredBoard, self).__init__(columns, rows, **renderer_params)
-        self._desc_colors = self._colors(True)
+
+        # clue colors can only be defined after the super().__init__
+        # yet they are described the board more precisely than the color_defs
+        # (it can contains excess colors like 'white')
+        self._desc_colors = self._clue_colors(True) | {SPACE}
 
     @property
     def init_cell_state(self):
-        return tuple(self.color_map) + (SPACE,)
+        return tuple(self._color_id_to_name)
 
     def cell_solved(self, i, j):
         """Return whether the cell is completely solved"""
@@ -513,7 +521,7 @@ class ColoredBoard(Board):
         return True
 
     def colors(self):
-        return self._desc_colors | {SPACE}
+        return self._desc_colors
 
     @property
     def is_colored(self):
@@ -590,7 +598,7 @@ class ColoredBoard(Board):
         solved = sum(self.cell_solution_rate(cell) for cell in row)
         return solved / len(row)
 
-    def _colors(self, horizontal):
+    def _clue_colors(self, horizontal):
         """
         All the different colors appeared
         in the descriptions (rows or columns)
@@ -605,25 +613,26 @@ class ColoredBoard(Board):
             colors.update(color for size, color in desc)
         return colors
 
-    @classmethod
-    def normalize(cls, rows):
+    def normalize(self, rows):
         """
         Presents given rows in standard format
         """
-        return tuple(map(normalize_description_colored, rows))
+        return tuple(normalize_description_colored(row, self._color_name_to_id)
+                     for row in rows)
 
     def validate(self):
         self.validate_headers(self.columns_descriptions, self.height)
         self.validate_headers(self.rows_descriptions, self.width)
 
-        horizontal_colors = self._colors(True)
-        vertical_colors = self._colors(False)
+        horizontal_colors = self._clue_colors(True)
+        vertical_colors = self._clue_colors(False)
 
         if horizontal_colors != vertical_colors:
             raise ValueError('Colors differ: {} (rows) and {} (columns)'.format(
                 horizontal_colors, vertical_colors))
 
-        not_defined_colors = horizontal_colors - set(self.color_map)
+        not_defined_colors = horizontal_colors - set(self._color_name_to_id[name]
+                                                     for name in self.color_defs)
         if not_defined_colors:
             raise ValueError('Some colors not defined: {}'.format(
                 tuple(not_defined_colors)))
@@ -668,11 +677,22 @@ class ColoredBoard(Board):
         Return the ASCII character to draw
         for given color based on color map
         """
-        return self.color_map[color_name][1]
+        if color_name not in self.color_defs:
+            color_name = self.color_name_by_id(color_name)
+
+        return self.color_defs[color_name][1]
 
     def rgb_for_color(self, color_name):
         """Return the RGB triplet for given color based on color map"""
-        return self.color_map[color_name][0]
+        if color_name not in self.color_defs:
+            color_name = self.color_name_by_id(color_name)
+        return self.color_defs[color_name][0]
+
+    def color_name_by_id(self, color_id):
+        return self._color_id_to_name.get(color_id)
+
+    def color_id_by_name(self, color_name):
+        return self._color_name_to_id.get(color_name)
 
 
 class _DummyBoard(object):  # pylint: disable=too-few-public-methods

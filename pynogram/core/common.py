@@ -70,7 +70,7 @@ def normalize_description(row, color=False):
 _COLOR_DESCRIPTION_RE = re.compile('([0-9]+)(.+)')
 
 
-def normalize_description_colored(row):
+def normalize_description_colored(row, name_to_id_map):
     """Normalize a colored nonogram description"""
     row = normalize_description(row, color=True)
 
@@ -93,7 +93,7 @@ def normalize_description_colored(row):
         else:
             res.append(item)
 
-    return tuple(res)
+    return tuple((size, name_to_id_map[color]) for size, color in res)
 
 
 INFORMAL_REPRESENTATIONS = {

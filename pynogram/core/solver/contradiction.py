@@ -52,7 +52,6 @@ class Solver(object):
         :type board: Board
         """
         self.board = board
-        self.colors = tuple(board.colors())
 
         self.max_solutions = max_solutions
         self.timeout = timeout
@@ -469,31 +468,13 @@ class Solver(object):
 
         return True
 
-    # TODO: such a mapping should appear inside a ColoredBoard implementation:
-    # the operations with integers always faster than with the strings.
-    def _push_state(self, queue, state, priority):
-        """
-        Prevents annoying error for colored puzzles:
-        'TypeError: unorderable types: bool() < str()'
-
-        The state is a triple (x, y, color) which represent
-        a single assumption about the next search direction.
-        The error appears because of the color
-        can be a string instance or 'False' (which is SPACE).
-        That is why we move from a color name to a color index.
-        """
-        color = state[2]
-        color_id = self.colors.index(color)
-        state = tuple(state[:2]) + (color_id,)
+    @classmethod
+    def _push_state(cls, queue, state, priority):
         queue[state] = priority
 
-    def _get_next_state(self, queue):
-        """
-        Transform the color index of a state to usable color name
-        """
-        state = list(queue.pop_smallest()[0])
-        state[2] = self.colors[state[2]]
-        return tuple(state)
+    @classmethod
+    def _get_next_state(cls, queue):
+        return queue.pop_smallest()[0]
 
     def _set_explored(self, path):
         self.explored_paths.add(tuple(sorted(path)))
