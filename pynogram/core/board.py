@@ -675,6 +675,11 @@ class ColoredBoard(Board):
                 raise ValueError('Cannot allocate row {} in just {} cells'.format(
                     list(row), max_size))
 
+    def make_snapshot(self):
+        # shallow copy the cells itself
+        # to prevent too heavy tuple's `deepcopy`
+        return [list(row) for row in self.cells]
+
     def char_for_color(self, color_name):
         """
         Return the ASCII character to draw
