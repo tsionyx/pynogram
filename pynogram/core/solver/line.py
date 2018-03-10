@@ -55,7 +55,9 @@ def solve_row(board, index, is_column, method,
     updated = solve_line(row_desc, row, method=method)
 
     new_jobs = []
-    if board.line_solution_rate(updated) > pre_solution_rate:
+
+    # if board.line_solution_rate(updated) > pre_solution_rate:
+    if tuple(row) != updated:
         # LOG.debug('Queue: %s', jobs_queue)
         LOG.debug(row)
         LOG.debug(updated)
@@ -177,10 +179,10 @@ def _solve_with_method(
     if not contradiction_mode:
         board.solution_round_completed()
 
-        rate = board.solution_rate
-        if rate != 1:
-            LOG.warning("The nonogram is not solved full ('%s'). The rate is %.4f",
-                        method, rate)
+        # rate = board.solution_rate
+        # if rate != 1:
+        #     LOG.warning("The nonogram is not solved full ('%s'). The rate is %.4f",
+        #                 method, rate)
         LOG.info('Full solution: %.6f sec', time.time() - start)
         LOG.info('Lines solved: %i', lines_solved)
 
