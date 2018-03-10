@@ -553,7 +553,7 @@ class ColoredBoard(Board):
             raise ValueError("Cannot unset the colors '%s' from cell %s (%s)" %
                              (bad_state, (row_index, column_index), colors))
 
-    def cell_solution_rate(self, cell):
+    def cell_solution_rate(self, cell, full_colors=None):
         """
         How the cell's color set is close
         to the full solution (one color).
@@ -570,32 +570,35 @@ class ColoredBoard(Board):
            rate = (N - 1) / (N - 1) = 1
         """
 
-        if is_list_like(cell):
-            cell_colors = set(cell)
-        else:
-            cell_colors = {cell}
+        # if is_list_like(cell):
+        #     cell_colors = set(cell)
+        # else:
+        #     cell_colors = {cell}
 
-        full_colors = self.colors()
-        cell_colors &= full_colors
+        if full_colors is None:
+            full_colors = self.colors()
 
-        current_size, full_size = len(cell_colors), len(full_colors)
+        cell_colors = set(cell) & full_colors
+        current_size = len(cell_colors)
 
         if current_size == 1:
             return 1
 
         assert current_size > 1
 
+        full_size = len(full_colors)
         rate = full_size - current_size
         normalized_rate = rate / (full_size - 1)
 
-        assert 0 <= normalized_rate <= 1, 'Full: {}, Cell: {}'.format(full_colors, cell_colors)
+        # assert 0 <= normalized_rate <= 1, 'Full: {}, Cell: {}'.format(full_colors, cell_colors)
         return normalized_rate
 
     def line_solution_rate(self, row):
         """
         How many cells in a row are known to be of particular color
         """
-        solved = sum(self.cell_solution_rate(cell) for cell in row)
+        full_colors = self.colors()
+        solved = sum(self.cell_solution_rate(cell, full_colors=full_colors) for cell in row)
         return solved / len(row)
 
     def _clue_colors(self, horizontal):

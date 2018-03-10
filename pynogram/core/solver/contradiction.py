@@ -114,12 +114,6 @@ class Solver(object):
             column_indexes=(column_index,),
             contradiction_mode=True)
 
-        rate = board.solution_rate
-        if rate == 1:
-            self._add_solution()
-
-        return rate
-
     def probe(self, row_index, column_index, assumption, rollback=True, force=False):
         """
         Try to find if the given cell can be in an assumed state.
@@ -157,8 +151,13 @@ class Solver(object):
         save = board.make_snapshot()
 
         try:
-            rate = self._solve_with_guess(row_index, column_index, assumption)
+            self._solve_with_guess(row_index, column_index, assumption)
+
+            if board.is_solved_full:
+                self._add_solution()
+
             if rollback:
+                rate = board.solution_rate
                 board.cells = save
                 return False, rate
 
@@ -553,9 +552,9 @@ class Solver(object):
                         # self._add_search_result(path, False)
                         return False
 
-                    rate = board.solution_rate
+                    # rate = board.solution_rate
                     # self._add_search_result(path, rate)
-                    if rate == 1:
+                    if board.is_solved_full:
                         self._add_solution()
                         LOG.warning(
                             "The only color '%s' for the cell '%s' lead to full solution. "
@@ -594,9 +593,9 @@ class Solver(object):
                         # self._add_search_result(path, False)
                         return False
 
-                    rate = board.solution_rate
+                    # rate = board.solution_rate
                     # self._add_search_result(path, rate)
-                    if rate == 1:
+                    if board.is_solved_full:
                         self._add_solution()
                         LOG.warning(
                             "The negation of color '%s' for the cell '%s' lead to full solution. "
