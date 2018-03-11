@@ -149,6 +149,11 @@ class Board(object):  # pylint: disable=too-many-public-methods
         return cell != UNKNOWN
 
     @classmethod
+    def cell_value_solved(cls, cell):
+        """Whether the given value is a complete solution for a cell"""
+        return cell != UNKNOWN
+
+    @classmethod
     def colors(cls):
         """All the possible states that a cell can be in"""
         return {BOX, SPACE}
@@ -285,13 +290,18 @@ class Board(object):  # pylint: disable=too-many-public-methods
     def __str__(self):
         return '{}({}x{})'.format(self.__class__.__name__, self.height, self.width)
 
+    def is_line_solved(self, row):
+        for cell in row:
+            if not self.cell_value_solved(cell):
+                return False
+        return True
+
     @property
     def is_solved_full(self):
         """Whether no unsolved cells in a board left"""
         for row in self.cells:
-            for cell in row:
-                if self.cell_solution_rate(cell) < 1:
-                    return False
+            if not self.is_line_solved(row):
+                return False
 
         return True
 
@@ -553,6 +563,13 @@ class ColoredBoard(Board):
             raise ValueError("Cannot unset the colors '%s' from cell %s (%s)" %
                              (bad_state, (row_index, column_index), colors))
 
+    def cell_value_solved(self, cell, full_colors=None):
+        if full_colors is None:
+            full_colors = self.colors()
+
+        cell_colors = set(cell) & full_colors
+        return len(cell_colors) == 1
+
     def cell_solution_rate(self, cell, full_colors=None):
         """
         How the cell's color set is close
@@ -592,6 +609,13 @@ class ColoredBoard(Board):
 
         # assert 0 <= normalized_rate <= 1, 'Full: {}, Cell: {}'.format(full_colors, cell_colors)
         return normalized_rate
+
+    def is_line_solved(self, row):
+        full_colors = self.colors()
+        for cell in row:
+            if not self.cell_value_solved(cell, full_colors=full_colors):
+                return False
+        return True
 
     def line_solution_rate(self, row):
         """

@@ -40,9 +40,9 @@ def solve_row(board, index, is_column, method,
         row = board.get_row(index)
         desc = 'row'
 
-    pre_solution_rate = board.line_solution_rate(row)
+    # pre_solution_rate = board.line_solution_rate(row)
 
-    if pre_solution_rate == 1:
+    if board.is_line_solved(row):
         if contradiction_mode:
             assert_match(row_desc, row)
         else:
