@@ -5,7 +5,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import time
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict, defaultdict, deque
 
 from six import iteritems
 from six.moves import range
@@ -467,14 +467,6 @@ class Solver(object):
 
         return True
 
-    @classmethod
-    def _push_state(cls, queue, state, priority):
-        queue[state] = priority
-
-    @classmethod
-    def _get_next_state(cls, queue):
-        return queue.pop_smallest()[0]
-
     def _set_explored(self, path):
         self.explored_paths.add(tuple(sorted(path)))
 
@@ -509,16 +501,14 @@ class Solver(object):
         if depth + 1 > self.depth_reached:
             self.depth_reached = depth + 1
 
-        search_directions = PriorityDict()
-        for state in states:
-            self._push_state(search_directions, state, 1)
+        search_directions = deque(states)
 
         search_counter = 0
         save = board.make_snapshot()
         try:
             while search_directions:
                 total_number_of_directions = len(search_directions)
-                state = self._get_next_state(search_directions)
+                state = search_directions.popleft()
                 search_counter += 1
 
                 if self._limits_reached(depth):
@@ -532,14 +522,14 @@ class Solver(object):
                 cell_colors = board.cell_colors(*cell)
 
                 if assumption not in cell_colors:
-                    LOG.error("The assumption '%s' is already expired. "
-                              "Possible colors for %s are %s",
-                              assumption, cell, cell_colors)
+                    LOG.warning("The assumption '%s' is already expired. "
+                                "Possible colors for %s are %s",
+                                assumption, cell, cell_colors)
                     continue
 
                 if len(cell_colors) == 1:
-                    LOG.error("Only one color for cell '%s' left: %s. Solve it unconditionally",
-                              cell, assumption)
+                    LOG.warning("Only one color for cell '%s' left: %s. Solve it unconditionally",
+                                cell, assumption)
                     assert assumption == tuple(cell_colors)[0]
                     try:
                         self._solve_without_search(every=True)
@@ -619,7 +609,8 @@ class Solver(object):
                     #     return True
 
                     for state in states_to_try:
-                        self._push_state(search_directions, state, 0)
+                        if state not in search_directions:
+                            search_directions.appendleft(state)
 
         finally:
             # do not restore the solved cells on a root path - they are really solved!
