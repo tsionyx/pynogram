@@ -105,10 +105,10 @@ class Solver(object):
                   row_index, column_index, assumption)
 
         if board.is_colored:
-            assumption = [assumption]
+            assumption = (assumption,)
 
         board.cells[row_index][column_index] = assumption
-        line.solve(
+        return line.solve(
             board,
             row_indexes=(row_index,),
             column_indexes=(column_index,),
@@ -134,7 +134,7 @@ class Solver(object):
           which cells has changed on that probe.
           b) if no contradiction found, but `rollback` is False,
           then we do not restore the board and return the previous state also.
-          c) otherwise it contains the solution rate for the partially
+          c) otherwise it contains the number of solved cells for the partially
           solved board (if the assumption made is true)
         """
         board = self.board
@@ -151,15 +151,14 @@ class Solver(object):
         save = board.make_snapshot()
 
         try:
-            self._solve_with_guess(row_index, column_index, assumption)
+            solved_cells = self._solve_with_guess(row_index, column_index, assumption)
 
             if board.is_solved_full:
                 self._add_solution()
 
             if rollback:
-                rate = board.solution_rate
                 board.cells = save
-                return False, rate
+                return False, solved_cells
 
             return False, save
 
@@ -273,6 +272,7 @@ class Solver(object):
         return counter_found, self._probes_from_rates(rates)
 
     def _add_solution(self):
+        # force to check the board
         line.solve(self.board, contradiction_mode=True)
         self.board.add_solution()
 

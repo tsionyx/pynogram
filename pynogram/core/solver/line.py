@@ -26,7 +26,7 @@ def solve_row(board, index, is_column, method,
     If the line gets partially solved,
     put the crossed lines into queue.
 
-    Return the list of new jobs that should be put into queue.
+    Return the number of solved cells and the list of new jobs that should be solved next.
     """
 
     start = time.time()
@@ -43,17 +43,17 @@ def solve_row(board, index, is_column, method,
     # pre_solution_rate = board.line_solution_rate(row)
 
     if board.is_line_solved(row):
+        # do not check solved lines in trusted mode
         if contradiction_mode:
             assert_match(row_desc, row)
-        else:
-            # do not check solved lines in trusted mode
-            return ()
+        return 0, ()
 
     LOG.debug('Solving %s %s: %s. Partial: %s',
               index, desc, row_desc, row)
 
     updated = solve_line(row_desc, row, method=method)
 
+    cells_solved = 0
     new_jobs = []
 
     # if board.line_solution_rate(updated) > pre_solution_rate:
@@ -67,9 +67,11 @@ def solve_row(board, index, is_column, method,
                     if set(pre) == set(post):
                         continue
                     assert len(pre) > len(post)
+                    cells_solved += 1
                 else:
                     assert pre == UNKNOWN
                     assert post in (BOX, SPACE)
+                    cells_solved += 1
 
                 new_jobs.append((not is_column, i))
         # LOG.debug('Queue: %s', jobs_queue)
@@ -81,7 +83,7 @@ def solve_row(board, index, is_column, method,
             board.set_row(index, updated)
 
     LOG.debug('%ss solution: %.6f sec', desc.title(), time.time() - start)
-    return new_jobs
+    return cells_solved, new_jobs
 
 
 def solve(board, parallel=False,
@@ -93,6 +95,8 @@ def solve(board, parallel=False,
     - then with FSM and reverse tracking
 
     All methods use priority queue to store the lines needed to solve.
+
+    Return the total number of solved cells.
     """
 
     if methods is None:
@@ -105,16 +109,20 @@ def solve(board, parallel=False,
     if not isinstance(methods, (tuple, list)):
         methods = [methods]
 
+    total_cells_solved = 0
     for method in methods:
-        jobs = _solve_with_method(
+        cells_solved, jobs = _solve_with_method(
             board, method,
             parallel=parallel,
             row_indexes=row_indexes,
             column_indexes=column_indexes,
             contradiction_mode=contradiction_mode)
 
+        total_cells_solved += cells_solved
         row_indexes = [index for is_column, index in jobs if not is_column]
         column_indexes = [index for is_column, index in jobs if is_column]
+
+    return total_cells_solved
 
 
 def _solve_with_method(
@@ -124,7 +132,7 @@ def _solve_with_method(
     """Solve the nonogram to the most using given method"""
 
     if board.is_solved_full and not contradiction_mode:
-        return ()
+        return 0, ()
 
     lines_solved = 0
 
@@ -164,11 +172,14 @@ def _solve_with_method(
     for column_index in column_indexes:
         _add_job((True, column_index), 0)
 
+    total_cells_solved = 0
+
     while line_jobs:
         (is_column, index), priority = line_jobs.pop_smallest()
-        new_jobs = solve_row(board, index, is_column, method,
-                             contradiction_mode=contradiction_mode)
+        cells_solved, new_jobs = solve_row(board, index, is_column, method,
+                                           contradiction_mode=contradiction_mode)
 
+        total_cells_solved += cells_solved
         for new_job in new_jobs:
             # lower priority = more priority
             _add_job(new_job, priority - 1)
@@ -186,4 +197,4 @@ def _solve_with_method(
         LOG.info('Full solution: %.6f sec', time.time() - start)
         LOG.info('Lines solved: %i', lines_solved)
 
-    return all_jobs
+    return total_cells_solved, all_jobs
