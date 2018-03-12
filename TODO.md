@@ -1,8 +1,7 @@
-- store colors as a set of numbers (for colored), as one of 0, 1, -16(UNKNOWN) for black-and-white.
-Use np.array(dtype=np.int8). Replace `line_solution` in `solve_row` with simple `!=`
+- store colors as a set of numbers (for colored), as one of 0, 1, -16(UNKNOWN) for black-and-white. Use `np.array(dtype=np.int8)`
 
 - check that it always a set, get rid of `is_list_like` as much as possible
-- more abstractions! Make the classes Cell, Clue, State
+- more abstractions! Make the named tuples Cell, Clue, State
 
 - simpson refactoring: use regexp, `assert_match` with it
 - coverage!
@@ -18,18 +17,13 @@ Use np.array(dtype=np.int8). Replace `line_solution` in `solve_row` with simple 
     (add the checks to the queue, refill it on every contradiction found,
     until no more cells found). No need to do 'every=True', just a simple priority queue.
     Also see 16905.
-  - if no contradiction, then save repeated solutions
-    for all the possible choices and extract intersection
-    of that solution
 
 - searching:
   - if too many dead ends found, just lower this path priority and try the next (see 3620):
     - add counter of dead ends for any path. If the path becomes dead_end itself,
     clear the counter for all its children.
-  - do the other colors probes when found rate=1
   - found real contradictions and do not resolve them (see 3073)
   - take into account the color to search for (see 3620, 2498, 3883, 5380)
-  - check that the candidates are selected according to the biggest solution rate
   - check on pbn=16838
 
 - SVG:
