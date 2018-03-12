@@ -20,6 +20,7 @@ Install
 
 You can also install `numpy` for better performance
 (it's not listed in requirements to keep the package lightweight).
+However numpy does not work with PyPy interpreter.
 
 Usage
 -----
@@ -202,7 +203,8 @@ The following sites and articles were used when making this solver:
 
 -----
 
-The software developed and tested on Ubuntu 16.04 LTS using python versions 2.7 and 3.5.
+The software developed and tested on Ubuntu 16.04 LTS using CPython versions 2.7 and 3.5.
+PyPy support is in progress.
 If you have any issues, drop a line to the
 `project site <https://github.com/tsionyx/pynogram/issues>`_.
 

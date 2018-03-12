@@ -1,7 +1,16 @@
-image: python:3.5
+# use the default image as
+# the python images contain too old PyPy version in their repos
+# image: python:3.5
 
 before_script:
-  - python -V        # Print out python version for debugging
+  - apt-get update -qq
+  - apt-get install -y -qq git  # for .fix.sh script
+  - apt-get install -y -qq python python-pip python-dev
+  - apt-get install -y -qq python3 python3-pip python3-dev
+  - apt-get update -qq && apt-get install -y -qq pypy pypy-dev
+  - python -V        # Print out python versions for debugging
+  - python3 -V
+  - pypy -V
 
 test:
   script:
@@ -11,6 +20,8 @@ test:
 run:
   variables:
     NAME: pynogram
+    # https://stackoverflow.com/a/35101311/1177288
+    PYTHONIOENCODING: utf-8
 
   script:
   - python setup.py sdist bdist_wheel --universal

@@ -1,5 +1,7 @@
 six >= 1.10.0
-numpy
+numpy; platform_python_implementation != 'PyPy'
+# numpy's `__copy__` does not work on pypy, so simply skip it
+# git+https://bitbucket.org/pypy/numpy.git; platform_python_implementation == 'PyPy'
 futures; python_version < '3.2'
 tornado
 svgwrite

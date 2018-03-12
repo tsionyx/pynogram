@@ -117,7 +117,7 @@ class TestMaxSafe(object):
 
     @pytest.mark.skipif(sys.version_info >= (3, 4), reason="requires Python<3.4")
     def test_empty_with_default_failed(self):
-        with pytest.raises(TypeError, match='got an unexpected keyword argument'):
+        with pytest.raises(TypeError, match='unexpected keyword argument'):
             self._the_same_as_max([], default=14)
 
     def test_empty_with_default(self):

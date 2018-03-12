@@ -359,7 +359,7 @@ class TransitionTable(list):
             if i > 0:
                 res.append('')
             res.append(i)
-            res.extend(itervalues(states))
+            res.extend(sorted(itervalues(states), key=lambda x: x.state))
             # for state, step in iteritems(states):
             #     res.append('({}): {}'.format(state, step))
 
