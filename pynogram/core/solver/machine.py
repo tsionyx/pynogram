@@ -197,12 +197,12 @@ class NonogramFSM(fsm.FiniteStateMachine):
     @classmethod
     def _types_for_cell(cls, cell):
         if cell in (BOX, SPACE):
-            return [cell]
+            return cell,
 
         if cell == UNKNOWN:
-            return [BOX, SPACE]
+            return BOX, SPACE
 
-        return []
+        return ()
 
     def _make_transition_table(self, row):
         # for each read cell store a list of StepState
@@ -301,6 +301,8 @@ class _StepState(object):  # pylint: disable=too-few-public-methods
     and the list of transitions which led to this state
     """
 
+    __slots__ = ['state', 'previous_states']
+
     def __init__(self, state, prev=None, cell_type=None):
         # self.id = id(self)
         self.state = state
@@ -396,7 +398,7 @@ class NonogramFSMColored(NonogramFSM):
 
     @classmethod
     def _types_for_cell(cls, cell):
-        return list(set(cell))
+        return set(cell)
 
     @classmethod
     def _cell_value_from_solved(cls, states):
