@@ -8,7 +8,7 @@ from __future__ import unicode_literals, print_function, division
 import logging
 import os
 from collections import defaultdict
-from copy import copy, deepcopy
+from copy import copy
 
 from six.moves import zip, range
 
@@ -410,7 +410,9 @@ class Board(object):  # pylint: disable=too-many-public-methods
 
     def make_snapshot(self):
         """Safely save the current state of a board"""
-        return deepcopy(self.cells)
+        # the values of the cells just shallow copied here
+        # do not do deepcopy to prevent too heavy tuple's `deepcopy`
+        return [list(row) for row in self.cells]
 
     def _current_state_in_solutions(self):
         for i, sol in enumerate(self.solutions):
@@ -698,11 +700,6 @@ class ColoredBoard(Board):
             if need_cells > max_size:
                 raise ValueError('Cannot allocate row {} in just {} cells'.format(
                     list(row), max_size))
-
-    def make_snapshot(self):
-        # shallow copy the cells itself
-        # to prevent too heavy tuple's `deepcopy`
-        return [list(row) for row in self.cells]
 
     def char_for_color(self, color_name):
         """
