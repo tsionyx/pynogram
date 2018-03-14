@@ -250,6 +250,10 @@ class NonogramFSM(fsm.FiniteStateMachine):
         # pylint: disable=no-member
         solved_row = self.solutions_cache.get((self.description, row))
         if solved_row is not None:
+            if solved_row is False:
+                raise NonogramError("Failed to solve line '{}' with clues '{}' (cached)".format(
+                    row, self.description))
+
             assert len(solved_row) == len(row)
             return solved_row
 
@@ -257,7 +261,9 @@ class NonogramFSM(fsm.FiniteStateMachine):
 
         # print(transition_table)
         if self.final_state not in transition_table[-1]:
-            raise NonogramError("The row '{}' cannot fit".format(row))
+            self._save_in_cache(row, False)
+            raise NonogramError("Failed to solve line '{}' with clues '{}'".format(
+                row, self.description))
 
         solved_row = []
         for states in reversed(list(

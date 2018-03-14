@@ -55,6 +55,10 @@ class BguSolver(object):
         # pylint: disable=no-member
         solved = cls.solutions_cache.get((clue, line))
         if solved is not None:
+            if solved is False:
+                raise NonogramError("Failed to solve line '{}' with clues '{}' (cached)".format(
+                    line, clue))
+
             assert len(solved) == len(line)
             return solved
 
@@ -67,6 +71,7 @@ class BguSolver(object):
             cls.solutions_cache.save((clue, line), solved)
             return solved
         else:
+            cls.solutions_cache.save((clue, line), False)
             raise NonogramError("Failed to solve line '{}' with clues '{}'".format(line, clue))
 
     def try_solve(self):

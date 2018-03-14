@@ -306,7 +306,7 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
         with pytest.raises(NonogramError) as ie:
             solve_line('1 1', '__.', method='reverse_tracking')
 
-        assert str(ie.value) == "The row '(None, None, False)' cannot fit"
+        assert str(ie.value) == "Failed to solve line '(None, None, False)' with clues '(1, 1)'"
 
     def test_solve_bad_method(self):
         with pytest.raises(AttributeError) as ie:
