@@ -6,16 +6,13 @@ The program's entry point
 
 from __future__ import unicode_literals, print_function
 
-import codecs
 import json
 import logging
-import sys
 from argparse import ArgumentParser
-
-from six import PY2
 
 from pynogram.__version__ import __version__
 from pynogram.core.board import make_board
+from pynogram.core.common import BOX
 from pynogram.core.solver.contradiction import Solver
 from pynogram.reader import read_example, Pbn, PbnLocal
 from pynogram.renderer import BaseAsciiRenderer
@@ -51,11 +48,12 @@ def cli_args():
     return parser.parse_args()
 
 
-def draw_solution(board_def, every_round=True, **solver_args):
+def draw_solution(board_def, every_round=True, box_symbol=None, **solver_args):
     """Solve the given board in terminal with animation"""
 
     d_board = make_board(*board_def, renderer=BaseAsciiRenderer)
-    d_board.renderer.icons.update({True: '\u2B1B'})
+    if box_symbol is not None:
+        d_board.renderer.icons.update({BOX: box_symbol})
     if every_round:
         d_board.on_solution_round_complete = lambda board: board.draw()
 
@@ -113,9 +111,6 @@ def _setup_logs(
 
 def main():
     """Main function for setuptools console_scripts"""
-    if PY2:
-        sys.stdout = codecs.getwriter('utf8')(sys.stdout)
-
     args = cli_args()
     if args.version:
         print(__version__)
@@ -131,6 +126,7 @@ def main():
         board_def = read_example(args.board)
 
     draw_solution(board_def,
+                  box_symbol='\u2B1B',
                   every_round=not args.draw_final,
                   max_solutions=args.max_solutions,
                   timeout=args.timeout,

@@ -5,15 +5,17 @@ Defines various renderers for the game of nonogram
 
 from __future__ import unicode_literals, print_function, division
 
+import codecs
 import logging
 import os
 import re
-import sys
+from sys import stdout
 
 from six import (
     integer_types, text_type, string_types,
     iteritems,
     itervalues,
+    PY2,
 )
 
 from pynogram.core.board import Renderer
@@ -28,6 +30,11 @@ if _LOG_NAME == '__main__':  # pragma: no cover
     _LOG_NAME = os.path.basename(__file__)
 
 LOG = logging.getLogger(_LOG_NAME)
+
+# prevent "UnicodeEncodeError: 'ascii' codec can't encode character ..."
+# when redirecting output
+if PY2:
+    stdout = codecs.getwriter('utf8')(stdout)
 
 
 class Cell(object):  # pylint: disable=too-few-public-methods
@@ -138,7 +145,7 @@ class StreamRenderer(Renderer):
         SPACE: '.',
     }
 
-    def __init__(self, board=None, stream=sys.stdout, icons=None):
+    def __init__(self, board=None, stream=stdout, icons=None):
         self.stream = stream
         if icons is None:
             icons = dict(self.DEFAULT_ICONS)
@@ -235,7 +242,7 @@ class AsciiRenderer(BaseAsciiRenderer):
 
     __rend_name__ = 'text-grid'
 
-    def __init__(self, board=None, stream=sys.stdout):
+    def __init__(self, board=None, stream=stdout):
         super(AsciiRenderer, self).__init__(board, stream=stream)
         self.icons.update({
             UNKNOWN: ' ',
@@ -404,7 +411,7 @@ class SvgRenderer(StreamRenderer):
         """The size of the descriptions text"""
         return self.cell_size * 0.6
 
-    def __init__(self, board=None, stream=sys.stdout, size=DEFAULT_CELL_SIZE_IN_PIXELS):
+    def __init__(self, board=None, stream=stdout, size=DEFAULT_CELL_SIZE_IN_PIXELS):
         super(SvgRenderer, self).__init__(board, stream)
 
         # decrease startup time when do not need this renderer
