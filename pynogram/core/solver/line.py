@@ -10,17 +10,14 @@ from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
 )
-from pynogram.core.solver.base import (
-    assert_match, solve_line,
-)
+from pynogram.core.solver.base import solve_line
 from pynogram.utils.priority_dict import PriorityDict
 
 LOG = logging.getLogger(__name__)
 
 
 # pylint: disable=too-many-arguments, too-many-locals, too-many-branches
-def solve_row(board, index, is_column, method,
-              contradiction_mode=False):
+def solve_row(board, index, is_column, method):
     """
     Solve a line with the solving `method`.
     If the line gets partially solved,
@@ -42,11 +39,11 @@ def solve_row(board, index, is_column, method,
 
     # pre_solution_rate = board.line_solution_rate(row)
 
-    if board.is_line_solved(row):
-        # do not check solved lines in trusted mode
-        if contradiction_mode:
-            assert_match(row_desc, row)
-        return 0, ()
+    # if board.is_line_solved(row):
+    #     # do not check solved lines in trusted mode
+    #     if contradiction_mode:
+    #         assert_match(row_desc, row)
+    #     return 0, ()
 
     LOG.debug('Solving %s %s: %s. Partial: %s',
               index, desc, row_desc, row)
@@ -182,8 +179,7 @@ def _solve_with_method(
 
     while line_jobs:
         (is_column, index), priority = line_jobs.pop_smallest()
-        cells_solved, new_jobs = solve_row(board, index, is_column, method,
-                                           contradiction_mode=contradiction_mode)
+        cells_solved, new_jobs = solve_row(board, index, is_column, method)
 
         total_cells_solved += cells_solved
         for new_job in new_jobs:
