@@ -131,8 +131,14 @@ def _solve_with_method(
         contradiction_mode=False):
     """Solve the nonogram to the most using given method"""
 
-    if board.is_solved_full and not contradiction_mode:
-        return 0, ()
+    # `is_solved_full` is cost, so minimize calls to it.
+    # Do not call if only a handful of lines has to be solved
+    if row_indexes is None or column_indexes is None or \
+            len(row_indexes) > 2 or len(column_indexes) > 2:
+
+        # do not call if contradiction_mode == False
+        if not contradiction_mode and board.is_solved_full:
+            return 0, ()
 
     lines_solved = 0
 
