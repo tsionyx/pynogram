@@ -326,7 +326,7 @@ class Solver(object):
 
         return probe_jobs
 
-    def _solve_without_search(self, every=False):
+    def _solve_without_search(self, every=True):
         """
         Do the one round of solving with contradictions.
         Returns the number of contradictions found.
@@ -532,7 +532,7 @@ class Solver(object):
                                 cell, assumption)
                     assert assumption == tuple(cell_colors)[0]
                     try:
-                        self._solve_without_search(every=True)
+                        self._solve_without_search()
                     except NonogramError:
                         # the whole `path` branch of a search tree is a dead end
                         LOG.error(
@@ -573,7 +573,7 @@ class Solver(object):
                 if not success:
                     try:
                         board.unset_state(assumption, *cell)
-                        self._solve_without_search(every=True)
+                        self._solve_without_search()
                     except ValueError:
                         # the whole `path` branch of a search tree is a dead end
                         LOG.error(

@@ -6,6 +6,8 @@ from __future__ import unicode_literals, print_function
 import logging
 import time
 
+from six.moves import zip
+
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
