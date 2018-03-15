@@ -416,13 +416,16 @@ class Board(object):  # pylint: disable=too-many-public-methods
 
     def _current_state_in_solutions(self):
         for i, sol in enumerate(self.solutions):
-            diff = list(self.diff(sol, self.cells, have_deletions=True))
-            if diff:
-                LOG.info('The solution differs from %d-th one: %s cells',
-                         i, len(diff))
-            else:
+            diff = next(self.diff(sol, self.cells, have_deletions=True), None)
+            if diff is None:
                 LOG.info('The solution is the same as the %d-th', i)
+                if i > 2:
+                    # faster to find repeated solutions that appear lately
+                    LOG.debug('Move found solution to the beginning of the list')
+                    self.solutions.insert(0, self.solutions.pop(i))
                 return True
+            else:
+                LOG.info('The solution differs from %d-th one: first differ cell: %s', i, diff)
 
         return False
 
