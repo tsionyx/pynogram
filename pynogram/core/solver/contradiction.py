@@ -503,6 +503,7 @@ class Solver(object):
 
         search_directions = deque(states)
 
+        unconditional = False
         search_counter = 0
         save = board.make_snapshot()
         try:
@@ -531,8 +532,14 @@ class Solver(object):
                     LOG.warning("Only one color for cell '%s' left: %s. Solve it unconditionally",
                                 cell, assumption)
                     assert assumption == tuple(cell_colors)[0]
+                    if unconditional:
+                        LOG.warning(
+                            "The board does not change since the last unconditional solving, skip.")
+                        continue
+
                     try:
                         self._solve_without_search()
+                        unconditional = True
                     except NonogramError:
                         # the whole `path` branch of a search tree is a dead end
                         LOG.error(
@@ -557,6 +564,7 @@ class Solver(object):
                     LOG.info('The path %s already explored', full_path)
                     continue
 
+                unconditional = False
                 rate = board.solution_rate
                 guess_save = board.make_snapshot()
                 try:
@@ -565,15 +573,19 @@ class Solver(object):
                                 state, depth, rate, path)
                     self._add_search_result(path, rate)
                     success = self._try_state(state, path)
-                    is_solved = board.is_solved_full
+                    # is_solved = board.is_solved_full
                 finally:
                     board.cells = guess_save
                     self._set_explored(full_path)
 
                 if not success:
                     try:
+                        LOG.warning(
+                            "Unset the color %s for cell '%s'. Solve it unconditionally",
+                            assumption, cell)
                         board.unset_state(assumption, *cell)
                         self._solve_without_search()
+                        unconditional = True
                     except ValueError:
                         # the whole `path` branch of a search tree is a dead end
                         LOG.error(
@@ -592,7 +604,7 @@ class Solver(object):
                             "No need to traverse the path %s anymore", assumption, cell, path)
                         return True
 
-                if not success or is_solved:
+                if not success or board.is_solved_full:
                     # immediately try the other colors as well
                     # if all of them goes to the dead end,
                     # then the parent path is a dead end
