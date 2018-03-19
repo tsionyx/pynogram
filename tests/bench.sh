@@ -6,8 +6,12 @@ mkdir -p solutions
 
 echo "Start at $(date)"
 for i in $@; do
-    echo "Solving PBN's puzzle #$i (http://webpbn.com/$i) ..."
-    /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final -v --timeout=1800 --max-solutions=2 2>&1 1>solutions/${i}
+    if wget -qO- "http://webpbn.com/XMLpuz.cgi?id=$i" | head -1 | grep -q '<?xml'; then
+        echo "Solving PBN's puzzle #$i (http://webpbn.com/$i) ..."
+        /usr/bin/time -f 'Total: %U' python -m pynogram --pbn ${i} --draw-final -v --timeout=3600 --max-solutions=2 2>&1 1>solutions/${i}
+    else
+        echo "Failed to get puzzle #$i" >&2
+    fi
     echo
 done
 
