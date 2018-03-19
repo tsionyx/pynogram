@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-# nohup bash tests/bench.sh {1..23000} 2>&1 >> bench.log & tail -f bench.log
+# nohup bash tests/bench.sh {1..35000} 2>&1 >> bench.log & tail -f bench.log
 
 mkdir -p solutions
 

@@ -85,10 +85,10 @@ done
 
 
 
-## Long-solved board (more than 5 minutes, the first 23000 of webpbn's puzzles):
+## Long-solved board (more than 5 minutes, the first 35000 of webpbn's puzzles):
 
 ```
-$ bash tests/bench.sh {1..23000} 2>&1 >> bench.log &
+$ bash tests/bench.sh {1..35000} 2>&1 >> bench.log &
 # and wait for several hours...
 
 $ while read t
@@ -133,6 +133,10 @@ $ while read t
 | **22336** | 42.68             | >3600     | 0               | 6
 | 22792     | 100               | 2         | 1               | 0
 | 22949     | 100               | 11        | 1               | 0
+| 29433     | 92.65             | >3600     | 0               | 15
+| 30509     | 0                 | 893       | 2               | 97
+| 30532     | 21.44 -> 38.72    | 335       | 2               | 28
+| 30654     | 0                 | >3600     | 0               | 157/400 (hard limit)
 |
 | -- colored:
 | 510       | 83.76             | 26        | 2               | 6
@@ -206,6 +210,10 @@ $ while read t
 | 22169     | 86.06             | 57        | 2,4             | 31
 | 22284     | 89.82 -> 90.61    | 50        | 2               | 5
 | 22569     | 98.64 -> 100      | 7         | 1               | 2
+| 25158     | 85.70 -> 85.81    | >3600     | 0               | 8
+| 29436     | 84.40 -> 84.41    | >3600     | 0               | 8
+| 29826     | 86.72 -> 86.80    | 561       | 2               | 16
+| 30640     | 96.79             | >3600     | 0               | 9
 
 
 **Bold** puzzles are from http://webpbn.com/survey/ (_italic_ puzzles are mentioned there too).
