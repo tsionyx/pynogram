@@ -11,13 +11,6 @@
   - check for " (replace with ')
 - tornado: respond asynchronously (not in the main solving process)
 
-- contradictions:
-  - do not do full cells scan on the last contradiction round:
-    only the cells that was checked before the last found contradiction
-    (add the checks to the queue, refill it on every contradiction found,
-    until no more cells found). No need to do 'every=True', just a simple priority queue.
-    Also see 16905.
-
 - searching:
   - if too many dead ends found, just lower this path priority and try the next (see 3620):
     - add counter of dead ends for any path. If the path becomes dead_end itself,

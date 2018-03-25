@@ -6,6 +6,7 @@ from __future__ import unicode_literals, print_function
 import logging
 import time
 from collections import OrderedDict, defaultdict, deque
+from itertools import product
 
 from six import iteritems
 from six.moves import range
@@ -219,28 +220,34 @@ class Solver(object):
             return ()
 
         if board.is_solved_full:
+            self._add_solution()
             return ()
 
         return self._new_jobs_from_solution(state, prev_state, is_contradiction)
 
-    def _solve_jobs(self, jobs):
+    def _solve_jobs(self, jobs, refill=False):
         """
         Given a board and a list of jobs try to solve that board
         using the jobs as probes.
+        If `refill` specified, solve in several rounds,
+        until all the contradictions disappear.
 
-        Return the number of contradictions found and the
-        best candidate for the tree-base search
+        Return the number of contradictions found and
+        list of the best candidates for the tree-based search
         """
 
-        counter_total, counter_found = 0, 0
+        counter, counter_found = 0, 0
         rates = dict()
 
         board = self.board
 
+        processed_after_refill = set()
+        processed_before_last_contradiction = set()
+
         while jobs:
             job, priority = jobs.pop_smallest()
-            counter_total += 1
-            LOG.info('Probe #%d: %s (%f)', counter_total, job, priority)
+            counter += 1
+            LOG.info('Probe #%d: %s (%f)', counter, job, priority)
 
             # if the job is only coordinates
             # then try all the possible colors
@@ -266,8 +273,30 @@ class Solver(object):
                     for new_job, priority in self._new_jobs_from_solution(
                             (i, j, assumption), info, is_contradiction):
                         jobs[new_job] = priority
+
+                    # save all the jobs that already processed
+                    processed_before_last_contradiction = set(processed_after_refill)
                 else:
                     rates[(i, j, assumption)] = (info, priority)
+
+            if not refill:
+                continue
+
+            # we have work to do!
+            if jobs:
+                processed_after_refill.add((i, j))
+            elif processed_before_last_contradiction:
+                LOG.warning('No more jobs. Refill all the jobs processed before '
+                            'the last found contradiction (%s)',
+                            len(processed_before_last_contradiction))
+                refill_processed = self._get_all_unsolved_jobs(
+                    choose_from_cells=processed_before_last_contradiction)
+                for new_job, priority in iteritems(refill_processed):
+                    jobs[new_job] = priority
+
+                processed_after_refill -= processed_before_last_contradiction
+                processed_before_last_contradiction = set()
+                counter = 0
 
         return counter_found, self._probes_from_rates(rates)
 
@@ -306,27 +335,30 @@ class Solver(object):
 
         return tuple(jobs)
 
-    def _get_all_unsolved_jobs(self, skip_low_rated=False):
+    def _get_all_unsolved_jobs(self, choose_from_cells=None):
         board = self.board
 
+        if choose_from_cells is None:
+            # add every cell
+            choose_from_cells = product(range(board.height), range(board.width))
+
         probe_jobs = PriorityDict()
-        # add every cell
-        for i in range(board.height):
-            for j in range(board.width):
-                if board.cell_solved(i, j):
-                    continue
 
-                no_unsolved = len(list(board.unsolved_neighbours(i, j)))
+        for (i, j) in choose_from_cells:
+            if board.cell_solved(i, j):
+                continue
 
-                if no_unsolved >= 4 and skip_low_rated:
-                    continue
+            no_unsolved = len(list(board.unsolved_neighbours(i, j)))
 
-                cell_rate = board.row_solution_rate(i) + board.column_solution_rate(j)
-                probe_jobs[(i, j)] = 4 - cell_rate + no_unsolved
+            # if no_unsolved >= 4 and skip_low_rated:
+            #     continue
+
+            cell_rate = board.row_solution_rate(i) + board.column_solution_rate(j)
+            probe_jobs[(i, j)] = 4 - cell_rate + no_unsolved
 
         return probe_jobs
 
-    def _solve_without_search(self, every=True):
+    def _solve_without_search(self, to_the_max=False):
         """
         Do the one round of solving with contradictions.
         Returns the number of contradictions found.
@@ -334,8 +366,8 @@ class Solver(object):
         Based on https://www.cs.bgu.ac.il/~benr/nonograms/
         """
 
-        probe_jobs = self._get_all_unsolved_jobs(skip_low_rated=not every)
-        return self._solve_jobs(probe_jobs)
+        probe_jobs = self._get_all_unsolved_jobs()
+        return self._solve_jobs(probe_jobs, refill=to_the_max)
 
     def solve(self):
         """
@@ -353,28 +385,10 @@ class Solver(object):
         LOG.warning('Trying to solve using contradictions method')
         start = time.time()
 
-        round_number = 1
-
-        while True:
-            # at first, take only high rated cells into account
-            if round_number == 1:
-                every = False
-            else:
-                # then, solve every cell that is left
-                every = True
-
-            found_contradictions, best_candidates = self._solve_without_search(every=every)
-            current_solution_rate = board.solution_rate
-            LOG.warning('Contradictions (%d): (found %d): %f',
-                        round_number, found_contradictions, current_solution_rate)
-
-            if found_contradictions == 0:
-                break
-
-            if current_solution_rate == 1:
-                break
-
-            round_number += 1
+        found_contradictions, best_candidates = self._solve_without_search(to_the_max=True)
+        current_solution_rate = board.solution_rate
+        LOG.warning('Contradictions (found %d): %f',
+                    found_contradictions, current_solution_rate)
 
         if current_solution_rate < 1:
             # if stalled with sophisticated selection of cells
