@@ -4,6 +4,7 @@ from __future__ import unicode_literals, print_function
 
 import time
 
+from pynogram.core.solver.common import TwoLayerCache
 from pynogram.utils.cache import Cache, ExpirableCache
 
 
@@ -94,3 +95,20 @@ class TestCache(object):
 
         # do not increase after 15
         assert c.max_size == 15
+
+    def test_nonogram_cache(self):
+        c = TwoLayerCache(5)
+        c.save(('foo', 'bar'), 1)
+        c.save(('foo', 'baz'), 2)
+
+        assert len(c) == 2
+        # noinspection PyProtectedMember
+        assert list(c._storage) == ['foo']
+
+        assert c.get(('foo', 'baz')) == 2
+        assert c.delete(('foo', 'baz')) is True
+        assert c.get(('foo', 'baz')) is None
+
+        assert len(c) == 1
+        # noinspection PyProtectedMember
+        assert list(c._storage) == ['foo']
