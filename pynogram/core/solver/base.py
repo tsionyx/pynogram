@@ -47,17 +47,17 @@ def _solver(name):
     raise AttributeError("Cannot find solving method '%s'" % name)
 
 
-def solve_line(*args, **kwargs):
+def solve_line(desc, line, method='reverse_tracking'):
     """
     Utility for row solving that can be used in multiprocessing map
     """
-    method = kwargs.pop('method', 'reverse_tracking')
-
-    if len(args) == 1:
-        # mp's map supports only one iterable, so this weird syntax
-        args = args[0]
-
-    desc, line = args
+    # method = kwargs.pop('method', 'reverse_tracking')
+    #
+    # if len(args) == 1:
+    #     # mp's map supports only one iterable, so this weird syntax
+    #     args = args[0]
+    #
+    # desc, line = args
 
     desc = normalize_description(desc)
     # desc = tuple(desc)

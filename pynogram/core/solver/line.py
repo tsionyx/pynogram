@@ -58,8 +58,8 @@ def solve_row(board, index, is_column, method):
     # if board.line_solution_rate(updated) > pre_solution_rate:
     if tuple(row) != updated:
         # LOG.debug('Queue: %s', jobs_queue)
-        LOG.debug(row)
-        LOG.debug(updated)
+        # LOG.debug(row)
+        # LOG.debug(updated)
         for i, (pre, post) in enumerate(zip(row, updated)):
             if pre != post:
                 if is_list_like(post):  # colored
@@ -74,14 +74,14 @@ def solve_row(board, index, is_column, method):
 
                 new_jobs.append((not is_column, i))
         # LOG.debug('Queue: %s', jobs_queue)
-        LOG.debug('New info on %s %s: %s', desc, index, [job_index for _, job_index in new_jobs])
+        # LOG.debug('New info on %s %s: %s', desc, index, [job_index for _, job_index in new_jobs])
 
         if is_column:
             board.set_column(index, updated)
         else:
             board.set_row(index, updated)
 
-    LOG.debug('%ss solution: %.6f sec', desc.title(), time.time() - start)
+    LOG.debug('%ss solution: %.6f sec', desc, time.time() - start)
     return cells_solved, new_jobs
 
 
