@@ -2,6 +2,22 @@
 
 - check that it always a set, get rid of `is_list_like` as much as possible
 - more abstractions! Make the named tuples Cell, Clue, State
+- implement 'bgu' for colored
+
+- profile and improve bottlenecks:
+
+```bash
+$ time python -m cProfile -o 2556.pypy.prof pynogram/__main__.py --pbn 2556 --draw-final
+```
+
+```
+import pstats
+
+p = pstats.Stats('9892.pypy.prof')
+p_c = pstats.Stats('16838.pypy.prof')
+p.sort_stats('time').print_stats(20)
+p_c.sort_stats('cumtime').print_stats(20)
+```
 
 - simpson refactoring: use regexp, `assert_match` with it
 - coverage!
@@ -9,15 +25,19 @@
 - clean:
   - check docstrings
   - check for " (replace with ')
-- tornado: respond asynchronously (not in the main solving process)
+- tornado: respond asynchronously (not in the main solving thread)
 
 - searching:
+  - refactor according to https://en.wikipedia.org/wiki/Backtracking and https://en.wikipedia.org/wiki/Look-ahead_(backtracking)
   - if too many dead ends found, just lower this path priority and try the next (see 3620):
     - add counter of dead ends for any path. If the path becomes dead_end itself,
     clear the counter for all its children.
-  - found real contradictions and do not resolve them (see 3073)
+  - re-evaluate the order of candidates after every found dead candidate and applying the partial solution
+  - if for path P the pair (cell X, color C) leads to contradiction and all the other colors for X are explored fully (not stopped because of some limits but really fully explored!), then the P can be considered fully explored too (see 8098).
   - take into account the color to search for (see 3620, 2498, 3883, 5380)
-  - check on pbn=16838
+
+- profile memory usage
+
 
 - SVG:
   - fill=white
@@ -31,27 +51,9 @@
 - tests for Web UI
 - load board from file
 - load clues from solved board (check for complexity)
-- add heuristics:
-  - use multiprocessing?
 
 - solve blotted:
   19440, 19629, 19686, 19887, 20742, 20758, 20796, 21151, 21339, 22035, 22385, 22591
-
-- profile and improve bottlenecks:
-
-```bash
-$ time python -m cProfile -o hot.prof pynogram/__main__.py --pbn 2040 --draw-final
-```
-
-```
-import pstats
-
-p = pstats.Stats('hot.prof')
-p.sort_stats('cumtime').print_stats('solver', 20)
-p.sort_stats('ncalls').print_stats('solver', 20)
-p.sort_stats('time').print_stats(50)
-```
-
 - export to PBM, SVG (cli-options)
 - crypto? (easy in one direction, hard in the other)
 - import from different formats
