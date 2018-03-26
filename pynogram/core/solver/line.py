@@ -32,11 +32,11 @@ def solve_row(board, index, is_column, method):
 
     if is_column:
         row_desc = board.columns_descriptions[index]
-        row = board.get_column(index)
+        row = board.get_column(index, _copy=True)
         desc = 'column'
     else:
         row_desc = board.rows_descriptions[index]
-        row = board.get_row(index)
+        row = board.get_row(index, _copy=True)
         desc = 'row'
 
     # pre_solution_rate = board.line_solution_rate(row)
@@ -56,7 +56,7 @@ def solve_row(board, index, is_column, method):
     new_jobs = []
 
     # if board.line_solution_rate(updated) > pre_solution_rate:
-    if tuple(row) != updated:
+    if row != updated:
         # LOG.debug('Queue: %s', jobs_queue)
         # LOG.debug(row)
         # LOG.debug(updated)

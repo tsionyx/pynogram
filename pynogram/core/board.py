@@ -184,13 +184,22 @@ class Board(object):  # pylint: disable=too-many-public-methods
             raise ValueError('Cannot unset already set cell %s' % ([row_index, column_index]))
         self.cells[row_index][column_index] = invert(bad_state)
 
-    def get_row(self, index):
+    def get_row(self, index, _copy=False):
         """Get the board's row at given index"""
-        return self.cells[index]
+        res = self.cells[index]
+        if _copy:
+            return tuple(res)
 
-    def get_column(self, index):
+        return res
+
+    def get_column(self, index, _copy=False):
         """Get the board's column at given index"""
-        return tuple(row[index] for row in self.cells)
+
+        res = [row[index] for row in self.cells]
+        if _copy:
+            return tuple(res)
+
+        return res
 
     def set_row(self, index, value):
         """Set the board's row at given index with given value"""
@@ -479,9 +488,13 @@ class NumpyBoard(Board):
         super(NumpyBoard, self).__init__(columns, rows, **renderer_params)
         self.cells = np.array(self.cells)
 
-    def get_column(self, index):
+    def get_column(self, index, _copy=False):
         # self.cells.transpose([1, 0, 2])[index]
-        return self.cells.T[index]
+        res = self.cells.T[index]
+        if _copy:
+            return tuple(res)
+
+        return res
 
     def set_column(self, index, value):
         """Set the board's column at given index with given value"""

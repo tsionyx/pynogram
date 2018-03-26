@@ -114,7 +114,7 @@ def normalize_row(row):
 
     alphabet = set(row)
     if alphabet.issubset(FORMAL_ALPHABET):
-        return tuple(row)
+        return row
 
     LOG.debug('All row symbols: %s', alphabet)
     # save original for logs and debug
