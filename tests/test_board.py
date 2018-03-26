@@ -333,6 +333,63 @@ class TestContradictions(object):
 
         assert board.is_finished
 
+    @pytest.fixture
+    def stream(self):
+        return StringIO()
+
+    def test_depth_search_colored(self, stream):
+        renderer = BaseAsciiRenderer(stream=stream)
+        board = make_board(*Pbn.read(5260), renderer=renderer)
+
+        line_solver.solve(board)
+        assert board.solution_rate == 0.9375
+        assert len(board.solutions) == 0
+
+        Solver(board, max_solutions=2, timeout=600).solve()
+        assert board.solution_rate == 0.9375
+        assert len(board.solutions) == 2
+
+        assert board.is_finished
+
+        board.draw_solutions()
+        example_solution = [
+            '# # # # # #                   1 1                  ',
+            '# # # # # #                   1 1                  ',
+            '# # # # # #     1   1         1 1         1   1    ',
+            '# # # # # #   1 1 1 1         1 1         1 1 1 1  ',
+            '# # # # # #   6 1 2 1 2   1 2 1 1 2 1   2 1 2 1 6  ',
+            '# # # # # # 1 1 1 1 1 2 0 1 2 1 1 2 1 0 2 1 1 1 1 1',
+            '          1 X . . . . . . . . . . . . . . . . . . .',
+            '      1 6 1 . X . . . . . % % % % % % . . . . . X .',
+            '    1 1 1 1 . . X . . . . . % . . % . . . X . . . .',
+            '      1 2 1 . . . . X . . . . % % . . . . . X . . .',
+            '    1 1 1 1 . . . X . @ . . . . . . . . @ . . X . .',
+            '        2 2 . . . . @ @ . . . . . . . . @ @ . . . .',
+            '          0 . . . . . . . . . . . . . . . . . . . .',
+            '        1 1 . % . . . . . . . . . . . . . . . . % .',
+            '        2 2 . % % . . . . . . . . . . . . . . % % .',
+            '1 1 1 1 1 1 . % . % . . . . . * % . . . . . % . % .',
+            '1 1 1 1 1 1 . % . % . . . . . X * . . . . . % . % .',
+            '        2 2 . % % . . . . . . . . . . . . . . % % .',
+            '        1 1 . % . . . . . . . . . . . . . . . . % .',
+            '          0 . . . . . . . . . . . . . . . . . . . .',
+            '        2 2 . . . . @ @ . . . . . . . . @ @ . . . .',
+            '    1 1 1 1 . X . . . @ . . . . . . . . @ . . X . .',
+            '      1 2 1 . . X . . . . . . % % . . . . . X . . .',
+            '    1 1 1 1 . . . . X . . . % . . % . . . . . . X .',
+            '      1 6 1 . . . X . . . % % % % % % . . X . . . .',
+            '          1 . . . . . . . . . . . . . . . . . . . X',
+        ]
+
+        actual_drawing = stream.getvalue().rstrip().split('\n')
+        sol1, sol2 = actual_drawing[:26], actual_drawing[26:]
+
+        # header
+        assert sol1[:6] == sol2[:6] == example_solution[:6]
+
+        # central
+        assert sol1[11:21] == sol2[11:21] == example_solution[11:21]
+
 
 def color_board_def():
     columns = [['1r', (1, 'b')]] * 3
