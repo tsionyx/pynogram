@@ -20,10 +20,7 @@ class Cache(object):
     """
     Presents the simple dictionary
     with size limit and hit counter.
-    Also limited support for expiration is available.
     """
-
-    # TODO: make thread to expire objects
 
     def __init__(self, max_size=10 ** 5, increase=False, do_not_increase_after=10 ** 6):
         """
@@ -45,38 +42,41 @@ class Cache(object):
         self.increase = increase
         self.do_not_increase_after = do_not_increase_after
 
-    def save(self, name, value, _time=None):
-        """
-        Write the value to cache.
-        Optionally you can specify an expiration timeout.
-        """
-        if len(self._storage) >= self.max_size:
+    def __len__(self):
+        return len(self._storage)
+
+    def _clear(self):
+        self._storage.clear()
+
+    def save(self, name, value, **kwargs):
+        """Write the value to cache."""
+
+        if len(self) >= self.max_size:
             LOG.warning('Maximum size for cache reached (%s).', self.max_size)
 
-            self._storage.clear()
+            self._clear()
             self._increase_size()
 
-        self._storage[name] = (time(), _time, value)
+        self._save(name, value, **kwargs)
+
+    # noinspection PyUnusedLocal
+    def _save(self, name, value, **kwargs):
+        self._storage[name] = value
 
     def get(self, name):
-        """
-        Gets the value from a cache.
+        """Get the value from a cache"""
 
-        Expire the key if its time is over.
-        """
         self.total_queries += 1
-        item = self._storage.get(name)
+        value = self._get(name)
 
-        if item is None:
+        if value is None:
             return None
         else:
             self.hits += 1
-            start, _time, value = item
-            # expires
-            if _time is not None and time() - start > _time:
-                self.delete(name)
-
             return value
+
+    def _get(self, name):
+        return self._storage.get(name)
 
     def _increase_size(self):
         if self.max_size >= self.do_not_increase_after:
@@ -99,3 +99,31 @@ class Cache(object):
             return 0
 
         return float(self.hits) / self.total_queries
+
+
+# noinspection SpellCheckingInspection
+# https://english.stackexchange.com/a/312087
+class ExpirableCache(Cache):
+    """
+    The cache with limited support for expiration.
+    """
+
+    # TODO: make thread to expire objects
+
+    def _save(self, name, value, **kwargs):
+        """Optionally you can specify an expiration timeout"""
+        _time = kwargs.get('time')
+        self._storage[name] = (time(), _time, value)
+
+    def _get(self, name):
+        item = self._storage.get(name)
+
+        if item is None:
+            return None
+
+        start, _time, value = item
+        # expires
+        if _time is not None and time() - start > _time:
+            self.delete(name)
+
+        return value

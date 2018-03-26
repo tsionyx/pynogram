@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function
 
 import time
 
-from pynogram.utils.cache import Cache
+from pynogram.utils.cache import Cache, ExpirableCache
 
 
 class TestCache(object):
@@ -18,7 +18,7 @@ class TestCache(object):
         assert c.get('unknown') is None
 
     def test_capacity(self):
-        c = Cache(10)
+        c = Cache(10, increase=True)
         c.save('foo', 42)
 
         for i in range(10):
@@ -26,12 +26,17 @@ class TestCache(object):
             c.save(i, i)
 
         assert c.get('foo') is None
+        assert c.max_size == 20
 
     def test_expiration(self):
-        c = Cache(10)
-        c.save('foo', 42, 0.000001)
+        c = ExpirableCache(10)
+        c.save('foo', 42, time=0.000001)
+        c.save('bar', 28, time=60)
 
         time.sleep(0.01)
+        assert c.get('bar') == 28
+        assert c.get('bar') == 28
+
         assert c.get('foo') == 42
         assert c.get('foo') is None
 
@@ -53,3 +58,39 @@ class TestCache(object):
         c.get('foo')
         assert c.get('foo') == 42
         assert c.hit_rate == 0.6
+
+    def test_bad_increase_multiplier(self):
+        c = Cache(10, increase=1)
+
+        # for the first iteration to succeed
+        c.save('first', 0)
+
+        # 5 times all the same: the max_size does not increase and remains 10
+        for _ in range(5):
+            c.save('foo', 42)
+
+            for i in range(9):
+                assert c.get('foo') == 42
+                c.save(i, i)
+
+            assert c.get('foo') is None
+
+    def test_do_not_increase(self):
+        c = Cache(10, increase=True, do_not_increase_after=15)
+
+        c.save('foo', 42)
+        for i in range(10):
+            assert c.get('foo') == 42
+            c.save(i, i)
+        assert c.get('foo') is None
+
+        assert c.max_size == 15
+
+        c.save('foo', 42)
+        for i in range(15):
+            assert c.get('foo') == 42
+            c.save(i, i)
+        assert c.get('foo') is None
+
+        # do not increase after 15
+        assert c.max_size == 15
