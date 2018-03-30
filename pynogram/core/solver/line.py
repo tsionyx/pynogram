@@ -28,16 +28,16 @@ def solve_row(board, index, is_column, method):
     Return the number of solved cells and the list of new jobs that should be solved next.
     """
 
-    start = time.time()
+    # start = time.time()
 
     if is_column:
         row_desc = board.columns_descriptions[index]
         row = board.get_column(index, _copy=True)
-        desc = 'column'
+        # desc = 'column'
     else:
         row_desc = board.rows_descriptions[index]
         row = board.get_row(index, _copy=True)
-        desc = 'row'
+        # desc = 'row'
 
     # pre_solution_rate = board.line_solution_rate(row)
 
@@ -47,8 +47,7 @@ def solve_row(board, index, is_column, method):
     #         assert_match(row_desc, row)
     #     return 0, ()
 
-    LOG.debug('Solving %s %s: %s. Partial: %s',
-              index, desc, row_desc, row)
+    # LOG.debug('Solving %s %s: %s. Partial: %s', index, desc, row_desc, row)
 
     updated = solve_line(row_desc, row, method=method)
 
@@ -81,7 +80,7 @@ def solve_row(board, index, is_column, method):
         else:
             board.set_row(index, updated)
 
-    LOG.debug('%ss solution: %.6f sec', desc, time.time() - start)
+    # LOG.debug('%ss solution: %.6f sec', desc, time.time() - start)
     return cells_solved, new_jobs
 
 

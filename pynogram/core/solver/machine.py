@@ -223,11 +223,14 @@ class NonogramFSM(fsm.FiniteStateMachine):
                 transition_table.append_transition(
                     trans_index, new_state, previous_step_state, cell_type)
 
+        # optimize lookups
+        _types_for_cell = self._types_for_cell
+
         for i, cell in enumerate(row):
             transition_index = i + 1
 
             for prev_state, prev in iteritems(transition_table[i]):
-                for _type in self._types_for_cell(cell):
+                for _type in _types_for_cell(cell):
                     _shift_one_cell(_type, transition_index,
                                     prev, prev_state)
 
@@ -265,12 +268,11 @@ class NonogramFSM(fsm.FiniteStateMachine):
             raise NonogramError("Failed to solve line '{}' with clues '{}'".format(
                 row, self.description))
 
-        solved_row = []
-        for states in reversed(list(
-                transition_table.reverse_tracking(self.final_state))):
-            solved_row.append(self._cell_value_from_solved(states))
+        solved_row = tuple(
+            self._cell_value_from_solved(states)
+            for states in reversed(list(
+                transition_table.reverse_tracking(self.final_state))))
 
-        solved_row = tuple(solved_row)
         assert len(solved_row) == len(row)
 
         self._save_in_cache(row, solved_row)
