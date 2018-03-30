@@ -184,22 +184,13 @@ class Board(object):  # pylint: disable=too-many-public-methods
             raise ValueError('Cannot unset already set cell %s' % ([row_index, column_index]))
         self.cells[row_index][column_index] = invert(bad_state)
 
-    def get_row(self, index, _copy=False):
+    def get_row(self, index):
         """Get the board's row at given index"""
-        res = self.cells[index]
-        if _copy:
-            return tuple(res)
+        return self.cells[index]
 
-        return res
-
-    def get_column(self, index, _copy=False):
+    def get_column(self, index):
         """Get the board's column at given index"""
-
-        res = [row[index] for row in self.cells]
-        if _copy:
-            return tuple(res)
-
-        return res
+        return (row[index] for row in self.cells)
 
     def set_row(self, index, value):
         """Set the board's row at given index with given value"""
@@ -320,20 +311,24 @@ class Board(object):  # pylint: disable=too-many-public-methods
         # if self.is_solved_full:
         #     return 1
 
-        return avg(self.line_solution_rate(row) for row in self.cells)
+        size = self.width
+        return avg(self.line_solution_rate(row, size=size) for row in self.cells)
 
     @classmethod
-    def line_solution_rate(cls, row):
+    def line_solution_rate(cls, row, size=None):
         """How many cells in a given line are known to be box or space"""
-        return sum(1 for cell in row if cell != UNKNOWN) / len(row)
+        if size is None:
+            size = len(row)
+
+        return sum(1 for cell in row if cell != UNKNOWN) / size
 
     def row_solution_rate(self, index):
         """How many cells in a horizontal row are known to be box or space"""
-        return self.line_solution_rate(self.get_row(index))
+        return self.line_solution_rate(self.get_row(index), size=self.width)
 
     def column_solution_rate(self, index):
         """How many cells in a vertical column are known to be box or space"""
-        return self.line_solution_rate(self.get_column(index))
+        return self.line_solution_rate(self.get_column(index), size=self.height)
 
     @classmethod
     def cell_solution_rate(cls, cell):
@@ -488,13 +483,9 @@ class NumpyBoard(Board):
         super(NumpyBoard, self).__init__(columns, rows, **renderer_params)
         self.cells = np.array(self.cells)
 
-    def get_column(self, index, _copy=False):
+    def get_column(self, index):
         # self.cells.transpose([1, 0, 2])[index]
-        res = self.cells.T[index]
-        if _copy:
-            return tuple(res)
-
-        return res
+        return self.cells.T[index]
 
     def set_column(self, index, value):
         """Set the board's column at given index with given value"""
@@ -635,13 +626,16 @@ class ColoredBoard(Board):
                 return False
         return True
 
-    def line_solution_rate(self, row):
+    def line_solution_rate(self, row, size=None):
         """
         How many cells in a row are known to be of particular color
         """
         full_colors = self.colors()
+        if size is None:
+            size = len(row)
+
         solved = sum(self.cell_solution_rate(cell, full_colors=full_colors) for cell in row)
-        return solved / len(row)
+        return solved / size
 
     def _clue_colors(self, horizontal):
         """

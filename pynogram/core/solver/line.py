@@ -32,11 +32,11 @@ def solve_row(board, index, is_column, method):
 
     if is_column:
         row_desc = board.columns_descriptions[index]
-        row = board.get_column(index, _copy=True)
+        row = tuple(board.get_column(index))
         # desc = 'column'
     else:
         row_desc = board.rows_descriptions[index]
-        row = board.get_row(index, _copy=True)
+        row = tuple(board.get_row(index))
         # desc = 'row'
 
     # pre_solution_rate = board.line_solution_rate(row)
