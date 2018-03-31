@@ -39,13 +39,16 @@ class FiniteStateMachine(object):
     https://en.wikipedia.org/wiki/Finite-state_machine
     """
 
+    __slots__ = ['initial_state', '_state', 'state_map', 'final_state']
+
     def __init__(self, initial_state, state_map, final=None):
         self.initial_state = initial_state
         self._state = initial_state
         self.state_map = OrderedDict(state_map)
         self.final_state = final
 
-        assert self.current_state in self.states
+        # the assertion never failed but took too long, so just switch it off
+        # assert self.current_state in self.states
 
     def transition(self, *actions):
         """
@@ -91,7 +94,7 @@ class FiniteStateMachine(object):
         if current_state is None:
             current_state = self.current_state
 
-        return self.state_map.get((current_state, action), None)
+        return self.state_map.get((current_state, action))
 
     @property
     def current_state(self):

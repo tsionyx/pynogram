@@ -396,6 +396,7 @@ class TransitionTable(list):
                     step_possible_states.add(prev.state)
 
             possible_states = step_possible_states
+            # TODO: set() here
             yield tuple(step_possible_cell_types)
 
 
@@ -406,6 +407,7 @@ class NonogramFSMColored(NonogramFSM):
 
     @classmethod
     def _types_for_cell(cls, cell):
+        # FIXME: store colors as set always
         return set(cell)
 
     @classmethod
