@@ -7,7 +7,6 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
-from collections import OrderedDict
 
 from six import iteritems, text_type
 
@@ -44,7 +43,7 @@ class FiniteStateMachine(object):
     def __init__(self, initial_state, state_map, final=None):
         self.initial_state = initial_state
         self._state = initial_state
-        self.state_map = OrderedDict(state_map)
+        self.state_map = dict(state_map)
         self.final_state = final
 
         # the assertion never failed but took too long, so just switch it off
@@ -126,7 +125,7 @@ class FiniteStateMachine(object):
         ]
         res.extend([
             '{}, {} -> {}'.format(state, action, new_state)
-            for (state, action), new_state in iteritems(self.state_map)])
+            for (state, action), new_state in sorted(iteritems(self.state_map))])
 
         if self.final_state is not None:
             res.append('Final state: {}.'.format(self.final_state))

@@ -58,15 +58,17 @@ class TestFiniteStateMachine(object):
         assert exc.code == 1
 
     def test_str(self, fsm):
+        # states are in alphabetical order
+
         assert str(fsm) == '\n'.join([
             'FiniteStateMachine(home);',
             'All states: [bed, home, work];',
             'All actions: [sleep, take train, wake];',
             'States map:',
             'bed, wake -> home',
+            'home, sleep -> bed',
             'home, take train -> work',
             'work, take train -> home',
-            'home, sleep -> bed',
         ])
 
     def test_match_not_available_when_final_undefined(self, fsm):
