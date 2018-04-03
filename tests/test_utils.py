@@ -15,7 +15,7 @@ from pynogram.utils.collections import (
     avg,
 )
 from pynogram.utils.other import get_version
-from pynogram.utils.priority_dict import PriorityDict
+from pynogram.utils.priority_dict import PriorityDict, PriorityDict2
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -170,16 +170,6 @@ class TestPriorityDict(object):
 
         assert not p_dict
 
-    def test_repeating_priorities(self, p_dict):
-        p_dict['baz'] = 1
-
-        # undefined
-        assert p_dict.pop_smallest()[0] == 'baz'
-        assert p_dict.pop_smallest()[0] == 'foo'
-        assert p_dict.pop_smallest() == ('bar', 3)
-
-        assert not p_dict
-
     def test_repeating_keys(self, p_dict):
         p_dict['foo'] = 0
         assert p_dict.pop_smallest()[0] == 'foo'
@@ -204,6 +194,18 @@ class TestPriorityDict(object):
 
         assert p_dict.setdefault('foo', 'something') == 1
 
+
+class TestPriorityDictOld(TestPriorityDict):
+    def test_repeating_priorities(self, p_dict):
+        p_dict['baz'] = 1
+
+        # undefined
+        assert p_dict.pop_smallest()[0] == 'baz'
+        assert p_dict.pop_smallest()[0] == 'foo'
+        assert p_dict.pop_smallest() == ('bar', 3)
+
+        assert not p_dict
+
     # noinspection PyProtectedMember
     def test_rebuild(self, p_dict):
         old_heap_id = id(p_dict._heap)
@@ -217,6 +219,26 @@ class TestPriorityDict(object):
         # this action resets the heap
         p_dict['foo'] = 10
         assert id(p_dict._heap) != old_heap_id
+
+
+class TestPriorityDict2(TestPriorityDict):
+    @pytest.fixture
+    def p_dict(self):
+        res = PriorityDict2()
+        res['foo'] = 1
+        res['bar'] = 3
+        res['baz'] = 2
+        return res
+
+    def test_repeating_priorities(self, p_dict):
+        p_dict['baz'] = 1
+
+        # undefined
+        assert p_dict.pop_smallest()[0] == 'foo'
+        assert p_dict.pop_smallest()[0] == 'baz'
+        assert p_dict.pop_smallest() == ('bar', 3)
+
+        assert not p_dict
 
 
 class TestVersion(object):
