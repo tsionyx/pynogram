@@ -1,8 +1,10 @@
-- store colors as a set of numbers (for colored), as one of 0, 1, -16(UNKNOWN) for black-and-white. Use `np.array(dtype=np.int8)`
+- backjumping:
+    (many repeating dead ends: `grep 'false' 9892.log | sed 's/^[[:space:]]*//' | sort | uniq -c | sort -nr | head`)
+- implement 'bgu' for colored (http://myweb.npu.edu.tw/~tcga2017/Paper_Submission_pdf/2017_TCGA_paper_5.pdf)
 
+- Use `np.array(dtype=np.int8)` for board
 - check that it always a set, get rid of `is_list_like` as much as possible
 - more abstractions! Make the named tuples Cell, Clue, State
-- implement 'bgu' for colored
 
 - profile and improve bottlenecks:
 

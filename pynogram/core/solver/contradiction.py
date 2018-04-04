@@ -593,6 +593,7 @@ class Solver(object):
                     self._set_explored(full_path)
 
                 if not success:
+                    # TODO: add backjumping here
                     try:
                         LOG.warning(
                             "Unset the color %s for cell '%s'. Solve it unconditionally",
