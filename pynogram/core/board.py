@@ -12,6 +12,12 @@ from copy import copy
 
 from six.moves import zip, range
 
+try:
+    # noinspection PyPackageRequirements
+    import numpy as np
+except ImportError:
+    np = None
+
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE, invert,
     normalize_description,
@@ -478,8 +484,6 @@ class NumpyBoard(Board):
     """
 
     def __init__(self, columns, rows, **renderer_params):
-        import numpy as np
-
         super(NumpyBoard, self).__init__(columns, rows, **renderer_params)
         self.cells = np.array(self.cells)
 
@@ -497,8 +501,6 @@ class NumpyBoard(Board):
         return copy(self.cells)
 
     def _current_state_in_solutions(self):
-        import numpy as np
-
         for solution in self.solutions:
             if np.array_equal(self.cells, solution):
                 return True
@@ -765,7 +767,7 @@ def make_board(*args, **kwargs):
     if len(args) == 2:
         try:
             return NumpyBoard(*args, **kwargs)
-        except ImportError:
+        except AttributeError:
             return Board(*args, **kwargs)
 
     elif len(args) == 3:
