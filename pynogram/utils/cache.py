@@ -71,9 +71,9 @@ class Cache(object):
 
         if value is None:
             return None
-        else:
-            self.hits += 1
-            return value
+
+        self.hits += 1
+        return value
 
     def _get(self, name):
         return self._storage.get(name)

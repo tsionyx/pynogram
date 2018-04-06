@@ -31,6 +31,8 @@ class _SearchNode(object):
         self.children = OrderedDict()
 
     def to_dict(self):
+        """Represent the given node as the dictionary of other nodes"""
+
         if not self.children:
             return self.value
 
@@ -242,7 +244,7 @@ class Solver(object):
         board = self.board
 
         processed_after_refill = set()
-        processed_before_last_contradiction = set()
+        processed_before_contradiction = set()
 
         while jobs:
             job, priority = jobs.pop_smallest()
@@ -275,7 +277,7 @@ class Solver(object):
                         jobs[new_job] = priority
 
                     # save all the jobs that already processed
-                    processed_before_last_contradiction = set(processed_after_refill)
+                    processed_before_contradiction = set(processed_after_refill)
                 else:
                     rates[(i, j, assumption)] = (info, priority)
 
@@ -285,17 +287,17 @@ class Solver(object):
             # we have work to do!
             if jobs:
                 processed_after_refill.add((i, j))
-            elif processed_before_last_contradiction:
+            elif processed_before_contradiction:
                 LOG.warning('No more jobs. Refill all the jobs processed before '
                             'the last found contradiction (%s)',
-                            len(processed_before_last_contradiction))
+                            len(processed_before_contradiction))
                 refill_processed = self._get_all_unsolved_jobs(
-                    choose_from_cells=processed_before_last_contradiction)
+                    choose_from_cells=processed_before_contradiction)
                 for new_job, priority in iteritems(refill_processed):
                     jobs[new_job] = priority
 
-                processed_after_refill -= processed_before_last_contradiction
-                processed_before_last_contradiction = set()
+                processed_after_refill -= processed_before_contradiction
+                processed_before_contradiction = set()
                 counter = 0
 
         return counter_found, self._probes_from_rates(rates)

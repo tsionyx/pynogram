@@ -34,7 +34,7 @@ LOG = logging.getLogger(_LOG_NAME)
 # prevent "UnicodeEncodeError: 'ascii' codec can't encode character ..."
 # when redirecting output
 if PY2:
-    stdout = codecs.getwriter('utf8')(stdout)
+    stdout = codecs.getwriter('utf8')(stdout)  # pylint: disable=invalid-name
 
 
 class Cell(object):  # pylint: disable=too-few-public-methods

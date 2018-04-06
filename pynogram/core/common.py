@@ -151,7 +151,7 @@ def is_color_list(value):
 
     # to handle both standard types and numpy arrays
     # pylint: disable=len-as-condition
-    if len(value) and type(value[0]) in (tuple, list):
+    if len(value) and isinstance(value[0], (tuple, list)):
         return True
 
     return False

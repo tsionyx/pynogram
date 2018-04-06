@@ -297,6 +297,8 @@ class Board(object):  # pylint: disable=too-many-public-methods
         return '{}({}x{})'.format(self.__class__.__name__, self.height, self.width)
 
     def is_line_solved(self, row):
+        """Is the given row fully solved"""
+
         for cell in row:
             if not self.cell_value_solved(cell):
                 return False
@@ -730,9 +732,13 @@ class ColoredBoard(Board):
         return self.color_defs[color_name][0]
 
     def color_name_by_id(self, color_id):
+        """Return the string color name for given ID"""
+
         return self._color_id_to_name.get(color_id)
 
     def color_id_by_name(self, color_name):
+        """Return the color ID for given string name"""
+
         return self._color_name_to_id.get(color_name)
 
 

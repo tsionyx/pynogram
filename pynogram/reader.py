@@ -120,14 +120,13 @@ def read_ini(content):
     parser = MultiLineConfigParser()
 
     if isinstance(content, string_types):
-        with open(content) as file:
-            if PY2:
-                parser.readfp(file)
-            else:
-                # readfp is deprecated in future versions
-                parser.read_file(file)
+        content = open(content)
+
+    if PY2:
+        parser.readfp(content)  # pylint: disable=deprecated-method
     else:
-        parser.readfp(content)
+        # readfp is deprecated in future versions
+        parser.read_file(content)
 
     columns = []
     for col in parser.get_list('clues', 'columns'):
