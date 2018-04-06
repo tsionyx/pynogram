@@ -112,8 +112,8 @@ class FastSolver(object):
                             raise NonogramError("All previous blocks cover solids")
                         current_block -= 1
                         if (solid[current_block] < 0) or (
-                                res[current_block + 1] + solid[current_block + 1]
-                                - clue[current_block] + 1 <=
+                                res[current_block + 1] + solid[current_block + 1] -
+                                clue[current_block] + 1 <=
                                 res[current_block] + solid[current_block]):
                             break
 
@@ -170,8 +170,8 @@ class FastSolver(object):
                                 "The %d-th block cannot be stretched" % error_block)
                         current_block -= 1
                         if (solid[current_block] < 0) or (
-                                res[current_block + 1] + solid[current_block + 1]
-                                - clue[current_block] + 1 <=
+                                res[current_block + 1] + solid[current_block + 1] -
+                                clue[current_block] + 1 <=
                                 res[current_block] + solid[current_block]):
                             break
 
@@ -213,8 +213,7 @@ class FastSolver(object):
                             current_block -= 1
                             if (solid[current_block] < 0) or (
                                     res[current_block + 1] +
-                                    solid[current_block + 1]
-                                    - clue[current_block] + 1 <=
+                                    solid[current_block + 1] - clue[current_block] + 1 <=
                                     res[current_block] + solid[current_block]):
                                 break
 

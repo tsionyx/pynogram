@@ -32,10 +32,11 @@ CASES = [
         None, True, True, True, None, False, True, True]),
     ([4, 2], ' #  .   ', [
         True, True, True, True, False, None, True, None]),
-    ((1, 1, 2, 1, 1, 3, 1), [
-        True, False, False, None, None, False, None, True,
-        None, False, False, True, None, None, None, None,
-        None, True, None, None, None, None], [
+    ((1, 1, 2, 1, 1, 3, 1),
+     [
+         True, False, False, None, None, False, None, True,
+         None, False, False, True, None, None, None, None,
+         None, True, None, None, None, None], [
          True, False, False, None, None, False, None, True,
          None, False, False, True, False, None, None, None,
          None, True, None, None, None, None]),
