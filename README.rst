@@ -203,8 +203,8 @@ The following sites and articles were used when making this solver:
 
 -----
 
-The software developed and tested on Ubuntu 16.04 LTS using CPython versions 2.7 and 3.5.
-PyPy support is in progress.
+The software developed and tested on Ubuntu 16.04 LTS using CPython 2.7 and 3.5.
+Also PyPy 2.7 and 3.5 are supported.
 If you have any issues, drop a line to the
 `project site <https://github.com/tsionyx/pynogram/issues>`_.
 
