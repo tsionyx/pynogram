@@ -220,6 +220,14 @@ class Board(object):  # pylint: disable=too-many-public-methods
             raise ValueError('Cannot unset already set cell %s' % ([row_index, column_index]))
         self.cells[row_index][column_index] = invert(bad_state)
 
+    def set_state(self, cell_state):
+        """
+        Set the color of a cell with given coordinates
+        :type cell_state: CellState
+        """
+        row_index, column_index, color = cell_state
+        self.cells[row_index][column_index] = color
+
     def get_row(self, index):
         """Get the board's row at given index"""
         return self.cells[index]
@@ -460,6 +468,10 @@ class Board(object):  # pylint: disable=too-many-public-methods
         # do not do deepcopy to prevent too heavy tuple's `deepcopy`
         return [list(row) for row in self.cells]
 
+    def restore(self, snapshot):
+        """Restore the previously saved state of a board"""
+        self.cells = snapshot
+
     def _current_state_in_solutions(self):
         for i, sol in enumerate(self.solutions):
             diff = next(self.diff(sol, self.cells, have_deletions=True), None)
@@ -613,6 +625,15 @@ class ColoredBoard(Board):
         else:
             raise ValueError("Cannot unset the colors '%s' from cell %s (%s)" %
                              (bad_state, (row_index, column_index), colors))
+
+    def set_state(self, cell_state):
+        """
+        Set the color of a cell with given coordinates
+        :type cell_state: CellState
+        """
+
+        row_index, column_index, color = cell_state
+        self.cells[row_index][column_index] = (color,)
 
     def cell_value_solved(self, cell, full_colors=None):
         if full_colors is None:

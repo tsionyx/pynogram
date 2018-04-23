@@ -21,6 +21,10 @@ LOG = logging.getLogger(__name__)
 
 USE_CONTRADICTION_RESULTS = True
 
+# the fewer possible colors for a cell
+# the earlier it appears in a list of candidates
+FEW_COLORS_FIRST = False
+
 # use the position of a cell (number of neighbours and solution rate of row/column)
 # to adjust its rate when choosing the next probe for DFS
 ADJUST_RATE = True
@@ -62,7 +66,7 @@ class Solver(object):
         if max_depth is None:
             # why 400?
             # I simply searched for some value that will be somehow bigger
-            # than 351 (the maximum useful search depth reached on the test set so far)
+            # than 351 (the maximum useful search depth reached on the test set so far),
             # but still reachable for recursion calls.
             #
             # NB: in current implementation depth=444 fails with
@@ -112,11 +116,8 @@ class Solver(object):
         board = self.board
         LOG.debug('Assume that (%i, %i) is %s', *tuple(cell_state))
 
-        row_index, column_index, assumption = cell_state
-        if board.is_colored:
-            assumption = (assumption,)
+        board.set_state(cell_state)
 
-        board.cells[row_index][column_index] = assumption
         return line.solve(
             board,
             row_indexes=(cell_state.row_index,),
@@ -167,16 +168,17 @@ class Solver(object):
             if board.is_solved_full:
                 self._add_solution()
 
-            if rollback:
-                board.cells = save
-                return False, solved_cells
-
-            return False, save
-
         except NonogramError:
             LOG.debug('Contradiction', exc_info=True)
             # rollback solved cells
-            board.cells = save
+            board.restore(save)
+
+        else:
+            if rollback:
+                board.restore(save)
+                return False, solved_cells
+
+            return False, save
 
         if USE_CONTRADICTION_RESULTS:
             before_contradiction = board.make_snapshot()
@@ -334,6 +336,8 @@ class Solver(object):
         max_rate = {pos: max(v.values()) for pos, v in iteritems(jobs_with_rates)}
         # the biggest rate appears first
         best = sorted(iteritems(max_rate), key=lambda x: x[1], reverse=True)
+        if FEW_COLORS_FIRST:
+            best = sorted(best, key=lambda x: len(jobs_with_rates[x[0]]))
         LOG.debug('\n'.join(map(str, best)))
 
         jobs = []
@@ -602,7 +606,7 @@ class Solver(object):
                     success = self._try_state(state, path)
                     # is_solved = board.is_solved_full
                 finally:
-                    board.cells = guess_save
+                    board.restore(guess_save)
                     self._set_explored(full_path)
 
                 if not success:
@@ -655,7 +659,7 @@ class Solver(object):
         finally:
             # do not restore the solved cells on a root path - they are really solved!
             if path:
-                board.cells = save
+                board.restore(save)
                 self._set_explored(path)
 
         return True
