@@ -7,7 +7,7 @@ before_script:
   - apt-get install -y -qq python-pip python3-pip pypy-dev
 
   # update pip to correctly do `pip show -f`
-  - pip install --upgrade pip
+  - pip install --upgrade pip==9.0.3  # pip 10 is broken, https://github.com/pypa/pip/issues/5240
 
   # update setuptools because old version (<24.3) has bug with hard links
   # https://github.com/pypa/setuptools/blob/master/CHANGES.rst#v2430
