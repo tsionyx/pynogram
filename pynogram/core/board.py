@@ -7,7 +7,7 @@ from __future__ import unicode_literals, print_function, division
 
 import logging
 import os
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from copy import copy
 
 from six.moves import zip, range
@@ -103,6 +103,24 @@ class Renderer(object):
         raise NotImplementedError()
 
 
+class CellPosition(namedtuple('Cell', 'row_index column_index')):
+    """2-D coordinates of a board cell"""
+    pass
+
+
+class CellState(namedtuple('CellState', 'row_index column_index color')):
+    """2-D coordinates of a board cell with fixed color"""
+
+    @property
+    def position(self):
+        """Get only coordinates (ignore the color)"""
+        return CellPosition(self[0], self[1])
+
+    @classmethod
+    def from_position(cls, position, color):
+        return cls(position[0], position[1], color)
+
+
 class Board(object):  # pylint: disable=too-many-public-methods
     """
     Nonogram board with columns and rows defined
@@ -149,8 +167,13 @@ class Board(object):  # pylint: disable=too-many-public-methods
         else:
             raise TypeError('Bad renderer: %s' % renderer)
 
-    def cell_solved(self, i, j):
-        """Return whether the cell is completely solved"""
+    def cell_solved(self, position):
+        """
+        Return whether the cell is completely solved
+        :type position: CellPosition
+        """
+
+        i, j = position
         cell = self.cells[i][j]
         return cell != UNKNOWN
 
@@ -174,18 +197,25 @@ class Board(object):  # pylint: disable=too-many-public-methods
         """
         return False
 
-    def cell_colors(self, i, j):
-        """All the possible states that the cell can be in"""
-        if not self.cell_solved(i, j):
+    def cell_colors(self, position):
+        """
+        All the possible states that the cell can be in
+
+        :type position: CellPosition
+        """
+        if not self.cell_solved(position):
             return self.colors()
 
+        i, j = position
         return {self.cells[i][j]}
 
-    def unset_state(self, bad_state, row_index, column_index):
+    def unset_state(self, cell_state):
         """
         Drop the state from the list of possible states
         for a given cell
+        :type cell_state: CellState
         """
+        row_index, column_index, bad_state = cell_state
         if self.cells[row_index][column_index] != UNKNOWN:
             raise ValueError('Cannot unset already set cell %s' % ([row_index, column_index]))
         self.cells[row_index][column_index] = invert(bad_state)
@@ -355,13 +385,15 @@ class Board(object):  # pylint: disable=too-many-public-methods
         """Set the solving status (used by renderers)"""
         self._finished = finished
 
-    def neighbours(self, row_index, column_index):
+    def neighbours(self, position):
         """
         For the given cell yield
         the four possible neighbour cells.
         When the given cell is on a border,
         that number can reduce to three or two.
+        :type position: CellPosition
         """
+        row_index, column_index = position
         if row_index > 0:
             yield row_index - 1, column_index
 
@@ -374,14 +406,16 @@ class Board(object):  # pylint: disable=too-many-public-methods
         if column_index < self.width - 1:
             yield row_index, column_index + 1
 
-    def unsolved_neighbours(self, row_index, column_index):
+    def unsolved_neighbours(self, position):
         """
         For the given cell yield the neighbour cells
         that are not completely solved yet.
+        :type position: CellPosition
         """
-        for cell in self.neighbours(row_index, column_index):
-            if not self.cell_solved(*cell):
-                yield cell
+        for pos in self.neighbours(position):
+            pos = CellPosition(*pos)
+            if not self.cell_solved(pos):
+                yield pos
 
     @classmethod
     def diff(cls, old_cells, new_cells, have_deletions=False):
@@ -533,8 +567,8 @@ class ColoredBoard(Board):
     def init_cell_state(self):
         return tuple(self._color_id_to_name)
 
-    def cell_solved(self, i, j):
-        """Return whether the cell is completely solved"""
+    def cell_solved(self, position):
+        i, j = position
         cell = self.cells[i][j]
         if is_list_like(cell):
             colors = tuple(set(cell))
@@ -550,19 +584,23 @@ class ColoredBoard(Board):
     def is_colored(self):
         return True
 
-    def cell_colors(self, i, j):
-        """All the possible states that the cell can be in"""
+    def cell_colors(self, position):
+        i, j = position
+
         cell = self.cells[i][j]
         if is_list_like(cell):
             return set(cell)
 
         return {cell}
 
-    def unset_state(self, bad_state, row_index, column_index):
-        colors = self.cell_colors(row_index, column_index)
-        if not is_list_like(bad_state):
-            bad_state = [bad_state]
-        bad_state = set(bad_state)
+    def unset_state(self, cell_state):
+        row_index, column_index, bad_state = cell_state
+        colors = self.cell_colors(cell_state.position)
+        if is_list_like(bad_state):
+            bad_state = set(bad_state)
+        else:
+            bad_state = {bad_state}
+
         LOG.debug('(%d, %d) previous state: %s',
                   row_index, column_index, colors)
         LOG.debug('Bad states: %s', bad_state)

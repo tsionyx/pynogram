@@ -11,6 +11,7 @@ from itertools import product
 from six import iteritems
 from six.moves import range
 
+from pynogram.core.board import CellPosition, CellState
 from pynogram.core.solver import line
 from pynogram.core.solver.base import cache_hit_rate
 from pynogram.core.solver.common import NonogramError
@@ -102,22 +103,27 @@ class Solver(object):
 
         current.value = score
 
-    def _solve_with_guess(self, row_index, column_index, assumption):
+    def propagate_change(self, cell_state):
+        """
+        Set the given color to given cell
+        and try to solve the board with that new info.
+        :type cell_state: CellState
+        """
         board = self.board
-        LOG.debug('Assume that (%i, %i) is %s',
-                  row_index, column_index, assumption)
+        LOG.debug('Assume that (%i, %i) is %s', *tuple(cell_state))
 
+        row_index, column_index, assumption = cell_state
         if board.is_colored:
             assumption = (assumption,)
 
         board.cells[row_index][column_index] = assumption
         return line.solve(
             board,
-            row_indexes=(row_index,),
-            column_indexes=(column_index,),
+            row_indexes=(cell_state.row_index,),
+            column_indexes=(cell_state.column_index,),
             contradiction_mode=True)
 
-    def probe(self, row_index, column_index, assumption, rollback=True, force=False):
+    def probe(self, cell_state, rollback=True, force=False):
         """
         Try to find if the given cell can be in an assumed state.
         If the contradiction is found, set the cell
@@ -142,19 +148,21 @@ class Solver(object):
         """
         board = self.board
 
+        pos = cell_state.position
+        assumption = cell_state.color
         # already solved
-        if board.cell_solved(row_index, column_index):
+        if board.cell_solved(pos):
             if not force:
                 return False, None
 
-        if assumption not in board.cell_colors(row_index, column_index):
+        if assumption not in board.cell_colors(pos):
             LOG.warning("The probe is useless: color '%s' already unset", assumption)
             return False, None
 
         save = board.make_snapshot()
 
         try:
-            solved_cells = self._solve_with_guess(row_index, column_index, assumption)
+            solved_cells = self.propagate_change(cell_state)
 
             if board.is_solved_full:
                 self._add_solution()
@@ -175,10 +183,10 @@ class Solver(object):
         else:
             before_contradiction = None
 
-        LOG.info("Found contradiction at (%i, %i)",
-                 row_index, column_index)
+        pos = cell_state.position
+        LOG.info("Found contradiction at (%i, %i)", *pos)
         try:
-            board.unset_state(assumption, row_index, column_index)
+            board.unset_state(cell_state)
         except ValueError as ex:
             raise NonogramError(str(ex))
 
@@ -186,33 +194,33 @@ class Solver(object):
         # solve with only one cell as new info
         line.solve(
             board,
-            row_indexes=(row_index,),
-            column_indexes=(column_index,))
+            row_indexes=(pos.row_index,),
+            column_indexes=(pos.column_index,))
 
         return True, before_contradiction
 
-    def _new_jobs_from_solution(self, job, previous_state, is_contradiction):
+    def _new_jobs_from_solution(self, cell_state, previous_state, is_contradiction):
         board = self.board
 
         # evaluate generator
         changed = list(board.changed(previous_state))
-        i, j, assumption = job
+        assumption = cell_state.color
         log_contradiction = '(not) ' if is_contradiction else ''
         LOG.info('Changed %d cells with %s%s assumption',
                  len(changed), log_contradiction, assumption)
 
         # add the neighbours of the changed cells into jobs
-        for coord in changed:
-            for neighbour in board.unsolved_neighbours(*coord):
+        for pos in changed:
+            for neighbour in board.unsolved_neighbours(pos):
                 yield neighbour, 1
 
         # add the neighbours of the selected cell into jobs
-        for neighbour in board.unsolved_neighbours(i, j):
+        for neighbour in board.unsolved_neighbours(cell_state.position):
             yield neighbour, 0
 
     def _set_probe(self, state):
         board = self.board
-        is_contradiction, prev_state = self.probe(*state, rollback=False, force=True)
+        is_contradiction, prev_state = self.probe(state, rollback=False, force=True)
 
         if is_contradiction:
             raise NonogramError('Real contradiction was found: %s' % (state,))
@@ -247,21 +255,21 @@ class Solver(object):
         processed_before_contradiction = set()
 
         while jobs:
-            job, priority = jobs.pop_smallest()
+            state, priority = jobs.pop_smallest()
             counter += 1
-            LOG.info('Probe #%d: %s (%f)', counter, job, priority)
+            LOG.info('Probe #%d: %s (%f)', counter, state, priority)
 
             # if the job is only coordinates
             # then try all the possible colors
-            if len(job) == 2:
-                i, j = job
-                assumptions = board.cell_colors(i, j)
+            pos = state[:2]
+            if len(state) == 2:
+                assumptions = board.cell_colors(state)
             else:
-                i, j, color = job
-                assumptions = (color,)
+                assumptions = (state.color,)
 
             for assumption in assumptions:
-                is_contradiction, info = self.probe(i, j, assumption)
+                state = CellState.from_position(pos, assumption)
+                is_contradiction, info = self.probe(state)
 
                 if info is None:
                     continue
@@ -273,20 +281,20 @@ class Solver(object):
                         return counter_found, None
 
                     for new_job, priority in self._new_jobs_from_solution(
-                            (i, j, assumption), info, is_contradiction):
+                            state, info, is_contradiction):
                         jobs[new_job] = priority
 
                     # save all the jobs that already processed
                     processed_before_contradiction = set(processed_after_refill)
                 else:
-                    rates[(i, j, assumption)] = (info, priority)
+                    rates[state] = (info, priority)
 
             if not refill:
                 continue
 
             # we have work to do!
             if jobs:
-                processed_after_refill.add((i, j))
+                processed_after_refill.add(pos)
             elif processed_before_contradiction:
                 LOG.warning('No more jobs. Refill all the jobs processed before '
                             'the last found contradiction (%s)',
@@ -310,10 +318,10 @@ class Solver(object):
     def _probes_from_rates(self, rates):
         jobs_with_rates = defaultdict(dict)
 
-        for job, (rate, priority) in iteritems(rates):
-            cell = job[:2]
-            color = job[-1]
-            if self.board.cell_solved(*cell):
+        for cell_state, (rate, priority) in iteritems(rates):
+            pos = cell_state.position
+            color = cell_state.color
+            if self.board.cell_solved(pos):
                 continue
 
             # the more priority the less desired that job
@@ -321,19 +329,18 @@ class Solver(object):
             if ADJUST_RATE:
                 rate += (10 - priority)
             # if rate > jobs_with_rates.get(job, 0):
-            jobs_with_rates[cell][color] = rate
+            jobs_with_rates[pos][color] = rate
 
-        max_rate = {k: max(v.values()) for k, v in iteritems(jobs_with_rates)}
+        max_rate = {pos: max(v.values()) for pos, v in iteritems(jobs_with_rates)}
         # the biggest rate appears first
         best = sorted(iteritems(max_rate), key=lambda x: x[1], reverse=True)
         LOG.debug('\n'.join(map(str, best)))
 
         jobs = []
-        for cell, max_rate in best:
-            job = cell
-            colors = sorted(iteritems(jobs_with_rates[cell]), key=lambda x: x[1], reverse=True)
+        for pos, max_rate in best:
+            colors = sorted(iteritems(jobs_with_rates[pos]), key=lambda x: x[1], reverse=True)
             for color, rate in colors:
-                jobs.append(job + (color,))
+                jobs.append(CellState.from_position(pos, color))
 
         return tuple(jobs)
 
@@ -346,17 +353,21 @@ class Solver(object):
 
         probe_jobs = PriorityDict()
 
-        for (i, j) in choose_from_cells:
-            if board.cell_solved(i, j):
+        for pos in choose_from_cells:
+            pos = CellPosition(*pos)
+            if board.cell_solved(pos):
                 continue
 
-            no_unsolved = len(list(board.unsolved_neighbours(i, j)))
+            no_unsolved = len(list(board.unsolved_neighbours(pos)))
 
             # if no_unsolved >= 4 and skip_low_rated:
             #     continue
 
-            cell_rate = board.row_solution_rate(i) + board.column_solution_rate(j)
-            probe_jobs[(i, j)] = 4 - cell_rate + no_unsolved
+            row_rate = board.row_solution_rate(pos.row_index)
+            column_rate = board.column_solution_rate(pos.column_index)
+            cell_rate = row_rate + column_rate
+
+            probe_jobs[pos] = 4 - cell_rate + no_unsolved
 
         return probe_jobs
 
@@ -534,19 +545,19 @@ class Solver(object):
                 if state in path:
                     continue
 
-                i, j, assumption = state
-                cell = i, j
-                cell_colors = board.cell_colors(*cell)
+                assumption = state.color
+                pos = state.position
+                cell_colors = board.cell_colors(pos)
 
                 if assumption not in cell_colors:
                     LOG.warning("The assumption '%s' is already expired. "
                                 "Possible colors for %s are %s",
-                                assumption, cell, cell_colors)
+                                assumption, pos, cell_colors)
                     continue
 
                 if len(cell_colors) == 1:
                     LOG.warning("Only one color for cell '%s' left: %s. Solve it unconditionally",
-                                cell, assumption)
+                                pos, assumption)
                     assert assumption == tuple(cell_colors)[0]
                     if unconditional:
                         LOG.warning(
@@ -561,7 +572,7 @@ class Solver(object):
                         LOG.error(
                             "The last possible color '%s' for the cell '%s' "
                             "lead to the contradiction. "
-                            "The path %s is invalid", assumption, cell, path)
+                            "The path %s is invalid", assumption, pos, path)
                         # self._add_search_result(path, False)
                         return False
 
@@ -571,7 +582,7 @@ class Solver(object):
                         self._add_solution()
                         LOG.warning(
                             "The only color '%s' for the cell '%s' lead to full solution. "
-                            "No need to traverse the path %s anymore", assumption, cell, path)
+                            "No need to traverse the path %s anymore", assumption, pos, path)
                         return True
                     continue
 
@@ -599,8 +610,8 @@ class Solver(object):
                     try:
                         LOG.warning(
                             "Unset the color %s for cell '%s'. Solve it unconditionally",
-                            assumption, cell)
-                        board.unset_state(assumption, *cell)
+                            assumption, pos)
+                        board.unset_state(state)
                         self._solve_without_search()
                         unconditional = True
                     except ValueError:
@@ -608,7 +619,7 @@ class Solver(object):
                         LOG.error(
                             "The last possible color '%s' for the cell '%s' "
                             "lead to the contradiction. "
-                            "The path %s is invalid", assumption, cell, path)
+                            "The path %s is invalid", assumption, pos, path)
                         # self._add_search_result(path, False)
                         return False
 
@@ -618,7 +629,7 @@ class Solver(object):
                         self._add_solution()
                         LOG.warning(
                             "The negation of color '%s' for the cell '%s' lead to full solution. "
-                            "No need to traverse the path %s anymore", assumption, cell, path)
+                            "No need to traverse the path %s anymore", assumption, pos, path)
                         return True
 
                 if not success or board.is_solved_full:
@@ -630,7 +641,7 @@ class Solver(object):
                         if color == assumption:
                             continue
 
-                        states_to_try.append(cell + (color,))
+                        states_to_try.append(CellState.from_position(pos, color))
 
                     # if all(self._is_explored(path + (state,)) for state in states_to_try):
                     #     LOG.error('All other colors (%s) of cell %s already explored',
