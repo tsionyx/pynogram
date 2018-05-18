@@ -118,6 +118,7 @@ class CellState(namedtuple('CellState', 'row_index column_index color')):
 
     @classmethod
     def from_position(cls, position, color):
+        """Create a colored state from the CellPosition and color"""
         return cls(position[0], position[1], color)
 
 
