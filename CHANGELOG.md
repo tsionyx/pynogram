@@ -31,3 +31,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Removed
 - demo boards
 - lxml dependency (use standard XML parser)
+
+## [0.2.0] - 2018-05-19
+### Added
+- adapt [Ben-Gurion University solver (BGU)](https://www.cs.bgu.ac.il/~benr/nonograms/) for better line solver
+- searching-backtracking algorithm
+- support for pypy (both 2 and 3). This significantly improved
+the performance of terminal-based solver. However, the web version
+becomes more unresponsive on any pypy interpreter, so it's recommended
+to use py3 for `pynogram-web` and pypy3 for `pynogram`
+- use numpy for black and white boards if available
+- read local PBN-formatted puzzles
+- use tornado log formatter if tornado package is available
+- statistics on the most time-consuming boards (webpbn.com). See docs/benchmarks.md for details
+- show the search tree at the end of solving difficult puzzles
+- [Faase](http://www.iwriteiam.nl/D0601.html#3) (one of the most difficult known board) and [n-dom](http://webpbn.com/survey/dom.html) boards
+- list of local boards to the web UI (_/board/local/_, _/board/local/source_)
+- test for colored SVG puzzle
+
+### Fixed
+- improved some bottlenecks by profiling:
+  - commenting some debug logs
+  - add \_\_slots\_\_
+  - do as less as possible type conversions (set to list to tuple, etc)
+  - replace string color names in `ColoredBoard.cells` with their integer codes
+- use named tuples `CellPosition` and `CellState`
+instead of pairs and triples
+- do not manipulate `Board.cells` directly anymore, use helper methods now
+- [cache is more intelligent now](http://webpbn.com/survey/caching.html)
+- refactor the Simpson line solver
+- flake8 now checks everything
