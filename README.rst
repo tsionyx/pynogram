@@ -163,19 +163,19 @@ Web
     splitting the whole board into 5x5 squares (remember puzzles in those magazines?)
 
 
-http://localhost:3145/board/local/einstein?render=svg
+http://localhost:3145/board/local/einstein?render=svg (zoom=67%)
 
 .. image:: docs/images/einstein-local-svg.gif
 
-http://localhost:3145/board/local/MLP?render=text-grid-bold
+http://localhost:3145/board/local/MLP?render=text-grid-bold (zoom=25%)
 
 .. image:: docs/images/MLP-local-text-grid.gif
 
-http://localhost:3145/board/pbn/2040?render=text
+http://localhost:3145/board/pbn/2040?render=text (zoom=75%)
 
-.. image:: docs/images/marilyn-pbn-svg.gif
+.. image:: docs/images/marilyn-pbn-text.gif
 
-http://localhost:3145/board/pbn/2196
+http://localhost:3145/board/pbn/2196 (zoom=75%)
 
 .. image:: docs/images/precious-pbn-svg.gif
 
