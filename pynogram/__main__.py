@@ -6,11 +6,16 @@ The program's entry point
 
 from __future__ import unicode_literals, print_function
 
+import curses
 import json
 import logging
 from argparse import ArgumentParser
+from threading import Thread
+
+from six.moves import queue
 
 from pynogram.__version__ import __version__
+from pynogram.animation import CursesRenderer, StringsPager
 from pynogram.core.board import make_board
 from pynogram.core.common import BOX
 from pynogram.core.solver.contradiction import Solver
@@ -43,18 +48,21 @@ def cli_args():
 
     parser.add_argument('--verbose', '-v', action='count',
                         help='increase logging level')
-    parser.add_argument('--draw-final', action='store_true',
-                        help='draw only final result, skip all the intermediate steps')
+
+    output_mode = parser.add_mutually_exclusive_group()
+    output_mode.add_argument('--draw-final', action='store_true',
+                             help='draw only final result, skip all the intermediate steps')
+    output_mode.add_argument('--curses', action='store_true',
+                             help='use curses for solving animation (experimental)')
     return parser.parse_args()
 
 
-def draw_solution(board_def, every_round=True, box_symbol=None, **solver_args):
-    """Solve the given board in terminal with animation"""
+def solve(d_board, draw_final=False, **solver_args):
+    """
+    Wrapper for solver that handles errors and prints out the results
+    """
 
-    d_board = make_board(*board_def, renderer=BaseAsciiRenderer)
-    if box_symbol is not None:
-        d_board.renderer.icons.update({BOX: box_symbol})
-    if every_round:
+    if not draw_final:
         d_board.on_solution_round_complete = lambda board: board.draw()
 
     solver = Solver(d_board, **solver_args)
@@ -66,15 +74,44 @@ def draw_solution(board_def, every_round=True, box_symbol=None, **solver_args):
         exc = True
         raise
     finally:
-        if exc or not every_round:
+        if exc or draw_final:
             # draw the last solved cells
             d_board.draw()
 
         if not d_board.is_solved_full:
             d_board.draw_solutions()
 
-        if solver.search_map:
+        if draw_final and solver.search_map:
             print(json.dumps(solver.search_map.to_dict(), indent=1))
+
+
+def draw_solution(board_def, draw_final=False, box_symbol=None,
+                  curses_animation=False, **solver_args):
+    """Solve the given board in terminal with animation"""
+
+    if curses_animation:
+        if draw_final:
+            logging.warning('No need to use curses with draw_final=True')
+            curses_animation = False
+
+    if curses_animation:
+        board_queue = queue.Queue()
+        d_board = make_board(*board_def, renderer=CursesRenderer, stream=board_queue)
+
+        if box_symbol is not None:
+            d_board.renderer.icons.update({BOX: box_symbol})
+
+        thread = Thread(target=solve, args=(d_board,), kwargs=solver_args)
+        thread.daemon = True
+        thread.start()
+        curses.wrapper(StringsPager.draw, board_queue)
+    else:
+        d_board = make_board(*board_def, renderer=BaseAsciiRenderer)
+
+        if box_symbol is not None:
+            d_board.renderer.icons.update({BOX: box_symbol})
+
+        solve(d_board, draw_final=draw_final, **solver_args)
 
 
 def log_level(verbosity):
@@ -127,7 +164,8 @@ def main():
 
     draw_solution(board_def,
                   box_symbol='\u2B1B',
-                  every_round=not args.draw_final,
+                  draw_final=args.draw_final,
+                  curses_animation=args.curses,
                   max_solutions=args.max_solutions,
                   timeout=args.timeout,
                   max_depth=args.max_depth)
