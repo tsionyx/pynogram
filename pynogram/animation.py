@@ -210,7 +210,24 @@ class CursesRenderer(BaseAsciiRenderer):
 
     def render(self):
         # clear the screen before next board
-        self._print('\n')
+        self._print(self.separator)
         super(CursesRenderer, self).render()
         # allow the drawing thread to do its job
         time.sleep(0)
+
+    CLS_SEPARATOR = '\n'
+    separator = CLS_SEPARATOR
+
+    def draw(self, cells=None):
+        """
+        Additionally set up the separator between solutions
+        to enable clearing the screen on ordinary update
+        and informational message when a unique solution gets printed
+        """
+        if cells is None:
+            self.separator = self.CLS_SEPARATOR
+        else:
+            # do not clear the screen for new solution
+            self.separator = 'Unique solution'
+
+        super(CursesRenderer, self).draw(cells=cells)
