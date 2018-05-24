@@ -10,7 +10,7 @@ import locale
 import logging
 import time
 
-from six import string_types
+from six import string_types, itervalues
 from six.moves import queue
 
 from pynogram.renderer import BaseAsciiRenderer
@@ -43,6 +43,7 @@ class StringsPager(object):
 
         self.lines = dict()
         self.row_index = 0
+        self._current_start_index = 0
 
         # the index from which to start drawing (for long pages)
         self.vertical_offset = 0
@@ -62,26 +63,58 @@ class StringsPager(object):
         """The width of active window"""
         return self.window_size[1]
 
-    def scroll_down(self):
+    def scroll_down(self, full=False):
         """Scroll the page down"""
 
         # we should not hide more than a third of the lines
         # if some spaces are presented below
-        allow_to_hide = len(self.lines) / 3
+        allow_to_hide = int(len(self.lines) / 3)
 
         # we should be able to see the lower edge anyway
-        max_offset = max(len(self.lines) - self.window_height, allow_to_hide)
+        max_offset = max(len(self.lines) - self.window_height + 1, allow_to_hide)
 
         if self.vertical_offset < max_offset:
-            self.vertical_offset += 1
+            if full:
+                self.vertical_offset = max_offset
+            else:
+                self.vertical_offset += 1
             self.redraw()
 
-    def scroll_up(self):
+    def scroll_up(self, full=False):
         """Scroll the page up"""
 
         # do not allow empty lines at the top
         if self.vertical_offset > 0:
-            self.vertical_offset -= 1
+            if full:
+                self.vertical_offset = 0
+            else:
+                self.vertical_offset -= 1
+            self.redraw()
+
+    def scroll_right(self):
+        """Scroll the page to the right"""
+
+        if not self.lines:
+            return
+
+        max_len = max(len(line) for line in itervalues(self.lines))
+        # we should not hide more than a third of the lines
+        # if some spaces are presented further to the right
+        allow_to_hide = 0  # int(max_len / 3)
+
+        # we should be able to see the right edge anyway
+        max_offset = max(max_len - self.window_width + 1, allow_to_hide)
+
+        if self.current_start_index < max_offset:
+            self.current_start_index += 1
+            self.redraw()
+
+    def scroll_left(self):
+        """Scroll the page to the left"""
+
+        # do not allow empty lines at the top
+        if self.current_start_index > 0:
+            self.current_start_index -= 1
             self.redraw()
 
     @property
@@ -89,7 +122,19 @@ class StringsPager(object):
         """The y-coordinate to draw next line on"""
         return self.row_index - self.vertical_offset
 
-    def put_line(self, line, y_position=None, x_offset=0):
+    @property
+    def current_start_index(self):
+        """The default index to start printing the line from"""
+        return self._current_start_index
+
+    @current_start_index.setter
+    def current_start_index(self, value):
+        if value < 0:
+            value = 0
+
+        self._current_start_index = value
+
+    def put_line(self, line, y_position=None, x_offset=0, start_index=None):
         """
         Draws the line on the current position
         (if it is within visible area)
@@ -98,9 +143,15 @@ class StringsPager(object):
         if y_position is None:
             y_position = self.current_draw_position
 
+        if start_index is None:
+            start_index = self.current_start_index
+
         height, width = self.window_size
         # only draw if will be visible on a screen
         if 0 <= y_position <= height - 1:
+            if start_index != 0:
+                line = line[start_index:]
+
             # to fit in the screen
             line = line[:width - 1]
 
@@ -110,6 +161,8 @@ class StringsPager(object):
             self.window.addstr(y_position, x_offset, line)
 
     def move_cursor(self, y_position, x_position):
+        """Move the cursor to the specified coordinates"""
+
         if ((0 <= y_position <= self.window_height - 1) and (
                 0 <= x_position <= self.window_width - 1)):
             self.window.move(y_position, x_position)
@@ -185,10 +238,20 @@ class StringsPager(object):
         # k is the last character pressed
         k = 0
         while k != ord('q'):
-            if k == curses.KEY_DOWN:
+            if k in (curses.KEY_DOWN, ord(' ')):
                 _self.scroll_down()
+            elif k == curses.KEY_END:
+                _self.scroll_down(full=True)
+
             elif k == curses.KEY_UP:
                 _self.scroll_up()
+            elif k == curses.KEY_HOME:
+                _self.scroll_up(full=True)
+
+            elif k == curses.KEY_RIGHT:
+                _self.scroll_right()
+            elif k == curses.KEY_LEFT:
+                _self.scroll_left()
 
             _self.update()
             # Refresh the screen

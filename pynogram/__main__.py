@@ -106,7 +106,7 @@ class PagerWithUptime(StringsPager):
     def update(self):
         redraw = super(PagerWithUptime, self).update()
         if redraw:
-            self.put_line(self._last_update_timestamp, y_position=0)
+            self.put_line(self._last_update_timestamp, y_position=0, start_index=0)
             self.move_cursor(self.current_draw_position, 0)
 
         return redraw
