@@ -479,7 +479,7 @@ class Solver(object):
 
             __, best_candidates = self._solve_jobs(probe_jobs)
         except NonogramError as ex:
-            LOG.error('Dead end found (%s): %s', full_path, str(ex))
+            LOG.warning('Dead end found (%s): %s', full_path, str(ex))
             self._add_search_result(full_path, False)
             return False
 
@@ -573,7 +573,7 @@ class Solver(object):
                         unconditional = True
                     except NonogramError:
                         # the whole `path` branch of a search tree is a dead end
-                        LOG.error(
+                        LOG.warning(
                             "The last possible color '%s' for the cell '%s' "
                             "lead to the contradiction. "
                             "The path %s is invalid", assumption, pos, path)
@@ -620,7 +620,7 @@ class Solver(object):
                         unconditional = True
                     except ValueError:
                         # the whole `path` branch of a search tree is a dead end
-                        LOG.error(
+                        LOG.warning(
                             "The last possible color '%s' for the cell '%s' "
                             "lead to the contradiction. "
                             "The path %s is invalid", assumption, pos, path)
@@ -648,8 +648,8 @@ class Solver(object):
                         states_to_try.append(CellState.from_position(pos, color))
 
                     # if all(self._is_explored(path + (state,)) for state in states_to_try):
-                    #     LOG.error('All other colors (%s) of cell %s already explored',
-                    #               states_to_try, cell)
+                    #     LOG.warning('All other colors (%s) of cell %s already explored',
+                    #                 states_to_try, cell)
                     #     return True
 
                     for state in states_to_try:
