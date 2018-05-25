@@ -221,6 +221,16 @@ inside a separate console (`ncurses <https://en.wikipedia.org/wiki/Ncurses>`_) w
 The *--curses* mode does not work correctly on PyPy 2.7. If you want to run it on PyPy anyway,
 please install the PyPy 3 (it will give you the best performance anyway, so give it a chance).
 
+Examples:
+
+pynogram --pbn 30216 --curses
+
+.. image:: docs/images/curses-moose.gif
+
+pynogram --pbn 29723 --curses
+
+.. image:: docs/images/curses-mozaic.gif
+
 Errors
 ~~~~~~
 
