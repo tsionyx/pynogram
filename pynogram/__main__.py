@@ -21,7 +21,7 @@ from pynogram.animation import CursesRenderer, StringsPager
 from pynogram.core.board import make_board
 from pynogram.core.common import BOX
 from pynogram.core.solver.contradiction import Solver
-from pynogram.reader import read_example, Pbn, PbnLocal
+from pynogram.reader import read_example, Pbn, PbnLocal, example_file
 from pynogram.renderer import BaseAsciiRenderer
 
 
@@ -32,6 +32,8 @@ def cli_args():
 
     parser.add_argument('--version', action='store_true',
                         help='show version and exit')
+    parser.add_argument('--show-examples-folder', action='store_true',
+                        help='show the path to examples folder and exit')
 
     puzzle_source = parser.add_mutually_exclusive_group()
     puzzle_source.add_argument('-b', '--board', default='hello',
@@ -178,6 +180,10 @@ def main():
     args = cli_args()
     if args.version:
         print(__version__)
+        return
+
+    if args.show_examples_folder:
+        print(example_file())
         return
 
     _setup_logs(log_level(args.verbose))

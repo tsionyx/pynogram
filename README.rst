@@ -6,10 +6,10 @@ Nonogram solver
 
 Solve the `nonogram puzzles <https://en.wikipedia.org/wiki/Nonogram>`_
 and see the solution process.
-Currently supports black-and-white and color puzzles
-(see file format in ``examples/hello.txt``)
-with the unlimited size. Also you can solve puzzles
+Supports both black-and-white and color puzzles with the unlimited
+(at least in theory) size. Also, you can solve puzzles
 from http://webpbn.com that have thousands of them.
+
 
 Install
 -------
@@ -18,17 +18,15 @@ Install
 
     pip install pynogram
 
-You can also install `numpy` for better performance
+You can also install *numpy* for better performance
 (it's not listed in requirements to keep the package lightweight).
-However numpy does not work with PyPy interpreter.
+However, numpy does not work with PyPy interpreter.
 
-Usage
------
 
 Console
-~~~~~~~
+-------
 
-just to make sure it works
+Make sure it works, first (if not, see the `Errors`_ section):
 
 .. code-block::
 
@@ -44,7 +42,20 @@ just to make sure it works
       1 1 1 1 1 1 1 1 ⬛ . . . ⬛ . ⬛ . . . . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . .
         1 1 2 1 1 3 1 ⬛ . . . ⬛ . . ⬛ ⬛ . . ⬛ . ⬛ . . ⬛ ⬛ ⬛ . . ⬛
 
-solve local puzzle
+
+You can solve puzzles from different sources:
+
+- local puzzles, embedded inside the package
+- local puzzles, created by yourself
+- puzzles from http://webpbn.com (without downloading)
+- locally saved webpbn puzzles (mainly for development/debug purpose)
+
+Local
+~~~~~
+
+To solve one of the embedded puzzles do the ``pynogram --board {NAME}`` (or simply *-b*)
+where NAME is the name of the file (you can skip the *.txt* extension).
+See the list of all embedded puzzles in the *pynogram/examples/* of your installation folder [1]_.
 
 .. code-block::
 
@@ -80,8 +91,65 @@ solve local puzzle
             7 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . . . . . . . .
             7 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . . . . . . . .
 
+solve simple color puzzle (UK flag)
 
-solve simple black-and-white puzzle
+.. code-block::
+
+    $ pynogram -b uk
+    # # # # # # #       1 1 2 2 3 3 4                       4 3 3 2 2 1 1
+    # # # # # # #       1 2 1 2 1 2 1                       1 2 1 2 1 2 1
+    # # # # # # # 1 1 2 4 3 3 2 2 1 1                       1 1 2 2 3 3 4 2 1 1
+    # # # # # # # 5 5 4 3 3 3 3 3 3 3                       3 3 3 3 3 3 3 4 5 5
+    # # # # # # # 3 3 3 4 3 3 2 2 1 1 4 5 5 6       6 5 5 4 1 1 2 2 3 3 4 3 3 3
+    # # # # # # # 5 5 4 1 2 1 2 1 2 1 7 5 5 3       3 5 5 7 1 2 1 2 1 2 1 4 5 5
+    # # # # # # # 1 1 2 1 1 2 2 3 3 4 4 5 5 6 1515156 5 5 4 4 3 3 2 2 1 1 2 1 1
+        3 113 113 % % % * * * * * * * * * * * % % % * * * * * * * * * * * % % %
+    2 3 9 3 9 3 2 * * % % % * * * * * * * * * % % % * * * * * * * * * % % % * *
+    4 3 7 3 7 3 4 * * * * % % % * * * * * * * % % % * * * * * * * % % % * * * *
+    6 3 5 3 5 3 6 * * * * * * % % % * * * * * % % % * * * * * % % % * * * * * *
+    8 3 3 3 3 3 8 * * * * * * * * % % % * * * % % % * * * % % % * * * * * * * *
+    103 1 3 1 3 10* * * * * * * * * * % % % * % % % * % % % * * * * * * * * * *
+                31% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+                31% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+                31% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+    103 1 3 1 3 10* * * * * * * * * * % % % * % % % * % % % * * * * * * * * * *
+    8 3 3 3 3 3 8 * * * * * * * * % % % * * * % % % * * * % % % * * * * * * * *
+    6 3 5 3 5 3 6 * * * * * * % % % * * * * * % % % * * * * * % % % * * * * * *
+    4 3 7 3 7 3 4 * * * * % % % * * * * * * * % % % * * * * * * * % % % * * * *
+    2 3 9 3 9 3 2 * * % % % * * * * * * * * * % % % * * * * * * * * * % % % * *
+        3 113 113 % % % * * * * * * * * * * * % % % * * * * * * * * * * * % % %
+
+User-defined
+~~~~~~~~~~~~
+
+To create the puzzle by yourself, learn the format first. Do not panic, it is very simple!
+Find out the *pynogram/examples/hello.txt* file inside your installation folder [1]_
+and copy it to create a new puzzle. This file is the working puzzle which gets solved when
+you test the app with the simple ``pynogram`` call.
+To run the solver on your crafted file hit the same command but specify the path to your file:
+
+.. code-block::
+
+    $ cp /install/folder/pynogram/examples/hello.txt my-new-puzzle.txt
+    $ pynogram -b my-new-puzzle.txt
+    # # # # # # # # #               1 1
+    # # # # # # # # #               1 1               1   1     5
+    # # # # # # # # # 7 1 1 1 7 0 3 1 1 2 0 6 0 6 0 3 1 5 1 3 0 1
+                1 1 1 ⬛ . . . ⬛ . . . . . . . . . . . . . . . . ⬛
+            1 1 1 1 1 ⬛ . . . ⬛ . . . . . . ⬛ . ⬛ . . . . . . . ⬛
+        1 1 2 1 1 3 1 ⬛ . . . ⬛ . . ⬛ ⬛ . . ⬛ . ⬛ . . ⬛ ⬛ ⬛ . . ⬛
+    5 1 1 1 1 1 1 1 1 ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ . . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛
+    1 1 4 1 1 1 1 1 1 ⬛ . . . ⬛ . ⬛ ⬛ ⬛ ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛
+      1 1 1 1 1 1 1 1 ⬛ . . . ⬛ . ⬛ . . . . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . .
+        1 1 2 1 1 3 1 ⬛ . . . ⬛ . . ⬛ ⬛ . . ⬛ . ⬛ . . ⬛ ⬛ ⬛ . . ⬛
+
+Webpbn
+~~~~~~
+
+Visit the http://webpbn.com/ to see thousands of puzzles waiting for you to solve.
+To run the solver on any of them just specify the puzzle id with the *--pbn* flag:
+
+solve simple black-and-white puzzle http://webpbn.com/3
 
 .. code-block::
 
@@ -136,8 +204,55 @@ solve simple color puzzle http://webpbn.com/898
                   9 . . . X X X X X X X X X . . .
 
 
-Web
-~~~
+If you want to come over the network overhead when solving the webpbn puzzle,
+you can download it prior to solving (e.g. http://webpbn.com/survey/puzzles).
+Then run the solver ``pynogram --local-pbn=path/to/pbn/puzzle.xml``.
+
+Modes
+~~~~~
+
+By default, in the process of solving the new information will instantly appear on a terminal
+(as a full image board), so you can observe many boards that changing each other many times a second
+mixed with logs (if you specify any verbosity level with *-v* flag). But you can always disable
+the board updates and force to show only the final result with *--draw-final* flag.
+
+Also the new experimental mode *--curses* was added recently, that allows you to see the solving
+inside a separate console (`ncurses <https://en.wikipedia.org/wiki/Ncurses>`_) window.
+The *--curses* mode does not work correctly on PyPy 2.7. If you want to run it on PyPy anyway,
+please install the PyPy 3 (it will give you the best performance anyway, so give it a chance).
+
+Errors
+~~~~~~
+
+If you see something like this (e.g. I found it when run within docker image)
+
+.. code-block::
+
+    $ pynogram
+    ...
+    UnicodeEncodeError: 'ascii' codec can't encode character u'\u2b1b' in position 18: ordinal not in range(128)
+
+then try to run with the special environment variable
+
+.. code-block::
+
+    $ PYTHONIOENCODING=utf-8 pynogram
+
+If that will work, you can save that variable for current session:
+
+.. code-block::
+
+    $ export PYTHONIOENCODING=utf-8
+
+or for all the future runs
+
+.. code-block::
+
+    $ echo 'export PYTHONIOENCODING=utf-8' >> ~/.bashrc
+
+
+Web-solver
+----------
 
 - **to use the web solver you have to install additional subpackage:**
 
@@ -208,6 +323,24 @@ Also PyPy 2.7 and 3.5 are supported.
 If you have any issues, drop a line to the
 `project site <https://github.com/tsionyx/pynogram/issues>`_.
 
+
+.. [1] The installation folder can vary depending on your distro, python version
+ and installation method. For example when installed inside virtualenv it can be
+ in one of such paths:
+
+  - .env/lib/python3.5/site-packages/
+  - ~/.virtualenvs/pypy3/site-packages/
+  - ~/.virtualenvs/pynogram/lib/python2.7/site-packages/
+
+ When installing system-wide it can be in:
+
+  - /usr/lib/pypy/lib-python/2.7/
+  - /usr/local/lib/python2.7/dist-packages/
+
+ If you still cannot find it, try the ``which pynogram``, it gives you some clue
+ about where the installation folder can be.
+ Also if you actually searching for the *examples/* folder,
+ try ``pynogram --show-examples-folder``.
 
 .. |Build Status| image:: https://img.shields.io/travis/tsionyx/pynogram.svg
     :target: https://travis-ci.org/tsionyx/pynogram
