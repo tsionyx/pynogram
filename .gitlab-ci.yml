@@ -1,5 +1,8 @@
 # the python images contain too old PyPy version in their repos
-image: ubuntu
+
+# the ubuntu:latest now (May, 2018) comes with python3.6,
+# so specify a little outdated Ubuntu version
+image: ubuntu:16.04
 
 before_script:
   - apt-get update -qq
