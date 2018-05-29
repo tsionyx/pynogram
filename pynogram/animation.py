@@ -5,10 +5,14 @@ Defines various renderers for the game of nonogram
 
 from __future__ import unicode_literals, print_function
 
-import curses
 import locale
 import logging
 import time
+
+try:
+    import curses
+except ImportError:
+    curses = None
 
 from six import string_types, itervalues
 from six.moves import queue

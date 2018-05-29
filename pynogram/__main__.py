@@ -6,13 +6,17 @@ The program's entry point
 
 from __future__ import unicode_literals, print_function
 
-import curses
 import json
 import logging
 import platform
 from argparse import ArgumentParser
 from datetime import datetime
 from threading import Thread
+
+try:
+    import curses
+except ImportError:
+    curses = None
 
 from six import PY2, text_type
 from six.moves import queue
@@ -191,6 +195,9 @@ def main():
     is_windows = platform.system() == 'Windows'
     is_pypy2 = PY2 and platform.python_implementation() == 'PyPy'
     is_curses = args.curses
+
+    if is_curses and is_windows:
+        exit('Curses do not supported on Windows')
 
     _setup_logs(log_level(args.verbose))
 
