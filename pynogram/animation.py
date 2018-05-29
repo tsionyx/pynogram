@@ -216,6 +216,11 @@ class StringsPager(object):
         self.line_feed()
         return redraw
 
+    NO_OF_IDLE_UPDATES_TO_PAUSE = 1000
+    # if you make it too low, the CPU will use its power for useless looping
+    # on the other side, if the pause will be too high, the UI can become unresponsive
+    PAUSE_ON_IDLE = 0.05
+
     @classmethod
     def draw(cls, window, source_queue, restart_on='\n'):
         """
@@ -235,6 +240,11 @@ class StringsPager(object):
 
         _self = cls(window, source_queue, restart_on=restart_on)
 
+        idle_updates_counter = 0
+        # prevent unnecessary lookups inside a loop
+        idle_timeout = cls.PAUSE_ON_IDLE
+        max_idle_updates = cls.NO_OF_IDLE_UPDATES_TO_PAUSE
+
         # k is the last character pressed
         k = 0
         while k != ord('q'):
@@ -253,7 +263,15 @@ class StringsPager(object):
             elif k == curses.KEY_LEFT:
                 _self.scroll_left()
 
-            _self.update()
+            if _self.update():
+                idle_updates_counter = 0
+            else:
+                idle_updates_counter += 1
+                if idle_updates_counter >= max_idle_updates:
+                    LOG.info('Pause curses for %s seconds...', idle_timeout)
+                    time.sleep(idle_timeout)
+                    idle_updates_counter = 0
+
             # Refresh the screen
             # window.refresh()
 
