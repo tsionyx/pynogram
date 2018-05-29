@@ -201,11 +201,11 @@ class Solver(object):
 
         return True, before_contradiction
 
-    def _new_jobs_from_solution(self, cell_state, previous_state, is_contradiction):
+    def _new_jobs_from_solution(self, cell_state, previous_board, is_contradiction):
         board = self.board
 
         # evaluate generator
-        changed = list(board.changed(previous_state))
+        changed = list(board.changed(previous_board))
         assumption = cell_state.color
         log_contradiction = '(not) ' if is_contradiction else ''
         LOG.info('Changed %d cells with %s%s assumption',
@@ -220,14 +220,14 @@ class Solver(object):
         for neighbour in board.unsolved_neighbours(cell_state.position):
             yield neighbour, 0
 
-    def _set_probe(self, state):
+    def _set_guess(self, state):
         board = self.board
-        is_contradiction, prev_state = self.probe(state, rollback=False, force=True)
+        is_contradiction, prev_board = self.probe(state, rollback=False, force=True)
 
         if is_contradiction:
             raise NonogramError('Real contradiction was found: %s' % (state,))
 
-        if prev_state is None:
+        if prev_board is None:
             LOG.warning("The probe for state '%s' does not return anything new", state)
             return ()
 
@@ -235,7 +235,7 @@ class Solver(object):
             self._add_solution()
             return ()
 
-        return self._new_jobs_from_solution(state, prev_state, is_contradiction)
+        return self._new_jobs_from_solution(state, prev_board, is_contradiction)
 
     def _solve_jobs(self, jobs, refill=False):
         """
@@ -471,7 +471,7 @@ class Solver(object):
         probe_jobs = self._get_all_unsolved_jobs()
         try:
             # update with more prioritized cells
-            for new_job, priority in self._set_probe(state):
+            for new_job, priority in self._set_guess(state):
                 probe_jobs[new_job] = priority
 
             if self._limits_reached(depth):
