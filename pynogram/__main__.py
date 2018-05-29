@@ -9,11 +9,12 @@ from __future__ import unicode_literals, print_function
 import curses
 import json
 import logging
+import platform
 from argparse import ArgumentParser
 from datetime import datetime
 from threading import Thread
 
-from six import text_type
+from six import PY2, text_type
 from six.moves import queue
 
 from pynogram.__version__ import __version__
@@ -94,6 +95,7 @@ class PagerWithUptime(StringsPager):
     StringsPager that inserts the small counter
     in the upper left corner of curses window
     """
+
     def __init__(self, *args, **kwargs):
         super(PagerWithUptime, self).__init__(*args, **kwargs)
         self.start_time = datetime.now()
@@ -186,6 +188,10 @@ def main():
         print(example_file())
         return
 
+    is_windows = platform.system() == 'Windows'
+    is_pypy2 = PY2 and platform.python_implementation() == 'PyPy'
+    is_curses = args.curses
+
     _setup_logs(log_level(args.verbose))
 
     if args.pbn:
@@ -195,10 +201,16 @@ def main():
     else:
         board_def = read_example(args.board)
 
+    # the Windows does not support Unicode, so does the curses on PyPy2
+    if (is_curses and is_pypy2) or is_windows:
+        box_symbol = '#'
+    else:
+        box_symbol = '\u2B1B'
+
     draw_solution(board_def,
-                  box_symbol='\u2B1B',
+                  box_symbol=box_symbol,
                   draw_final=args.draw_final,
-                  curses_animation=args.curses,
+                  curses_animation=is_curses,
                   max_solutions=args.max_solutions,
                   timeout=args.timeout,
                   max_depth=args.max_depth)
