@@ -61,3 +61,19 @@ instead of pairs and triples
 - [cache is more intelligent now](http://webpbn.com/survey/caching.html)
 - refactor the Simpson line solver
 - flake8 now checks everything
+
+
+## [0.2.1] - 2018-06-01
+### Added
+- new visualization mode `--curses` (Linux only)
+- `--show-examples-folder` to find folder with embedded puzzles
+
+### Fixed
+- issues with Unicode on Windows console
+- specify ubuntu version in travis CI
+
+### Updated
+- improved README: more examples and descriptions
+- more clear rendering in text-grid mode
+- add PyPy in setup.py
+- gif image examples (to mirror recent algorithm accelerations)
