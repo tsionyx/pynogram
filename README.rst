@@ -1,3 +1,5 @@
+|PyPI| |PyPI - Python Version| |PyPI - Implementation|
+
 |Build Status| |Coverage Status|
 
 
@@ -26,7 +28,10 @@ However, numpy does not work with PyPy interpreter.
 Console
 -------
 
-Make sure it works, first (if not, see the `Errors`_ section):
+Console-based solver works on a wide variety of pythons: python2.7+, python3.5+, PyPy 2.7, PyPy 3.5.
+The best performance, however, achieved on PyPy (version 3 is always preferable), so try it out.
+
+Firstly, make sure it works (if not, see the `Errors`_ section):
 
 .. code-block::
 
@@ -50,8 +55,8 @@ You can solve puzzles from different sources:
 - puzzles from http://webpbn.com (without downloading)
 - locally saved webpbn puzzles (mainly for development/debug purpose)
 
-Local
-~~~~~
+`Local <pynogram/examples/>`_
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To solve one of the embedded puzzles do the ``pynogram --board {NAME}`` (or simply *-b*)
 where NAME is the name of the file (you can skip the *.txt* extension).
@@ -149,7 +154,7 @@ Webpbn
 Visit the http://webpbn.com/ to see thousands of puzzles waiting for you to solve.
 To run the solver on any of them just specify the puzzle id with the *--pbn* flag:
 
-solve simple black-and-white puzzle http://webpbn.com/3
+simple black-and-white puzzle http://webpbn.com/3
 
 .. code-block::
 
@@ -175,7 +180,7 @@ solve simple black-and-white puzzle http://webpbn.com/3
           9 . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . .
           5 . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ . . . . .
 
-solve simple color puzzle http://webpbn.com/898
+simple color puzzle http://webpbn.com/898
 
 .. code-block::
 
@@ -218,16 +223,14 @@ the board updates and force to show only the final result with *--draw-final* fl
 
 Also the new experimental mode *--curses* was added recently, that allows you to see the solving
 inside a separate console (`ncurses <https://en.wikipedia.org/wiki/Ncurses>`_) window.
-The *--curses* mode does not work correctly on PyPy 2.7. If you want to run it on PyPy anyway,
-please install the PyPy 3 (it will give you the best performance anyway, so give it a chance).
 
 Examples:
 
-pynogram --pbn 30216 --curses
+$ pynogram --pbn `30216 <http://webpbn.com/30216>`_ --curses
 
 .. image:: docs/images/curses-moose.gif
 
-pynogram --pbn 29723 --curses
+$ pynogram --pbn `29723 <http://webpbn.com/29723>`_ --curses
 
 .. image:: docs/images/curses-mozaic.gif
 
@@ -268,6 +271,10 @@ Web-solver
 
   ``pip install pynogram[web]`` and **start the server**: ``pynogram-web``
 
+- the web-solver does not work on PyPy 3.5 and gives very bad user experience on PyPy 2.7
+  (somehow tornado cannot get its share of CPU to update the screen), so I recommend
+  using old good CPython (preferably 3 for slightly better performance).
+
 - you can solve any of local puzzles (with */board/local* path)
   or webpbn puzzles (with */board/pbn* path)
 
@@ -284,7 +291,7 @@ Web-solver
   - **text-grid** - slightly more advanced ASCII-graphic that renders
     the grid between cells. However it requires more screen space.
 
-  - **text-grid-bold** - almost like the last, but also draws bold lines,
+  - **text-grid-bold** - almost like the last one, but also draws bold lines,
     splitting the whole board into 5x5 squares (remember puzzles in those magazines?)
 
 
@@ -356,3 +363,9 @@ If you have any issues, drop a line to the
     :target: https://travis-ci.org/tsionyx/pynogram
 .. |Coverage Status| image:: https://img.shields.io/coveralls/github/tsionyx/pynogram.svg
     :target: https://coveralls.io/github/tsionyx/pynogram
+.. |PyPI| image:: https://img.shields.io/pypi/v/pynogram.svg
+    :target: https://pypi.org/project/pynogram/
+.. |PyPI - Python Version| image:: https://img.shields.io/pypi/pyversions/pynogram.svg
+    :target: https://pypi.org/project/pynogram/
+.. |PyPI - Implementation| image:: https://img.shields.io/pypi/implementation/pynogram.svg
+    :target: https://pypi.org/project/pynogram/
