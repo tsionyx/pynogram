@@ -242,11 +242,11 @@ class AsciiRenderer(BaseAsciiRenderer):
 
     __rend_name__ = 'text-grid'
 
-    def __init__(self, board=None, stream=stdout):
-        super(AsciiRenderer, self).__init__(board, stream=stream)
-        self.icons.update({
-            UNKNOWN: ' ',
-        })
+    DEFAULT_ICONS = {
+        UNKNOWN: '?',
+        BOX: '#',
+        SPACE: ' ',
+    }
 
     # cannot fit the value more than '999'
     CELL_WIDTH = 3
