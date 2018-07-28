@@ -59,7 +59,7 @@ def normalize_description(row, color=False):
     elif isinstance(row, integer_types):
         return row,  # it's a tuple!
     elif isinstance(row, string_types):
-        blocks = row.split(' ')
+        blocks = row.split()
         if color:
             return tuple(blocks)
         return tuple(map(int, blocks))
