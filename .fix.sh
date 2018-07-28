@@ -84,6 +84,16 @@ function check_syntax() {
 }
 
 
+function git_ls_no_submodules() {
+    if [[ -f .gitmodules ]]; then
+        # manually exclude submodules https://stackoverflow.com/a/48434067
+        git ls-files $@ | grep -Fxvf  <(grep "^\s*\[submodule " .gitmodules | cut -d '"' -f2)
+    else
+        git ls-files $@
+    fi
+}
+
+
 ALLOW_NON_ASCII_FILE_TYPES='rst|md'
 
 function check_unicode() {
@@ -109,9 +119,9 @@ function check_unicode() {
 
     # all git-tracked *.py files (if exists any) should not have
     # a 'u' prefix before string literal
-    ! git ls-files '*.py' | xargs grep -PI "[^a-zA-Z\x7F-\xFF]u['\\\"]"
+    ! git ls-files '*.py' | xargs grep -nPI "[^a-zA-Z\x7F-\xFF]u['\\\"]"
 
-    ! git ls-files "*[^.($ALLOW_NON_ASCII_FILE_TYPES)]" | xargs grep -PIr --color '[^\x00-\x7F]'
+    ! git_ls_no_submodules "*[^.($ALLOW_NON_ASCII_FILE_TYPES)]" | xargs grep -nPIr --color '[^\x00-\x7F]'
 }
 
 # =================== HERE IS THE 'MAIN' FUNCTION BEGINS =================== #
@@ -122,12 +132,16 @@ case "$1" in
     --pre-commit)
         update_hook "${1:2}"
         ;;
+
     --pre-push)
         update_hook "${1:2}"
         ;;
 
     --unicode)
+        # disable the glob (noglob)
+        set -f
         check_unicode
+        set +f
         ;;
 
     *)
@@ -143,7 +157,7 @@ KNOWN_EXTENSIONS='py|ipynb|php|sql|sh|js|html|htm|css|json|xml|yml|yaml|iml|csv|
 # check if any git-tracked files has been changed
 hash_file=$(tempfile) || exit 1
 trap "rm -f -- '$hash_file'" EXIT
-git ls-files | xargs md5sum > "$hash_file"
+git_ls_no_submodules | xargs md5sum > "$hash_file"
 
 # http://stackoverflow.com/a/8694751/
 IFS=$'\n'
@@ -159,7 +173,7 @@ done
 unset IFS
 
 
-fixed_files=$(diff <(git ls-files | xargs md5sum) "$hash_file" | grep -P '^[<>]' | awk '{print $3}' | sort -u)
+fixed_files=$(diff <(git_ls_no_submodules | xargs md5sum) "$hash_file" | grep -P '^[<>]' | awk '{print $3}' | sort -u)
 rm -f -- "$hash_file"
 trap - EXIT
 
