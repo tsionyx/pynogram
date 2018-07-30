@@ -11,8 +11,9 @@ import os
 import sys
 from contextlib import contextmanager
 from datetime import datetime
+from functools import wraps
 
-from six import text_type
+from six import text_type, iteritems
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 START_TIME = datetime.now()
@@ -79,3 +80,33 @@ def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):  # pylint: disable=invalid-name
     Source: https://stackoverflow.com/a/33024979
     """
     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+
+
+def log_call(log_func=print):
+    def _decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            f_name = f.__name__
+
+            msg = 'Calling function {}('.format(f_name)
+            _args = args
+            if _args:
+                _self = _args[0]
+                if isinstance(_self, object) and hasattr(_self, f_name):
+                    _args = args[1:]
+
+            msg += ', '.join(map(str, _args))
+            msg += ', '.join('{}={}'.format(k, v) for k, v in iteritems(kwargs))
+
+            msg += ')'
+
+            # start_time = time.time()
+            result = f(*args, **kwargs)
+            msg += ' --> {}'.format(result)
+            log_func(msg)
+
+            return result
+
+        return wrapper
+
+    return _decorator

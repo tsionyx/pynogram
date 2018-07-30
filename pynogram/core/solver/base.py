@@ -9,6 +9,7 @@ from six import iteritems
 
 from pynogram.core.common import normalize_row, normalize_description
 from pynogram.core.solver import bgu
+from pynogram.core.solver import efficient
 from pynogram.core.solver import simpson
 from pynogram.core.solver.common import NonogramError, LineSolutionsMeta
 from pynogram.core.solver.machine import (
@@ -43,6 +44,9 @@ def _solver(name):
 
     if name == 'bgu':
         return bgu.BguSolver.solve
+
+    if name == 'eff':
+        return efficient.EfficientSolver.solve
 
     raise AttributeError("Cannot find solving method '%s'" % name)
 

@@ -7,7 +7,10 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
+from functools import partial, wraps
 from time import time
+
+from six import iteritems
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -127,3 +130,47 @@ class ExpirableCache(Cache):
             self.delete(name)
 
         return value
+
+
+class Memoized(object):
+    def __init__(self, func):
+        self.func = func
+        self._cache = {}
+
+    def __call__(self, *args, **kwargs):
+        key = tuple(args)
+        if kwargs:
+            key += tuple(iteritems(kwargs))
+
+        try:
+            return self._cache[key]
+        except KeyError:
+            res = self.func(*args, **kwargs)
+            self._cache[key] = res
+            return res
+        except TypeError:
+            # non cachable, better to not cache than to blow up entirely
+            return self.func(*args, **kwargs)
+
+    def __get__(self, obj, objtype):
+        """Support instance methods."""
+        return partial(self.__call__, obj)
+
+
+def memoized(f):
+    f._cache = {}
+
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        key = tuple(args)
+        if kwargs:
+            key += tuple(iteritems(kwargs))
+
+        try:
+            return f._cache[key]
+        except KeyError:
+            res = f(*args, **kwargs)
+            f._cache[key] = res
+            return res
+
+    return wrapper
