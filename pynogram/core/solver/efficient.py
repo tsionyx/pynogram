@@ -20,7 +20,7 @@ from pynogram.core.solver.common import (
     LineSolutionsMeta,
     NonogramError
 )
-from pynogram.utils.cache import memoized
+from pynogram.utils.cache import memoized_instance
 
 LOG = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class EfficientSolver(object):
 
         return minimum_lengths
 
-    @memoized
+    @memoized_instance
     def _fix(self, i, j):
         """
         Determine whether S[:i+1] is fixable with respect to D[:j+1]
@@ -142,7 +142,7 @@ class EfficientSolver(object):
 
         return self._paint(i, j)
 
-    @memoized
+    @memoized_instance
     def _paint(self, i, j):
         fix0 = self._fix0(i, j)
         fix1 = self._fix1(i, j)
@@ -243,7 +243,7 @@ class EfficientColorSolver(EfficientSolver):
 
         return minimum_lengths
 
-    @memoized
+    @memoized_instance
     def _fix(self, i, j):
         """
         Determine whether S[:i+1] is fixable with respect to D[:j+1]
@@ -360,7 +360,7 @@ class EfficientColorSolver(EfficientSolver):
     def empty_cell(cls):
         return {SPACE}
 
-    @memoized
+    @memoized_instance
     def _paint(self, i, j):
         fix0 = self._fix0(i, j)
 

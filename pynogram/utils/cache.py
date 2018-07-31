@@ -7,6 +7,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
+from collections import defaultdict
 from functools import partial, wraps
 from time import time
 
@@ -157,20 +158,29 @@ class Memoized(object):  # pragma: no cover
         return partial(self.__call__, obj)
 
 
-def memoized(f):
-    f._cache = {}
+def memoized_instance(f):
+    func_name = f.__name__
 
     @wraps(f)
     def wrapper(*args, **kwargs):
-        key = tuple(args)
+        _self = args[0]
+        _args = args[1:]
+
+        try:
+            cache = _self._memoized[func_name]
+        except AttributeError:
+            _self._memoized = defaultdict(dict)
+            cache = _self._memoized[func_name]
+
+        key = tuple(_args)
         if kwargs:
             key += tuple(iteritems(kwargs))
 
         try:
-            return f._cache[key]
+            return cache[key]
         except KeyError:
             res = f(*args, **kwargs)
-            f._cache[key] = res
+            cache[key] = res
             return res
 
     return wrapper
