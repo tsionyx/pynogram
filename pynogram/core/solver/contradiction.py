@@ -13,7 +13,7 @@ from six.moves import range
 
 from pynogram.core.board import CellPosition, CellState
 from pynogram.core.solver import line
-from pynogram.core.solver.base import cache_hit_rate
+from pynogram.core.solver.base import cache_info
 from pynogram.core.solver.common import NonogramError
 from pynogram.utils.priority_dict import PriorityDict
 
@@ -423,9 +423,10 @@ class Solver(object):
 
         board.set_finished()
         LOG.info('Full solution: %.6f sec', time.time() - start)
-        for method, hit_rate in cache_hit_rate().items():
-            if hit_rate > 0:
-                LOG.warning('Cache hit rate (%s): %.4f%%', method, hit_rate * 100.0)
+        for method, info in cache_info().items():
+            size, hit_rate = info
+            if size > 0:
+                LOG.warning('%s cache: size=%d, hit rate=%.4f%%', method, size, hit_rate * 100.0)
 
     def _limits_reached(self, depth):
         """

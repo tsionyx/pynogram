@@ -82,9 +82,9 @@ def assert_match(row_desc, row):
         raise NonogramError("The row '{}' cannot fit in clue '{}'".format(row, row_desc))
 
 
-def cache_hit_rate():
-    """Cache hit rate for different solvers"""
+def cache_info():
+    """Cache size and hit rate for different solvers"""
     return {
-        class_name: cache.hit_rate
+        class_name: (len(cache), cache.hit_rate)
         for class_name, cache in iteritems(LineSolutionsMeta.registered_caches)
     }
