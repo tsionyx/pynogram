@@ -82,7 +82,7 @@ def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):  # pylint: disable=invalid-name
     return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
 
-def log_call(log_func=print):
+def log_call(log_func=print):  # pragma: no cover
     def _decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):

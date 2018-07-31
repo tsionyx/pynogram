@@ -132,7 +132,7 @@ class ExpirableCache(Cache):
         return value
 
 
-class Memoized(object):
+class Memoized(object):  # pragma: no cover
     def __init__(self, func):
         self.func = func
         self._cache = {}

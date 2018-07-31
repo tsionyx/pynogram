@@ -8,6 +8,7 @@ from __future__ import unicode_literals, print_function
 import logging
 import os
 import re
+from collections import namedtuple
 
 from six import integer_types, string_types, iteritems
 
@@ -70,6 +71,10 @@ def normalize_description(row, color=False):
 _COLOR_DESCRIPTION_RE = re.compile('([0-9]+)(.+)')
 
 
+class ColorBlock(namedtuple('ColorBlock', 'size color')):
+    pass
+
+
 def normalize_description_colored(row, name_to_id_map):
     """Normalize a colored nonogram description"""
     row = normalize_description(row, color=True)
@@ -93,7 +98,7 @@ def normalize_description_colored(row, name_to_id_map):
         else:
             res.append(item)
 
-    return tuple((size, name_to_id_map[color]) for size, color in res)
+    return tuple(ColorBlock(size, name_to_id_map[color]) for size, color in res)
 
 
 INFORMAL_REPRESENTATIONS = {

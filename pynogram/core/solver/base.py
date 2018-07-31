@@ -45,8 +45,11 @@ def _solver(name):
     if name == 'bgu':
         return bgu.BguSolver.solve
 
-    if name == 'eff':
+    if name == 'efficient':
         return efficient.EfficientSolver.solve
+
+    if name == 'efficient_color':
+        return efficient.EfficientColorSolver.solve
 
     raise AttributeError("Cannot find solving method '%s'" % name)
 
