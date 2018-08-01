@@ -20,7 +20,6 @@ from pynogram.core.solver.common import (
     LineSolutionsMeta,
     NonogramError
 )
-from pynogram.utils.cache import memoized_instance
 
 LOG = logging.getLogger(__name__)
 
@@ -33,6 +32,17 @@ class EfficientSolver(object):
 
         self.minimum_lengths = self.min_lengths(self.description)
         self.additional_space = self._set_additional_space()
+
+        self._cache_width = len(self.description) + 1
+        self._fix_table = self._init_tables()
+        self._paint_table = self._init_tables()
+
+    def _init_tables(self):
+        cache_height = len(self.line) + 1
+        return [None] * (self._cache_width * cache_height)
+
+    def _linear_index(self, i, j):
+        return (i + 1) * self._cache_width + (j + 1)
 
     def _set_additional_space(self):
         space = self.empty_cell()
@@ -58,7 +68,13 @@ class EfficientSolver(object):
 
         return minimum_lengths
 
-    @memoized_instance
+    def fix(self, i, j):
+        fixable = self._fix_table[self._linear_index(i, j)]
+        if fixable is None:
+            fixable = self._fix(i, j)
+            self._fix_table[self._linear_index(i, j)] = fixable
+        return fixable
+
     def _fix(self, i, j):
         """
         Determine whether S[:i+1] is fixable with respect to D[:j+1]
@@ -98,7 +114,7 @@ class EfficientSolver(object):
         """
 
         if self.line[i] in (SPACE, UNKNOWN):
-            return self._fix(i - 1, j)
+            return self.fix(i - 1, j)
 
         return False
 
@@ -113,7 +129,7 @@ class EfficientSolver(object):
         if j >= 0 and i >= block_size:
             block = self.line[i - block_size: i + 1]
             if self._is_space_with_block(block):
-                return self._fix(i - block_size - 1, j - 1)
+                return self.fix(i - block_size - 1, j - 1)
 
         return False
 
@@ -127,7 +143,7 @@ class EfficientSolver(object):
 
     @classmethod
     def _space_with_block(cls, block_size):
-        return (cls.empty_cell(),) + (BOX,) * block_size
+        return [cls.empty_cell()] + ([BOX] * block_size)
 
     @classmethod
     def empty_cell(cls):
@@ -135,14 +151,19 @@ class EfficientSolver(object):
 
     def paint(self, i, j):
         if i < 0:
-            return ()
+            return []
 
-        if j < 0:
-            return tuple([self.empty_cell()] * (i + 1))
+        painted = self._paint_table[self._linear_index(i, j)]
+        if painted is None:
+            if j < 0:
+                painted = [self.empty_cell()] * (i + 1)
+            else:
+                painted = self._paint(i, j)
 
-        return self._paint(i, j)
+            self._paint_table[self._linear_index(i, j)] = painted
 
-    @memoized_instance
+        return painted
+
     def _paint(self, i, j):
         fix0 = self._fix0(i, j)
         fix1 = self._fix1(i, j)
@@ -159,7 +180,7 @@ class EfficientSolver(object):
                 raise NonogramError('Block %r not fixable at position %r' % (j, i))
 
     def _paint0(self, i, j):
-        return self.paint(i - 1, j) + (self.empty_cell(),)
+        return self.paint(i - 1, j) + [self.empty_cell()]
 
     def _paint1(self, i, j):
         block_size = self.description[j]
@@ -174,7 +195,7 @@ class EfficientSolver(object):
                 yield UNKNOWN
 
     def _paint_both(self, i, j):
-        return tuple(self._merge_iter(
+        return list(self._merge_iter(
             self._paint0(i, j),
             self._paint1(i, j)
         ))
@@ -209,7 +230,7 @@ class EfficientSolver(object):
         if self.additional_space:
             res = res[1:]
 
-        return res
+        return tuple(res)
 
 
 @add_metaclass(LineSolutionsMeta)
@@ -243,7 +264,6 @@ class EfficientColorSolver(EfficientSolver):
 
         return minimum_lengths
 
-    @memoized_instance
     def _fix(self, i, j):
         """
         Determine whether S[:i+1] is fixable with respect to D[:j+1]
@@ -290,7 +310,7 @@ class EfficientColorSolver(EfficientSolver):
         """
 
         if SPACE in self.line[i]:
-            return self._fix(i - 1, j)
+            return self.fix(i - 1, j)
 
         return False
 
@@ -330,7 +350,7 @@ class EfficientColorSolver(EfficientSolver):
             block = self.line[i - block_size + 1: i + 1]
 
             if self._can_be_colored(block, color, preceding_space=preceding_space):
-                return self._fix(i - block_size, j - 1)
+                return self.fix(i - block_size, j - 1)
 
         return False
 
@@ -347,20 +367,18 @@ class EfficientColorSolver(EfficientSolver):
 
     @classmethod
     def _color_block(cls, block_size, color, preceding_space=True):
+        block = []
         if preceding_space:
-            block = (cls.empty_cell(),)
+            block = [cls.empty_cell()]
             block_size -= 1
-        else:
-            block = ()
 
-        block += ({color},) * block_size
+        block += [{color}] * block_size
         return block
 
     @classmethod
     def empty_cell(cls):
         return {SPACE}
 
-    @memoized_instance
     def _paint(self, i, j):
         fix0 = self._fix0(i, j)
 
@@ -381,9 +399,6 @@ class EfficientColorSolver(EfficientSolver):
             else:
                 raise NonogramError('Block %r not fixable at position %r' % (j, i))
 
-    def _paint0(self, i, j):
-        return self.paint(i - 1, j) + (self.empty_cell(),)
-
     def _paint_color(self, i, j):
         size, color = self.description[j]
 
@@ -394,15 +409,20 @@ class EfficientColorSolver(EfficientSolver):
         else:
             block_size = size
 
-        return self.paint(i - block_size, j - 1) + self._color_block(
-            block_size, color, preceding_space=preceding_space)
+        prev = self.paint(i - block_size, j - 1)
+        this = self._color_block(block_size, color, preceding_space=preceding_space)
+        return prev + this
 
     @classmethod
-    def _merge_iter(cls, *s):
+    def _merge(cls, *s):
+        if len(s) == 1:
+            return s[0]
+
+        res = []
         for cells in zip(*s):
-            # print(s)
-            # print(cells)
-            yield set([color for cell in cells for color in cell])
+            res.append(set.union(*cells))
+
+        return res
 
     def _paint_all(self, i, j, colors):
         lines = []
@@ -411,9 +431,7 @@ class EfficientColorSolver(EfficientSolver):
 
         lines.append(self._paint_color(i, j))
 
-        if len(lines) == 1:
-            return lines[0]
-        return tuple(self._merge_iter(*lines))
+        return self._merge(*lines)
 
     def _solve(self):
         res = super(EfficientColorSolver, self)._solve()
