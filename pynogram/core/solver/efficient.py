@@ -75,19 +75,19 @@ class EfficientSolver(object):
             self._fix_table[self._linear_index(i, j)] = fixable
         return fixable
 
-    def _fix(self, i, j):
-        """
-        Determine whether S[:i+1] is fixable with respect to D[:j+1]
-        :param i: line size
-        :param j: block number
-        """
+    @classmethod
+    def _can_be_space(cls, cell):
+        return cell in (SPACE, UNKNOWN)
 
+    def _fix_border_conditions(self, i, j):
         if j < 0:
             assert j == -1
 
+            if i < 0:
+                return True
+
             # NB: improvement
-            # if no more blocks left, but some BOX pixels still appear
-            return BOX not in self.line[:i + 1]
+            return all(map(self._can_be_space, self.line[:i + 1]))
 
         # reached the beginning of the line
         if i < 0:
@@ -102,6 +102,18 @@ class EfficientSolver(object):
         if i < self.minimum_lengths[j]:
             return False
 
+        return None
+
+    def _fix(self, i, j):
+        """
+        Determine whether S[:i+1] is fixable with respect to D[:j+1]
+        :param i: line size
+        :param j: block number
+        """
+        res = self._fix_border_conditions(i, j)
+        if res is not None:
+            return res
+
         res = self._fix0(i, j) or self._fix1(i, j)
         return res
 
@@ -113,7 +125,7 @@ class EfficientSolver(object):
         :param j: block number
         """
 
-        if self.line[i] in (SPACE, UNKNOWN):
+        if self._can_be_space(self.line[i]):
             return self.fix(i - 1, j)
 
         return False
@@ -135,7 +147,7 @@ class EfficientSolver(object):
 
     @classmethod
     def _is_space_with_block(cls, s):
-        if s[0] in (SPACE, UNKNOWN):
+        if cls._can_be_space(s[0]):
             if all(pixel in (BOX, UNKNOWN) for pixel in s[1:]):
                 return True
 
@@ -156,7 +168,10 @@ class EfficientSolver(object):
         painted = self._paint_table[self._linear_index(i, j)]
         if painted is None:
             if j < 0:
-                painted = [self.empty_cell()] * (i + 1)
+                if all(map(self._can_be_space, self.line[:i + 1])):
+                    painted = [self.empty_cell()] * (i + 1)
+                else:
+                    raise NonogramError('Excess cells found at the beginning')
             else:
                 painted = self._paint(i, j)
 
@@ -218,12 +233,13 @@ class EfficientSolver(object):
         solver = cls(clue, line)
         try:
             solved = solver._solve()
-            # pylint: disable=no-member
-            cls.solutions_cache.save((clue, line), solved)
-            return solved
         except NonogramError:
             cls.solutions_cache.save((clue, line), False)
             raise NonogramError("Failed to solve line '{}' with clues '{}'".format(line, clue))
+
+        # pylint: disable=no-member
+        cls.solutions_cache.save((clue, line), solved)
+        return solved
 
     def _solve(self):
         res = self.paint(len(self.line) - 1, len(self.description) - 1)
@@ -264,55 +280,18 @@ class EfficientColorSolver(EfficientSolver):
 
         return minimum_lengths
 
+    @classmethod
+    def _can_be_space(cls, cell):
+        # not (len(cell) == 1 and cell[0] in self.colors)
+        return SPACE in cell
+
     def _fix(self, i, j):
-        """
-        Determine whether S[:i+1] is fixable with respect to D[:j+1]
-        :param i: line size
-        :param j: block number
-        """
-
-        if j < 0:
-            assert j == -1
-
-            if i < 0:
-                return True
-
-            # NB: improvement
-            # return any(len(cell) == 1 and cell[0] in self.colors for cell in self.line[:i + 1])
-            # spaces should be allowed for the rest of the line
-            for cell in self.line[:i + 1]:
-                if SPACE not in cell:
-                    return False
-            return True
-
-        # reached the beginning of the line
-        if i < 0:
-            assert i == -1
-
-            # no more blocks to fill
-            if j < 0:
-                return True
-            else:
-                return False
-
-        if i < self.minimum_lengths[j]:
-            return False
+        res = self._fix_border_conditions(i, j)
+        if res is not None:
+            return res
 
         color = self.description[j].color
         return self._fix0(i, j) or self._fix_colored(i, j, color)
-
-    def _fix0(self, i, j):
-        """
-        Determine whether S[:i+1] is fixable with respect to D[:j+1]
-        in assumption that S[i] can be 0
-        :param i: line size
-        :param j: block number
-        """
-
-        if SPACE in self.line[i]:
-            return self.fix(i - 1, j)
-
-        return False
 
     def _precede_with_space(self, j):
         current_color = self.description[j].color
@@ -325,13 +304,6 @@ class EfficientColorSolver(EfficientSolver):
         return False
 
     def _fix_colored(self, i, j, color):
-        """
-        Determine whether S[:i+1] is fixable with respect to D[:j+1]
-        in assumption that S[i] can be of specified color
-        :param i: line size
-        :param j: block number
-        """
-
         if j < 0:
             return False
 
@@ -357,7 +329,7 @@ class EfficientColorSolver(EfficientSolver):
     @classmethod
     def _can_be_colored(cls, s, color, preceding_space=True):
         if preceding_space:
-            if SPACE in s[0]:
+            if cls._can_be_space(s[0]):
                 # ignore the space header
                 s = s[1:]
             else:
