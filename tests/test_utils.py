@@ -7,7 +7,7 @@ import sys
 
 import pytest
 
-from pynogram.utils.collections import (
+from pynogram.utils.iter import (
     merge_dicts,
     pad,
     interleave,

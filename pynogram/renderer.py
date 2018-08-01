@@ -23,7 +23,7 @@ from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
 )
-from pynogram.utils.collections import pad, split_seq
+from pynogram.utils.iter import pad, split_seq
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

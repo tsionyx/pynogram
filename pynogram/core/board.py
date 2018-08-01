@@ -25,7 +25,7 @@ from pynogram.core.common import (
     DEFAULT_COLOR, DEFAULT_COLOR_NAME,
     is_list_like,
 )
-from pynogram.utils.collections import avg, max_safe
+from pynogram.utils.iter import avg, max_safe
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
