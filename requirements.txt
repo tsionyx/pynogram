@@ -4,7 +4,9 @@ numpy; platform_python_implementation != 'PyPy'
 # numpy's `__copy__` does not work on pypy, so simply skip it
 # git+https://bitbucket.org/pypy/numpy.git; platform_python_implementation == 'PyPy'
 futures; python_version < '3.2'
-tornado
+
+# https://github.com/tornadoweb/tornado/issues/2304
+tornado < 5.0
 svgwrite
 
 

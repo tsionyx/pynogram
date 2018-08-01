@@ -271,7 +271,7 @@ Web-solver
 
   ``pip install pynogram[web]`` and **start the server**: ``pynogram-web``
 
-- the web-solver does not work on PyPy 3.5 and gives very bad user experience on PyPy 2.7
+- the web-solver gives bad user experience on PyPy (both 2.7 and 3.5)
   (somehow tornado cannot get its share of CPU to update the screen), so I recommend
   using old good CPython (preferably 3 for slightly better performance).
 
