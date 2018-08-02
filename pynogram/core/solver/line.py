@@ -18,6 +18,22 @@ from pynogram.utils.priority_dict import PriorityDict
 LOG = logging.getLogger(__name__)
 
 
+def _is_pixel_updated(old, new):
+    if old == new:
+        return False
+
+    if is_list_like(new):  # colored
+        if set(old) == set(new):
+            return False
+        assert len(old) > len(new)
+
+    else:
+        assert old == UNKNOWN
+        assert new in (BOX, SPACE)
+
+    return True
+
+
 # pylint: disable=too-many-arguments, too-many-locals, too-many-branches
 def solve_row(board, index, is_column, method):
     """
@@ -25,7 +41,7 @@ def solve_row(board, index, is_column, method):
     If the line gets partially solved,
     put the crossed lines into queue.
 
-    Return the number of solved cells and the list of new jobs that should be solved next.
+    Return the list of new jobs that should be solved next (one for each solved cell).
     """
 
     # start = time.time()
@@ -51,7 +67,6 @@ def solve_row(board, index, is_column, method):
 
     updated = solve_line(row_desc, row, method=method)
 
-    cells_solved = 0
     new_jobs = []
 
     # if board.line_solution_rate(updated) > pre_solution_rate:
@@ -60,17 +75,7 @@ def solve_row(board, index, is_column, method):
         # LOG.debug(row)
         # LOG.debug(updated)
         for i, (pre, post) in enumerate(zip(row, updated)):
-            if pre != post:
-                if is_list_like(post):  # colored
-                    if set(pre) == set(post):
-                        continue
-                    assert len(pre) > len(post)
-                    cells_solved += 1
-                else:
-                    assert pre == UNKNOWN
-                    assert post in (BOX, SPACE)
-                    cells_solved += 1
-
+            if _is_pixel_updated(pre, post):
                 new_jobs.append((not is_column, i))
         # LOG.debug('Queue: %s', jobs_queue)
         # LOG.debug('New info on %s %s: %s', desc, index, [job_index for _, job_index in new_jobs])
@@ -81,7 +86,7 @@ def solve_row(board, index, is_column, method):
             board.set_row(index, updated)
 
     # LOG.debug('%ss solution: %.6f sec', desc, time.time() - start)
-    return cells_solved, new_jobs
+    return new_jobs
 
 
 def solve(board, parallel=False,
@@ -180,9 +185,9 @@ def _solve_with_method(
 
     while line_jobs:
         (is_column, index), priority = line_jobs.pop_smallest()
-        cells_solved, new_jobs = solve_row(board, index, is_column, method)
+        new_jobs = solve_row(board, index, is_column, method)
 
-        total_cells_solved += cells_solved
+        total_cells_solved += len(new_jobs)
         for new_job in new_jobs:
             # lower priority = more priority
             _add_job(new_job, priority - 1)
