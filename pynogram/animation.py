@@ -17,7 +17,7 @@ except ImportError:
 from six import string_types, itervalues
 from six.moves import queue
 
-from pynogram.renderer import BaseAsciiRenderer
+from pynogram.core.renderer import BaseAsciiRenderer
 
 _LOG_NAME = __name__
 LOG = logging.getLogger(_LOG_NAME)

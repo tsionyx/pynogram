@@ -11,11 +11,11 @@ from six.moves.configparser import NoSectionError
 
 from pynogram.core import propagation
 from pynogram.core.board import Board
+from pynogram.core.renderer import BaseAsciiRenderer
 from pynogram.reader import (
     example_file, read_ini, read_example,
     Pbn, PbnNotFoundError,
 )
-from pynogram.renderer import BaseAsciiRenderer
 
 
 class TestReader(object):

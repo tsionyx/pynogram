@@ -7,12 +7,12 @@ from __future__ import unicode_literals, print_function
 
 from pynogram.core.board import make_board
 from pynogram.core.common import BOX, SPACE
-from pynogram.reader import read_example
-from pynogram.renderer import (
+from pynogram.core.renderer import (
     AsciiRenderer,
     AsciiRendererWithBold,
     SvgRenderer,
 )
+from pynogram.reader import read_example
 
 
 def _example_board(file_name, renderer, **kwargs):

@@ -18,12 +18,15 @@ from six import (
     PY2,
 )
 
-from pynogram.core.board import Renderer
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
 )
-from pynogram.utils.iter import pad, split_seq
+from pynogram.utils.iter import (
+    pad,
+    split_seq,
+    max_safe,
+)
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -130,6 +133,83 @@ class GridCell(Cell):  # pylint: disable=too-few-public-methods
     def __repr__(self):
         return '{}({})'.format(
             self.__class__.__name__, self.value)
+
+
+class _DummyBoard(object):  # pylint: disable=too-few-public-methods
+    """
+    Stub for renderer init in case of it created before the board.
+    """
+    rows_descriptions = columns_descriptions = ()
+    width = height = 0
+
+
+class Renderer(object):
+    """Defines the abstract renderer for a nonogram board"""
+
+    def __init__(self, board=None):
+        self.cells = None
+        self.board = None
+        self.board_init(board)
+
+    def board_init(self, board=None):
+        """Initialize renderer's properties dependent on board it draws"""
+        if board:
+            LOG.info("Init '%s' renderer with board '%s'",
+                     self.__class__.__name__, board)
+        else:
+            if self.board:
+                return  # already initialized, do nothing
+            board = _DummyBoard()
+        self.board = board
+
+    @property
+    def full_height(self):
+        """The full visual height of a board"""
+        return self.header_height + self.board.height
+
+    @property
+    def full_width(self):
+        """The full visual width of a board"""
+        return self.side_width + self.board.width
+
+    @property
+    def header_height(self):
+        """The size of the header block with columns descriptions"""
+        return max_safe(map(len, self.board.columns_descriptions), default=0)
+
+    @property
+    def side_width(self):
+        """The width of the side block with rows descriptions"""
+        return max_safe(map(len, self.board.rows_descriptions), default=0)
+
+    def render(self):
+        """Actually print out the board"""
+        raise NotImplementedError()
+
+    def draw(self, cells=None):
+        """Calculate all the cells and draw an image of the board"""
+        self.draw_header()
+        self.draw_side()
+        self.draw_grid(cells=cells)
+        self.render()
+
+    def draw_header(self):
+        """
+        Changes the internal state to be able to draw columns descriptions
+        """
+        raise NotImplementedError()
+
+    def draw_side(self):
+        """
+        Changes the internal state to be able to draw rows descriptions
+        """
+        raise NotImplementedError()
+
+    def draw_grid(self, cells=None):
+        """
+        Changes the internal state to be able to draw a main grid
+        """
+        raise NotImplementedError()
 
 
 # noinspection PyAbstractClass

@@ -10,12 +10,12 @@ import pytest
 from pynogram.core import propagation
 from pynogram.core.backtracking import Solver
 from pynogram.core.board import Board, make_board
-from pynogram.reader import read_example, Pbn
-from pynogram.renderer import (
+from pynogram.core.renderer import (
     BaseAsciiRenderer,
     AsciiRenderer,
     AsciiRendererWithBold,
 )
+from pynogram.reader import read_example, Pbn
 from pynogram.utils.other import is_close
 
 

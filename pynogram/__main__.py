@@ -26,8 +26,8 @@ from pynogram.animation import CursesRenderer, StringsPager
 from pynogram.core.board import make_board
 from pynogram.core.common import BOX
 from pynogram.core.backtracking import Solver
+from pynogram.core.renderer import BaseAsciiRenderer
 from pynogram.reader import read_example, Pbn, PbnLocal, example_file
-from pynogram.renderer import BaseAsciiRenderer
 
 
 def cli_args():

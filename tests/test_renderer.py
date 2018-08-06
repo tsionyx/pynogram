@@ -9,7 +9,7 @@ import pytest
 from pynogram.core import propagation
 from pynogram.core.board import Board, make_board
 from pynogram.core.common import BOX, SPACE
-from pynogram.renderer import (
+from pynogram.core.renderer import (
     Renderer,
     BaseAsciiRenderer,
     AsciiRenderer,

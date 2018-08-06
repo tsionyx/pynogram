@@ -18,13 +18,13 @@ import tornado.web
 
 from pynogram.core.backtracking import Solver
 from pynogram.core.board import make_board
+from pynogram.core.renderer import (
+    StreamRenderer,
+    RENDERERS,
+)
 from pynogram.reader import (
     read_example, list_examples, read_example_source,
     Pbn, PbnNotFoundError,
-)
-from pynogram.renderer import (
-    StreamRenderer,
-    RENDERERS,
 )
 from .common import (
     BaseHandler,
