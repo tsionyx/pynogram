@@ -12,8 +12,8 @@ from xml.etree import ElementTree
 from six import string_types, PY2
 # I don't want interpolation features, so RawConfigParser (not ConfigParser)
 # noinspection PyUnresolvedReferences
-from six.moves.configparser import RawConfigParser  # pylint: disable=wrong-import-order
-from six.moves.urllib.request import urlopen  # pylint: disable=wrong-import-order
+from six.moves.configparser import RawConfigParser
+from six.moves.urllib.request import urlopen
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -88,7 +88,6 @@ def read_example_source(name):
     return open(example_file(name)).read()
 
 
-# pylint: disable=too-few-public-methods
 class MultiLineConfigParser(RawConfigParser, object):
     """
     INI-file parser that allows multiple lines in a value
@@ -124,7 +123,7 @@ def read_ini(content):
         content = open(content)
 
     if PY2:
-        parser.readfp(content)  # pylint: disable=deprecated-method
+        parser.readfp(content)
     else:
         # readfp is deprecated in future versions
         parser.read_file(content)

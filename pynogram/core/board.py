@@ -54,12 +54,10 @@ class CellState(namedtuple('CellState', 'row_index column_index color')):
         return cls(position[0], position[1], color)
 
 
-class Board(object):  # pylint: disable=too-many-public-methods
+class Board(object):
     """
     Nonogram board with columns and rows defined
     """
-
-    # pylint: disable=too-many-instance-attributes
 
     def __init__(self, columns, rows, **renderer_params):
         self.columns_descriptions = self.normalize(columns)
@@ -182,19 +180,16 @@ class Board(object):  # pylint: disable=too-many-public-methods
 
         self.column_updated(index)
 
-    # pylint: disable=not-callable
     def row_updated(self, row_index):
         """Runs each time the row of the board gets partially solved"""
         if self.on_row_update and callable(self.on_row_update):
             self.on_row_update(row_index=row_index, board=self)
 
-    # pylint: disable=not-callable
     def column_updated(self, column_index):
         """Runs each time the column of the board gets partially solved"""
         if self.on_column_update and callable(self.on_column_update):
             self.on_column_update(column_index=column_index, board=self)
 
-    # pylint: disable=not-callable
     def solution_round_completed(self):
         """
         Runs each time all the rows and the columns
@@ -203,7 +198,6 @@ class Board(object):  # pylint: disable=too-many-public-methods
         if self.on_solution_round_complete and callable(self.on_solution_round_complete):
             self.on_solution_round_complete(board=self)
 
-    # pylint: disable=not-callable
     def solution_found(self, solution):
         """
         Runs each time a new unique solution gets found

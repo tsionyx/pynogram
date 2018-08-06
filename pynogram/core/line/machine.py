@@ -277,7 +277,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
         return super(NonogramFSM, self).match(word)
 
 
-class _StepState(object):  # pylint: disable=too-few-public-methods
+class _StepState(object):
     """
     Stores state of the machine,
     the link to the previous StepState object
@@ -456,7 +456,6 @@ class ReverseTrackingSolver(BaseReverseTrackingSolver):
         super(ReverseTrackingSolver, cls)._save_in_cache(key, value)
 
         # it's a complete solution, so other solvers can use it too
-        # pylint: disable=no-member
         FastSolver.solutions_cache.save(key, value)
 
 

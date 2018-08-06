@@ -37,10 +37,10 @@ LOG = logging.getLogger(_LOG_NAME)
 # prevent "UnicodeEncodeError: 'ascii' codec can't encode character ..."
 # when redirecting output
 if PY2:
-    stdout = codecs.getwriter('utf8')(stdout)  # pylint: disable=invalid-name
+    stdout = codecs.getwriter('utf8')(stdout)
 
 
-class Cell(object):  # pylint: disable=too-few-public-methods
+class Cell(object):
     """Represent basic rendered cell"""
 
     DEFAULT_ICON = ' '
@@ -56,7 +56,7 @@ class Cell(object):  # pylint: disable=too-few-public-methods
         return '{}()'.format(self.__class__.__name__)
 
 
-class ThumbnailCell(Cell):  # pylint: disable=too-few-public-methods
+class ThumbnailCell(Cell):
     """
     Represent upper-left cell
     (where the thumbnail of the puzzle usually drawn).
@@ -64,7 +64,7 @@ class ThumbnailCell(Cell):  # pylint: disable=too-few-public-methods
     DEFAULT_ICON = '#'
 
 
-class ClueCell(Cell):  # pylint: disable=too-few-public-methods
+class ClueCell(Cell):
     """
     Represent cell that is part of description (clue).
     They are usually drawn on the top and on the left.
@@ -93,7 +93,7 @@ class ClueCell(Cell):  # pylint: disable=too-few-public-methods
             self.value, self.color)
 
 
-class GridCell(Cell):  # pylint: disable=too-few-public-methods
+class GridCell(Cell):
     """Represent the main area cell"""
 
     def __init__(self, value, renderer, colored=False):
@@ -135,7 +135,7 @@ class GridCell(Cell):  # pylint: disable=too-few-public-methods
             self.__class__.__name__, self.value)
 
 
-class _DummyBoard(object):  # pylint: disable=too-few-public-methods
+class _DummyBoard(object):
     """
     Stub for renderer init in case of it created before the board.
     """
@@ -213,7 +213,6 @@ class Renderer(object):
 
 
 # noinspection PyAbstractClass
-# pylint: disable=abstract-method
 class StreamRenderer(Renderer):
     """
     Simplify textual rendering of a board to a stream (stdout by default)
@@ -250,7 +249,7 @@ class BaseAsciiRenderer(StreamRenderer):
         self.cells = [[Cell()] * self.full_width
                       for _ in range(self.full_height)]
 
-    def cell_icon(self, cell):  # pylint: disable=no-self-use
+    def cell_icon(self, cell):
         """
         Gets a symbolic representation of a cell given its state
         and predefined table `icons`
@@ -706,7 +705,7 @@ class SvgRenderer(StreamRenderer):
 
         return cell
 
-    def draw_grid(self, cells=None):  # pylint: disable=too-many-locals
+    def draw_grid(self, cells=None):
         if cells is None:
             cells = self.board.cells
 

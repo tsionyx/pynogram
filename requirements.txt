@@ -18,6 +18,10 @@ svgwrite
 tox
 coverage
 flake8
+# pylint cannot be installed on PyPy3
+# because of 'typed-ast' dependency (through 'astroid' dependency)
+# https://github.com/PyCQA/astroid/blob/5cc50abb/astroid/__pkginfo__.py#L33
+pylint ; platform_python_implementation != 'PyPy' or python_version < '3'
 
 # via PyCharm's 'Run Configuration'
 #nose

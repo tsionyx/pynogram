@@ -94,7 +94,6 @@ class BaseLineSolver(object):
         """Solve the line (or use cached value)"""
         description, line = tuple(description), tuple(line)
 
-        # pylint: disable=no-member
         solved = cls.solutions_cache.get((description, line))
 
         if solved is False:
@@ -119,7 +118,6 @@ class BaseLineSolver(object):
 
     @classmethod
     def _save_in_cache(cls, key, value):
-        # pylint: disable=no-member
         cls.solutions_cache.save(key, value)
 
     def _solve(self):

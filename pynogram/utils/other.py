@@ -61,7 +61,7 @@ def terminating_mp_pool(*args, **kwargs):  # pragma: no cover
         pool.terminate()
 
 
-def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):  # pylint: disable=invalid-name
+def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
     """
     Almost equality for float numbers
 

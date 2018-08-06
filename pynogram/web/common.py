@@ -91,7 +91,6 @@ class BaseHandler(tornado.web.RequestHandler):
 
 
 # noinspection PyAbstractClass
-# pylint: disable=abstract-method
 class ThreadedHandler(tornado.web.RequestHandler):
     # noinspection SpellCheckingInspection
     """
@@ -110,7 +109,6 @@ class ThreadedHandler(tornado.web.RequestHandler):
     Based on https://gist.github.com/simplyvikram/6997323
     """
 
-    # pylint: disable=arguments-differ
     def initialize(self, *args, **kwargs):
         super(ThreadedHandler, self).initialize()
         # noinspection PyAttributeOutsideInit
@@ -123,7 +121,6 @@ class ThreadedBaseHandler(ThreadedHandler, BaseHandler):
     with the utility methods.
     """
 
-    # pylint: disable=arguments-differ
     def initialize(self, max_workers=10, **kwargs):
         super(ThreadedBaseHandler, self).initialize(max_workers=max_workers, **kwargs)
 
@@ -134,7 +131,6 @@ class HelloHandler(BaseHandler):
     """
 
     # noinspection PyMethodOverriding
-    # pylint: disable=arguments-differ
     def initialize(self, name, handlers, **kwargs):
         # noinspection PyAttributeOutsideInit
         self.name = name
@@ -198,7 +194,6 @@ class LongPollNotifier(object):
             self.callback_helper(callback, *args, **kwargs)
         self.callbacks = []
 
-    # pylint: disable=no-self-use
     def callback_helper(self, callback, *args, **kwargs):
         """
         Simply call the callback with the parameters provided.

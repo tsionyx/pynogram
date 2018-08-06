@@ -33,8 +33,6 @@ from .common import (
     LongPollNotifier,
 )
 
-# pylint: disable=arguments-differ
-
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
     _LOG_NAME = os.path.basename(__file__)

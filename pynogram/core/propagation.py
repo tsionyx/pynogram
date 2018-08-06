@@ -35,7 +35,6 @@ def _is_pixel_updated(old, new):
     return True
 
 
-# pylint: disable=too-many-arguments, too-many-locals, too-many-branches
 def solve_row(board, index, is_column, method):
     """
     Solve a line with the solving `method`.
