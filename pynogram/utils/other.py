@@ -61,12 +61,12 @@ def terminating_mp_pool(*args, **kwargs):  # pragma: no cover
         pool.terminate()
 
 
-def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
+def is_close(first, second, rel_tol=1e-09, abs_tol=0.0):
     """
     Almost equality for float numbers
 
-    :param a: first number
-    :param b: second number
+    :param first
+    :param second
 
     :param rel_tol: relative tolerance, it is multiplied
     by the greater of the magnitudes of the two arguments;
@@ -79,20 +79,22 @@ def is_close(a, b, rel_tol=1e-09, abs_tol=0.0):
 
     Source: https://stackoverflow.com/a/33024979
     """
-    return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
+    return abs(first - second) <= max(rel_tol * max(abs(first), abs(second)), abs_tol)
 
 
 def log_call(log_func=print):  # pragma: no cover
-    def _decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            f_name = f.__name__
+    """Print every function call along with its arguments"""
 
-            msg = 'Calling function {}('.format(f_name)
+    def _decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            func_name = func.__name__
+
+            msg = 'Calling function {}('.format(func_name)
             _args = args
             if _args:
                 _self = _args[0]
-                if isinstance(_self, object) and hasattr(_self, f_name):
+                if isinstance(_self, object) and hasattr(_self, func_name):
                     _args = args[1:]
 
             msg += ', '.join(map(str, _args))
@@ -101,7 +103,7 @@ def log_call(log_func=print):  # pragma: no cover
             msg += ')'
 
             # start_time = time.time()
-            result = f(*args, **kwargs)
+            result = func(*args, **kwargs)
             msg += ' --> {}'.format(result)
             log_func(msg)
 

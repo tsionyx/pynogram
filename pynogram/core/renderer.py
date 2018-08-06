@@ -7,7 +7,6 @@ from __future__ import unicode_literals, print_function, division
 
 import codecs
 import logging
-import os
 import re
 from sys import stdout
 
@@ -29,9 +28,6 @@ from pynogram.utils.iter import (
 )
 
 _LOG_NAME = __name__
-if _LOG_NAME == '__main__':  # pragma: no cover
-    _LOG_NAME = os.path.basename(__file__)
-
 LOG = logging.getLogger(_LOG_NAME)
 
 # prevent "UnicodeEncodeError: 'ascii' codec can't encode character ..."
@@ -604,10 +600,10 @@ class SvgRenderer(StreamRenderer):
         if len(color) == 6:
             return '#' + color
 
-        elif isinstance(color, string_types) and self.RGB_TRIPLET_RE.match(color):
+        if isinstance(color, string_types) and self.RGB_TRIPLET_RE.match(color):
             return 'rgb({})'.format(color)
 
-        elif isinstance(color, (list, tuple)) and len(color) == 3:
+        if isinstance(color, (list, tuple)) and len(color) == 3:
             return 'rgb({})'.format(','.join(map(str, color)))
 
         return color

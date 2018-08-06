@@ -403,6 +403,10 @@ class NonogramFSMColored(NonogramFSM):
 
 
 class BaseMachineSolver(BaseLineSolver):
+    """
+    Nonogram line solver that uses finite state machine
+    """
+
     def __init__(self, description, line):
         super(BaseMachineSolver, self).__init__(description, line)
         self.nfsm = self.make_nfsm(description)
@@ -412,6 +416,12 @@ class BaseMachineSolver(BaseLineSolver):
 
     @classmethod
     def get_state_map(cls, description):
+        """
+        Construct a state map
+        (collection of available FSM transitions)
+        from the nonogram description.
+        Use cached value if available.
+        """
         nfsm_cls = cls.NFSM_CLASS
 
         # if description and is_list_like(description[0]):
@@ -441,25 +451,40 @@ class BaseMachineSolver(BaseLineSolver):
 
 
 class PartialMatchSolver(BaseMachineSolver):
+    """
+    FSM Nonogram solver that uses 'partial match' method (slow)
+    """
+
     def _solve(self):
         return self.nfsm.solve_with_partial_match(self.line)
 
 
 class BaseReverseTrackingSolver(BaseMachineSolver):
+    """
+    FSM Nonogram solver that uses 'reverse tracking' method (fast)
+    """
+
     def _solve(self):
         return self.nfsm.solve_with_reverse_tracking(self.line)
 
 
 class ReverseTrackingSolver(BaseReverseTrackingSolver):
+    """
+    FSM Nonogram solver for black and white puzzles
+    """
+
     @classmethod
-    def _save_in_cache(cls, key, value):
-        super(ReverseTrackingSolver, cls)._save_in_cache(key, value)
+    def save_in_cache(cls, original, solved):
+        super(ReverseTrackingSolver, cls).save_in_cache(original, solved)
 
         # it's a complete solution, so other solvers can use it too
-        FastSolver.solutions_cache.save(key, value)
+        FastSolver.save_in_cache(original, solved)
 
 
 class ReverseTrackingColoredSolver(BaseReverseTrackingSolver):
+    """
+    FSM Nonogram solver for colored puzzles
+    """
     NFSM_CLASS = NonogramFSMColored
 
 

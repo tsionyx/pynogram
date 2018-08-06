@@ -47,7 +47,8 @@ def invert(cell_state):
     """
     if cell_state == BOX:
         return SPACE
-    elif cell_state == SPACE:
+
+    if cell_state == SPACE:
         return BOX
 
     return cell_state
@@ -63,11 +64,14 @@ def normalize_description(row, color=False):
     """
     if not row:  # None, 0, '', [], ()
         return ()
-    elif isinstance(row, (tuple, list)):
+
+    if isinstance(row, (tuple, list)):
         return tuple(row)
-    elif isinstance(row, integer_types):
+
+    if isinstance(row, integer_types):
         return row,  # it's a tuple!
-    elif isinstance(row, string_types):
+
+    if isinstance(row, string_types):
         blocks = row.split()
         if color:
             return tuple(blocks)
@@ -80,7 +84,7 @@ _COLOR_DESCRIPTION_RE = re.compile('([0-9]+)(.+)')
 
 
 class ColorBlock(namedtuple('ColorBlock', 'size color')):
-    pass
+    """Represent one block of colored description"""
 
 
 def normalize_description_colored(row, name_to_id_map):

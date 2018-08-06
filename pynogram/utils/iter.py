@@ -82,13 +82,13 @@ def max_safe(*args, **kwargs):
     return max(*args, **kwargs)
 
 
-def list_replace(a_list, x, y):
+def list_replace(a_list, old, new):
     """
-    Replaces every `x` item in `a_list` with `y` item
+    Replaces every `old` item in `a_list` with `new` item
     """
     for i, item in enumerate(a_list):
-        if item == x:
-            a_list[i] = y
+        if item == old:
+            a_list[i] = new
 
 
 def split_seq(iterable, size):
@@ -100,11 +100,11 @@ def split_seq(iterable, size):
     :param size: chunk size
     :return: chunks one by one
     """
-    it = iter(iterable)
-    item = list(islice(it, size))
+    iterator = iter(iterable)
+    item = list(islice(iterator, size))
     while item:
         yield item
-        item = list(islice(it, size))
+        item = list(islice(iterator, size))
 
 
 def avg(iterable):

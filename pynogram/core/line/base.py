@@ -78,6 +78,11 @@ def cache_info():
 
 @add_metaclass(LineSolutionsMeta)
 class BaseLineSolver(object):
+    """
+    Basic line nonogram solver which provides
+    facilities to save and extract solutions using cache
+    """
+
     def __init__(self, description, line):
         self.description = description
         self.line = line
@@ -108,17 +113,21 @@ class BaseLineSolver(object):
         try:
             solved = solver._solve()
         except NonogramError as ex:
-            cls._save_in_cache((description, line), False)
+            cls.save_in_cache((description, line), False)
             raise NonogramError(
                 cls._error_message(description, line, additional_info=": {}".format(ex)))
 
         assert len(solved) == len(line)
-        cls._save_in_cache((description, line), solved)
+        cls.save_in_cache((description, line), solved)
         return solved
 
     @classmethod
-    def _save_in_cache(cls, key, value):
-        cls.solutions_cache.save(key, value)
+    def save_in_cache(cls, original, solved):
+        """
+        Put the solution in local cache.
+        Use solved=False to show that the line is not solvable.
+        """
+        cls.solutions_cache.save(original, solved)
 
     def _solve(self):
         return self.line

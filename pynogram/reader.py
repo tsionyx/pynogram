@@ -123,7 +123,9 @@ def read_ini(content):
         content = open(content)
 
     if PY2:
-        parser.readfp(content)
+        # it's not deprecated for python2
+        # noinspection PyDeprecation
+        parser.readfp(content)  # pylint: disable=deprecated-method
     else:
         # readfp is deprecated in future versions
         parser.read_file(content)

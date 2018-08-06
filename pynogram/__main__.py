@@ -156,7 +156,8 @@ def log_level(verbosity):
 
     if verbosity == 1:
         return logging.WARNING
-    elif verbosity == 2:
+
+    if verbosity == 2:
         return logging.INFO
 
     return logging.DEBUG

@@ -134,6 +134,10 @@ class ExpirableCache(Cache):
 
 
 class Memoized(object):  # pragma: no cover
+    """
+    Decorator to cache function results
+    """
+
     def __init__(self, func):
         self.func = func
         self._cache = {}
@@ -154,14 +158,19 @@ class Memoized(object):  # pragma: no cover
             return self.func(*args, **kwargs)
 
     def __get__(self, obj, objtype):
-        """Support instance methods."""
+        """To support instance methods."""
         return partial(self.__call__, obj)
 
 
-def memoized_instance(f):
-    func_name = f.__name__
+def memoized_instance(func):
+    """
+    Decorator to cache function results.
+    Can be safely applied to the instance methods.
+    """
 
-    @wraps(f)
+    func_name = func.__name__
+
+    @wraps(func)
     def wrapper(*args, **kwargs):
         _self = args[0]
         _args = args[1:]
@@ -169,8 +178,8 @@ def memoized_instance(f):
         try:
             cache = _self._memoized[func_name]
         except AttributeError:
-            _self._memoized = defaultdict(dict)
-            cache = _self._memoized[func_name]
+            cache = defaultdict(dict)
+            _self._memoized = cache
 
         key = tuple(_args)
         if kwargs:
@@ -179,7 +188,7 @@ def memoized_instance(f):
         try:
             return cache[key]
         except KeyError:
-            res = f(*args, **kwargs)
+            res = func(*args, **kwargs)
             cache[key] = res
             return res
 

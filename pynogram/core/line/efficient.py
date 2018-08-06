@@ -24,6 +24,11 @@ LOG = logging.getLogger(__name__)
 
 
 class EfficientSolver(BaseLineSolver):
+    """
+    Recursive nonogram line solver.
+    Adapted from the work 'An Efficient Approach to Solving Nonograms'
+    """
+
     def __init__(self, description, line):
         super(EfficientSolver, self).__init__(description, line)
 
@@ -66,6 +71,11 @@ class EfficientSolver(BaseLineSolver):
         return minimum_lengths
 
     def fix(self, i, j):
+        """
+        Verify whether blocks from 0 to (j-1)-th
+        can be resided inside a substring line[:i+1]
+        """
+
         fixable = self._fix_table[self._linear_index(i, j)]
         if fixable is None:
             fixable = self._fix(i, j)
@@ -91,10 +101,7 @@ class EfficientSolver(BaseLineSolver):
             assert i == -1
 
             # no more blocks to fill
-            if j < 0:
-                return True
-            else:
-                return False
+            return j < 0
 
         if i < self.minimum_lengths[j]:
             return False
@@ -143,9 +150,9 @@ class EfficientSolver(BaseLineSolver):
         return False
 
     @classmethod
-    def _is_space_with_block(cls, s):
-        if cls._can_be_space(s[0]):
-            if all(pixel in (BOX, UNKNOWN) for pixel in s[1:]):
+    def _is_space_with_block(cls, line):
+        if cls._can_be_space(line[0]):
+            if all(pixel in (BOX, UNKNOWN) for pixel in line[1:]):
                 return True
 
         return False
@@ -156,9 +163,16 @@ class EfficientSolver(BaseLineSolver):
 
     @classmethod
     def empty_cell(cls):
+        """
+        Represent a single line symbol that is empty (no color)
+        """
         return SPACE
 
     def paint(self, i, j):
+        """
+        Paint unsolved cells of line[:i+1]
+        using blocks from 0 to (j+1)-th as description
+        """
         if i < 0:
             return []
 
@@ -183,13 +197,13 @@ class EfficientSolver(BaseLineSolver):
         if fix0:
             if fix1:
                 return self._paint_both(i, j)
-            else:
-                return self._paint0(i, j)
-        else:
-            if fix1:
-                return self._paint1(i, j)
-            else:
-                raise NonogramError('Block %r not fixable at position %r' % (j, i))
+
+            return self._paint0(i, j)
+
+        if fix1:
+            return self._paint1(i, j)
+
+        raise NonogramError('Block %r not fixable at position %r' % (j, i))
 
     def _paint0(self, i, j):
         return self.paint(i - 1, j) + [self.empty_cell()]
@@ -199,8 +213,8 @@ class EfficientSolver(BaseLineSolver):
         return self.paint(i - block_size - 1, j - 1) + self._space_with_block(block_size)
 
     @classmethod
-    def _merge_iter(cls, s1, s2):
-        for pixel1, pixel2 in zip(s1, s2):
+    def _merge_iter(cls, line1, line2):
+        for pixel1, pixel2 in zip(line1, line2):
             if pixel1 == pixel2:
                 yield pixel1
             else:
@@ -221,6 +235,8 @@ class EfficientSolver(BaseLineSolver):
 
 
 class EfficientColorSolver(EfficientSolver):
+    """Recursive nonogram solver for colored puzzles"""
+
     def __init__(self, description, line):
         super(EfficientColorSolver, self).__init__(description, line)
 
@@ -297,15 +313,15 @@ class EfficientColorSolver(EfficientSolver):
         return False
 
     @classmethod
-    def _can_be_colored(cls, s, color, preceding_space=True):
+    def _can_be_colored(cls, line, color, preceding_space=True):
         if preceding_space:
-            if cls._can_be_space(s[0]):
+            if cls._can_be_space(line[0]):
                 # ignore the space header
-                s = s[1:]
+                line = line[1:]
             else:
                 return False
 
-        return all(color in cell for cell in s)
+        return all(color in cell for cell in line)
 
     @classmethod
     def _color_block(cls, block_size, color, preceding_space=True):
@@ -333,13 +349,13 @@ class EfficientColorSolver(EfficientSolver):
             if fix_colors:
                 fix_colors.append(SPACE)
                 return self._paint_all(i, j, fix_colors)
-            else:
-                return self._paint0(i, j)
-        else:
-            if fix_colors:
-                return self._paint_all(i, j, fix_colors)
-            else:
-                raise NonogramError('Block %r not fixable at position %r' % (j, i))
+
+            return self._paint0(i, j)
+
+        if fix_colors:
+            return self._paint_all(i, j, fix_colors)
+
+        raise NonogramError('Block %r not fixable at position %r' % (j, i))
 
     def _paint_color(self, i, j):
         size, color = self.description[j]
