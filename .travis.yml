@@ -32,4 +32,10 @@ script:
   - time $NAME -b winter -v
   - time $NAME --pbn 4089 --draw-final -vv
 
+  - tox -e lint -- $NAME --output-format=text | tee pylint.log || true
+  # fail if pylint gets score < 9.5
+  - grep -oP 'has been rated at \K([^/]+)' pylint.log |
+    python -c 'import sys; a=int((10-float(sys.stdin.read()))*100); sys.exit(a if a>50 else 0)'
+
+
 after_success: coveralls

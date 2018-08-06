@@ -1,6 +1,11 @@
+- refactoring:
+  - check for " (replace with '), "'{}'" -> '{!r}'
+  - comma at the end of every import list
+  - use https://codebeat.co
+  - check docstrings (+grammarly)
+
 - backjumping:
     (many repeating dead ends: `grep 'false' 9892.log | sed 's/^[[:space:]]*//' | sort | uniq -c | sort -nr | head`)
-- implement 'bgu' for colored (http://myweb.npu.edu.tw/~tcga2017/Paper_Submission_pdf/2017_TCGA_paper_5.pdf)
 
 - Use `np.array(dtype=np.int8)` for board
 - check that it always a set, get rid of `is_list_like` as much as possible
@@ -23,10 +28,6 @@ p_c.sort_stats('cumtime').print_stats(20)
 
 - simpson refactoring: use regexp, `assert_match` with it
 - coverage!
-- pylint in CI
-- clean:
-  - check docstrings
-  - check for " (replace with ')
 - tornado: respond asynchronously (not in the main solving thread)
 
 - searching:

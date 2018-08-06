@@ -28,6 +28,13 @@ before_script:
   - pypy -V
   - pypy3 -V
 
+
+variables:
+    NAME: pynogram
+    # https://stackoverflow.com/a/35101311/1177288
+    PYTHONIOENCODING: utf-8
+
+
 test:
   script:
   - pip install tox
@@ -35,11 +42,6 @@ test:
   coverage: '/^TOTAL.*\s+(\d+\%)$/'
 
 run:
-  variables:
-    NAME: pynogram
-    # https://stackoverflow.com/a/35101311/1177288
-    PYTHONIOENCODING: utf-8
-
   script:
   - python setup.py sdist bdist_wheel --universal
 
@@ -58,3 +60,16 @@ run:
   artifacts:
     paths:
     - dist/*.whl
+
+
+quality:
+  script:
+  - pip install tox
+
+  - tox -e lint -- $NAME --output-format=text | tee pylint.log || true
+  # fail if pylint gets score < 9.5
+  - grep -oP 'has been rated at \K([^/]+)' pylint.log |
+    python -c 'import sys; a=int((10-float(sys.stdin.read()))*100); sys.exit(a if a>50 else 0)'
+  artifacts:
+    paths:
+    - pylint.log
