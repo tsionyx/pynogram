@@ -6,9 +6,9 @@ from io import StringIO
 
 import pytest
 
+from pynogram.core import propagation
 from pynogram.core.board import Board, make_board
 from pynogram.core.common import BOX, SPACE
-from pynogram.core.solver import line as line_solver
 from pynogram.renderer import (
     Renderer,
     BaseAsciiRenderer,
@@ -342,7 +342,7 @@ class TestSvg(object):
 
     def test_color_solved(self, stream):
         b = make_board(*color_board_def(), renderer=SvgRenderer, stream=stream)
-        line_solver.solve(b)
+        propagation.solve(b)
 
         b.draw()
         table = [line.strip() for line in stream.getvalue().split('\n')]

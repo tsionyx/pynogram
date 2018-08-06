@@ -12,7 +12,8 @@ from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
 )
-from pynogram.core.solver.base import solve_line
+from pynogram.core.line import solve_line
+# from pynogram.core.line.machine import assert_match
 from pynogram.utils.priority_dict import PriorityDict
 
 LOG = logging.getLogger(__name__)

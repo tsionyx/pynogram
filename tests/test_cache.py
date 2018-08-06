@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function
 
 import time
 
-from pynogram.core.solver.common import TwoLayerCache
+from pynogram.core.line.base import TwoLayerCache
 from pynogram.utils.cache import Cache, ExpirableCache
 
 

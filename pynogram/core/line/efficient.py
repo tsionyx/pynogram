@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Dynamic programming algorithm from the work
-'An Efficient Approach to Solving Nonograms'
+Dynamic programming algorithm to solve nonograms (using recursion)
 
+See details in the work 'An Efficient Approach to Solving Nonograms':
 https://ir.nctu.edu.tw/bitstream/11536/22772/1/000324586300005.pdf
 """
 
@@ -10,25 +10,22 @@ from __future__ import unicode_literals
 
 import logging
 
-from six import add_metaclass
 from six.moves import zip
 
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
 )
-from pynogram.core.solver.common import (
-    LineSolutionsMeta,
-    NonogramError
+from pynogram.core.line.base import (
+    BaseLineSolver,
+    NonogramError,
 )
 
 LOG = logging.getLogger(__name__)
 
 
-@add_metaclass(LineSolutionsMeta)
-class EfficientSolver(object):
+class EfficientSolver(BaseLineSolver):
     def __init__(self, description, line):
-        self.description = description
-        self.line = line
+        super(EfficientSolver, self).__init__(description, line)
 
         self.minimum_lengths = self.min_lengths(self.description)
         self.additional_space = self._set_additional_space()
@@ -215,32 +212,6 @@ class EfficientSolver(object):
             self._paint1(i, j)
         ))
 
-    @classmethod
-    def solve(cls, clue, line):
-        """Solve the line (or use cached value)"""
-        clue, line = tuple(clue), tuple(line)
-
-        # pylint: disable=no-member
-        solved = cls.solutions_cache.get((clue, line))
-        if solved is not None:
-            if solved is False:
-                raise NonogramError("Failed to solve line '{}' with clues '{}' (cached)".format(
-                    line, clue))
-
-            assert len(solved) == len(line)
-            return solved
-
-        solver = cls(clue, line)
-        try:
-            solved = solver._solve()
-        except NonogramError:
-            cls.solutions_cache.save((clue, line), False)
-            raise NonogramError("Failed to solve line '{}' with clues '{}'".format(line, clue))
-
-        # pylint: disable=no-member
-        cls.solutions_cache.save((clue, line), solved)
-        return solved
-
     def _solve(self):
         res = self.paint(len(self.line) - 1, len(self.description) - 1)
         if self.additional_space:
@@ -249,7 +220,6 @@ class EfficientSolver(object):
         return tuple(res)
 
 
-@add_metaclass(LineSolutionsMeta)
 class EfficientColorSolver(EfficientSolver):
     def __init__(self, description, line):
         super(EfficientColorSolver, self).__init__(description, line)

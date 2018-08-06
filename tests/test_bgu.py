@@ -4,10 +4,10 @@ from __future__ import unicode_literals, print_function
 
 import pytest
 
+from pynogram.core import propagation
 from pynogram.core.board import Board
-from pynogram.core.solver import line as line_solver
-from pynogram.core.solver.base import solve_line
-from pynogram.core.solver.common import NonogramError
+from pynogram.core.common import NonogramError
+from pynogram.core.line import solve_line
 from pynogram.reader import read_example
 
 # TODO: more solved rows
@@ -65,5 +65,5 @@ class TestBguSolver(object):
 
         board = Board(columns, rows)
 
-        line_solver.solve(board, methods='bgu')
+        propagation.solve(board, methods='bgu')
         assert board.is_solved_full

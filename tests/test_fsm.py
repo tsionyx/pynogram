@@ -9,15 +9,13 @@ import pytest
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     normalize_row,
+    NonogramError,
 )
-from pynogram.core.fsm import (
+from pynogram.core.line import solve_line
+from pynogram.core.line.machine import BaseMachineSolver
+from pynogram.utils.fsm import (
     StateMachineError,
     FiniteStateMachine,
-)
-from pynogram.core.solver.base import (
-    NonogramError,
-    make_nfsm,
-    solve_line,
 )
 
 
@@ -86,7 +84,7 @@ class TestFiniteStateMachine(object):
 class TestNonogramFiniteStateMachine(object):
     @classmethod
     def fsm(cls, *description):
-        return make_nfsm(*description)
+        return BaseMachineSolver.make_nfsm(*description)
 
     @pytest.fixture
     def nfsm(self):
@@ -124,9 +122,9 @@ class TestNonogramFiniteStateMachine(object):
 
     def test_from_list(self):
         for nfsm in (
-                make_nfsm([1, 1]),
-                make_nfsm(1, 1),
-                make_nfsm('1 1'),
+                BaseMachineSolver.make_nfsm([1, 1]),
+                BaseMachineSolver.make_nfsm(1, 1),
+                BaseMachineSolver.make_nfsm('1 1'),
         ):
             assert nfsm.current_state == 1
             assert nfsm.states == (1, 2, 3, 4)
@@ -247,7 +245,7 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
 
     def test_transition_table(self):
         description, row = '2 2', '___0X_____'
-        nfsm = make_nfsm(description)
+        nfsm = BaseMachineSolver.make_nfsm(description)
 
         row = normalize_row(row)
         # noinspection PyProtectedMember
@@ -308,10 +306,12 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
         with pytest.raises(NonogramError) as ie:
             solve_line('1 1', '__.', method='reverse_tracking')
 
-        assert str(ie.value) == "Failed to solve line '(None, None, False)' with clues '(1, 1)'"
+        assert str(ie.value) == ("ReverseTrackingSolver: Failed to solve line "
+                                 "'(None, None, False)' with clues '(1, 1)': "
+                                 "Bad transition table: final state not found")
 
     def test_solve_bad_method(self):
-        with pytest.raises(AttributeError) as ie:
+        with pytest.raises(KeyError) as ie:
             solve_line('1 1', '___', method='brute_force')
 
-        assert str(ie.value) == "Cannot find solving method 'brute_force'"
+        assert str(ie.value.args[0]) == "Cannot find solver 'brute_force'"

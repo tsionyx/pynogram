@@ -10,16 +10,13 @@ from __future__ import unicode_literals, print_function
 
 import logging
 
-from six import add_metaclass
 from six.moves import range
 
 from pynogram.core.common import (
     BOX, SPACE, UNKNOWN,
+    NonogramError
 )
-from pynogram.core.solver.common import (
-    NonogramError,
-    LineSolutionsMeta,
-)
+from pynogram.core.line.base import BaseLineSolver
 
 LOG = logging.getLogger(__name__)
 
@@ -30,10 +27,9 @@ _SYMBOL_MAP = {
 }
 
 
-@add_metaclass(LineSolutionsMeta)
-class FastSolver(object):
+class FastSolver(BaseLineSolver):
     """
-    Nonogram line solver, that uses left and right overlap algorithm.
+    Nonogram line solver that uses left and right overlap algorithm.
     The algorithm gets most of the solution, but sometimes not complete one.
     """
 
@@ -245,18 +241,14 @@ class FastSolver(object):
 
         return list(reversed(cls.push_left(line, clue)))
 
-    @classmethod
-    def solve(cls, clue, line):
+    def _solve(self):
         """
         Solve the given line with given clue (description)
         using left and right overlap algorithm
         """
 
-        # pylint: disable=no-member
-        solved = cls.solutions_cache.get((clue, line))
-        if solved is not None:
-            assert len(solved) == len(line)
-            return solved
+        line = self.line
+        clue = self.description
 
         line_size = len(line)
         clue_size = len(clue)
@@ -266,7 +258,7 @@ class FastSolver(object):
         if (clue_size == 1) and clue[0] == 0:
             clue_size = 0
 
-        left_positions = cls.push_left(line, clue)
+        left_positions = self.push_left(line, clue)
 
         left_desc = []
         for block in range(clue_size):
@@ -287,7 +279,7 @@ class FastSolver(object):
 
         LOG.info("Line range = %d to %d", 0, line_size - 1)
 
-        right_positions = cls.push_right(line, clue)
+        right_positions = self.push_right(line, clue)
 
         right_desc = []
         for block in range(clue_size):
@@ -324,7 +316,4 @@ class FastSolver(object):
         k = line_size
         work[j: k] = [SPACE] * (k - j)
 
-        work = tuple(work)
-        # pylint: disable=no-member
-        cls.solutions_cache.save((clue, line), work)
-        return work
+        return tuple(work)

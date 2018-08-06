@@ -9,9 +9,12 @@ from six.moves import StringIO
 # noinspection PyUnresolvedReferences
 from six.moves.configparser import NoSectionError
 
+from pynogram.core import propagation
 from pynogram.core.board import Board
-from pynogram.core.solver import line
-from pynogram.reader import example_file, read_ini, read_example, Pbn, PbnNotFoundError
+from pynogram.reader import (
+    example_file, read_ini, read_example,
+    Pbn, PbnNotFoundError,
+)
 from pynogram.renderer import BaseAsciiRenderer
 
 
@@ -21,7 +24,7 @@ class TestReader(object):
 
         stream = StringIO()
         board = Board(columns, rows, renderer=BaseAsciiRenderer, stream=stream)
-        line.solve(board)
+        propagation.solve(board)
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([

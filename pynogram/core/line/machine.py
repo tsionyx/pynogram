@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Defines finite state machine to solve nonograms
+Nonogram solver using finite state machine
 
-See source article here (in russian):
+See source article (in russian):
 http://window.edu.ru/resource/781/57781
 """
 
@@ -11,19 +11,18 @@ from __future__ import unicode_literals, print_function
 import logging
 import os
 
-from six import iteritems, itervalues, add_metaclass
+from six import iteritems, itervalues
 from six.moves import range
 
-from pynogram.core import fsm
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     normalize_description, normalize_row,
     is_list_like,
+    NonogramError,
 )
-from pynogram.core.solver.common import (
-    NonogramError, LineSolutionsMeta,
-)
-from pynogram.core.solver.simpson import FastSolver
+from pynogram.core.line.base import BaseLineSolver
+from pynogram.core.line.simpson import FastSolver
+from pynogram.utils import fsm
 from pynogram.utils.cache import Cache
 
 _LOG_NAME = __name__
@@ -35,7 +34,6 @@ LOG = logging.getLogger(_LOG_NAME)
 fsm.LOG.setLevel(logging.WARNING)
 
 
-@add_metaclass(LineSolutionsMeta)
 class NonogramFSM(fsm.FiniteStateMachine):
     """
     Represents a special class of a FSM
@@ -250,41 +248,18 @@ class NonogramFSM(fsm.FiniteStateMachine):
         Solve the nonogram `row` using the FSM and reverse tracking
         """
 
-        # pylint: disable=no-member
-        solved_row = self.solutions_cache.get((self.description, row))
-        if solved_row is not None:
-            if solved_row is False:
-                raise NonogramError("Failed to solve line '{}' with clues '{}' (cached)".format(
-                    row, self.description))
-
-            assert len(solved_row) == len(row)
-            return solved_row
-
         transition_table = self._make_transition_table(row)
 
         # print(transition_table)
         if self.final_state not in transition_table[-1]:
-            self._save_in_cache(row, False)
-            raise NonogramError("Failed to solve line '{}' with clues '{}'".format(
-                row, self.description))
+            raise NonogramError('Bad transition table: final state not found')
 
         solved_row = tuple(
             self._cell_value_from_solved(states)
             for states in reversed(list(
                 transition_table.reverse_tracking(self.final_state))))
 
-        assert len(solved_row) == len(row)
-
-        self._save_in_cache(row, solved_row)
         return solved_row
-
-    def _save_in_cache(self, before, after):
-        # pylint: disable=no-member
-        self.solutions_cache.save((self.description, before), after)
-
-        # it's a complete solution, so other solvers can use it too
-        # pylint: disable=no-member
-        FastSolver.solutions_cache.save((self.description, before), after)
 
     def match(self, word):
         # special case for an empty description
@@ -426,34 +401,74 @@ class NonogramFSMColored(NonogramFSM):
 
         return super(NonogramFSMColored, self).match(one_color_word)
 
-    def _save_in_cache(self, before, after):
+
+class BaseMachineSolver(BaseLineSolver):
+    def __init__(self, description, line):
+        super(BaseMachineSolver, self).__init__(description, line)
+        self.nfsm = self.make_nfsm(description)
+
+    NFSM_CLASS = NonogramFSM
+    FSM_CACHE = Cache(1000)
+
+    @classmethod
+    def get_state_map(cls, description):
+        nfsm_cls = cls.NFSM_CLASS
+
+        # if description and is_list_like(description[0]):
+        #     nfsm_cls = NonogramFSMColored
+
+        state_map = cls.FSM_CACHE.get(description)
+        if state_map is None:
+            state_map = nfsm_cls.state_map_from_description(description)
+            cls.FSM_CACHE.save(description, state_map)
+
+        return state_map
+
+    @classmethod
+    def make_nfsm(cls, *description):
+        """
+        Produce the black-and-white or colored
+        finite state machine for nonogram solving
+        """
+
+        if len(description) == 1:
+            description = description[0]
+        description = normalize_description(description)
+
+        state_map = cls.get_state_map(description)
+
+        return cls.NFSM_CLASS(description, state_map)
+
+
+class PartialMatchSolver(BaseMachineSolver):
+    def _solve(self):
+        return self.nfsm.solve_with_partial_match(self.line)
+
+
+class BaseReverseTrackingSolver(BaseMachineSolver):
+    def _solve(self):
+        return self.nfsm.solve_with_reverse_tracking(self.line)
+
+
+class ReverseTrackingSolver(BaseReverseTrackingSolver):
+    @classmethod
+    def _save_in_cache(cls, key, value):
+        super(ReverseTrackingSolver, cls)._save_in_cache(key, value)
+
+        # it's a complete solution, so other solvers can use it too
         # pylint: disable=no-member
-        self.solutions_cache.save((self.description, before), after)
-
-        # do not store in FastSolver's cache because it cannot handle the color puzzles
-        # FastSolver.solutions_cache.save((self.description, before), after)
+        FastSolver.solutions_cache.save(key, value)
 
 
-_FSM_CACHE = Cache(1000)
+class ReverseTrackingColoredSolver(BaseReverseTrackingSolver):
+    NFSM_CLASS = NonogramFSMColored
 
 
-def make_nfsm(*description, **kwargs):
+def assert_match(row_desc, row):
     """
-    Produce the black-and-white or colored
-    finite state machine for nonogram solving
+    Verifies that the given row matches the description
     """
-    nfsm_cls = kwargs.get('nfsm_cls', NonogramFSM)
 
-    if len(description) == 1:
-        description = description[0]
-    description = normalize_description(description)
-
-    if description and is_list_like(description[0]):
-        nfsm_cls = NonogramFSMColored
-
-    state_map = _FSM_CACHE.get(description)
-    if state_map is None:
-        state_map = nfsm_cls.state_map_from_description(description)
-        _FSM_CACHE.save(description, state_map)
-
-    return nfsm_cls(description, state_map)
+    nfsm = BaseMachineSolver.make_nfsm(row_desc)
+    if not nfsm.match(row):
+        raise NonogramError("The row '{}' cannot fit in clue '{}'".format(row, row_desc))

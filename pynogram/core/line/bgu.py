@@ -10,15 +10,15 @@ from __future__ import unicode_literals
 
 import logging
 
-from six import add_metaclass
 from six.moves import range
 
 from pynogram.core.common import (
-    UNKNOWN, BOX, SPACE
+    UNKNOWN, BOX, SPACE,
 )
-from pynogram.core.solver.common import (
-    LineSolutionsMeta,
-    NonogramError)
+from pynogram.core.line.base import (
+    BaseLineSolver,
+    NonogramError,
+)
 
 LOG = logging.getLogger(__name__)
 
@@ -26,15 +26,14 @@ LOG = logging.getLogger(__name__)
 BOTH_COLORS = -1
 
 
-@add_metaclass(LineSolutionsMeta)
-class BguSolver(object):
+class BguSolver(BaseLineSolver):
     """
     The solver uses recursion to solve the line to the most
     """
 
-    def __init__(self, clue, line):
-        self.blocks = clue
-        self.block_sums = self.calc_block_sum(clue)
+    def __init__(self, description, line):
+        super(BguSolver, self).__init__(description, line)
+        self.block_sums = self.calc_block_sum(description)
 
         # define the internal representation of a line to be
         # one cell larger then the original
@@ -44,42 +43,23 @@ class BguSolver(object):
 
         line_size = len(line)
         positions = line_size + 1
-        self.job_size = len(clue) + 1
+        self.job_size = len(description) + 1
         self.sol = [None] * (self.job_size * positions)
 
-    @classmethod
-    def solve(cls, clue, line):
-        """Solve the line (or use cached value)"""
-        clue, line = tuple(clue), tuple(line)
-
-        # pylint: disable=no-member
-        solved = cls.solutions_cache.get((clue, line))
-        if solved is not None:
-            if solved is False:
-                raise NonogramError("Failed to solve line '{}' with clues '{}' (cached)".format(
-                    line, clue))
-
-            assert len(solved) == len(line)
-            return solved
-
-        solver = BguSolver(clue, line)
-        if solver.try_solve():
-            solved = solver.solved_line[:-1]
+    def _solve(self):
+        if self.try_solve():
+            solved = self.solved_line[:-1]
             solved = tuple(UNKNOWN if cell == BOTH_COLORS else cell for cell in solved)
-
-            # pylint: disable=no-member
-            cls.solutions_cache.save((clue, line), solved)
             return solved
-        else:
-            cls.solutions_cache.save((clue, line), False)
-            raise NonogramError("Failed to solve line '{}' with clues '{}'".format(line, clue))
+
+        raise NonogramError()
 
     def try_solve(self):
         """
         The main solver function.
         Return whether the line is solvable.
         """
-        position, block = len(self.line) - 1, len(self.blocks)
+        position, block = len(self.line) - 1, len(self.description)
         return self.get_sol(position, block)
 
     def get_mat_index(self, row, col):
@@ -149,7 +129,7 @@ class BguSolver(object):
         else:  # current cell is either white or unknown
             white_ans = self.get_sol(position - 1, block)  # set cell white and continue
 
-            prev_block_size = self.blocks[block - 1]
+            prev_block_size = self.description[block - 1]
             # set cell white, place the current block and continue
 
             black_ans = False

@@ -11,10 +11,10 @@ from itertools import product
 from six import iteritems
 from six.moves import range
 
+from pynogram.core import propagation
 from pynogram.core.board import CellPosition, CellState
-from pynogram.core.solver import line
-from pynogram.core.solver.base import cache_info
-from pynogram.core.solver.common import NonogramError
+from pynogram.core.common import NonogramError
+from pynogram.core.line.base import cache_info
 from pynogram.utils.priority_dict import PriorityDict
 
 LOG = logging.getLogger(__name__)
@@ -118,7 +118,7 @@ class Solver(object):
 
         board.set_state(cell_state)
 
-        return line.solve(
+        return propagation.solve(
             board,
             row_indexes=(cell_state.row_index,),
             column_indexes=(cell_state.column_index,),
@@ -194,7 +194,7 @@ class Solver(object):
 
         # try to solve with additional info
         # solve with only one cell as new info
-        line.solve(
+        propagation.solve(
             board,
             row_indexes=(pos.row_index,),
             column_indexes=(pos.column_index,))
@@ -314,7 +314,7 @@ class Solver(object):
 
     def _add_solution(self):
         # force to check the board
-        line.solve(self.board, contradiction_mode=True)
+        propagation.solve(self.board, contradiction_mode=True)
         self.board.add_solution()
 
     def _probes_from_rates(self, rates):
@@ -393,7 +393,7 @@ class Solver(object):
 
         board = self.board
 
-        line.solve(board)
+        propagation.solve(board)
         if board.is_solved_full:
             board.set_finished()
             LOG.info('No need to solve with contradictions')

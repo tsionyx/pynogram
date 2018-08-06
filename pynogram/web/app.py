@@ -16,8 +16,8 @@ import tornado.httpserver
 import tornado.ioloop
 import tornado.web
 
+from pynogram.core.backtracking import Solver
 from pynogram.core.board import make_board
-from pynogram.core.solver.contradiction import Solver
 from pynogram.reader import (
     read_example, list_examples, read_example_source,
     Pbn, PbnNotFoundError,

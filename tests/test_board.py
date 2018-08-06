@@ -7,9 +7,9 @@ from io import StringIO
 
 import pytest
 
+from pynogram.core import propagation
+from pynogram.core.backtracking import Solver
 from pynogram.core.board import Board, make_board
-from pynogram.core.solver import line as line_solver
-from pynogram.core.solver.contradiction import Solver
 from pynogram.reader import read_example, Pbn
 from pynogram.renderer import (
     BaseAsciiRenderer,
@@ -113,7 +113,7 @@ class TestSolution(object):
         return tested_board(AsciiRenderer, stream=stream)
 
     def test_solve(self, board, stream):
-        line_solver.solve(board)
+        propagation.solve(board)
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
@@ -149,9 +149,9 @@ class TestSolution(object):
         # assert board.is_finished
 
     def test_repeat_solutions(self, board):
-        line_solver.solve(board)
+        propagation.solve(board)
         assert board.is_solved_full
-        line_solver.solve(board)
+        propagation.solve(board)
         assert board.is_solved_full
 
     def test_several_solutions(self, stream):
@@ -163,7 +163,7 @@ class TestSolution(object):
         ]
 
         board = Board(columns, rows, renderer=AsciiRenderer, stream=stream)
-        line_solver.solve(board)
+        propagation.solve(board)
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
@@ -192,7 +192,7 @@ class TestSolution(object):
         renderer = AsciiRendererWithBold(stream=stream)
         renderer.BOLD_LINE_EVERY = 2
         board = Board(columns, rows, renderer=renderer)
-        line_solver.solve(board)
+        propagation.solve(board)
         board.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
@@ -224,7 +224,7 @@ class TestSolution(object):
         board.on_row_update = lambda **kwargs: rows_updated.append(kwargs['row_index'])
         board.on_column_update = lambda **kwargs: cols_updated.append(kwargs['column_index'])
         board.on_solution_round_complete = lambda **kwargs: rounds.append(1)
-        line_solver.solve(board)
+        propagation.solve(board)
 
         # the solution will go like following:
         # 1. draw the lower '_' in L (row 2)
@@ -250,7 +250,7 @@ class TestSolution(object):
                 board = self.board(stream=stream)
                 start = time.time()
 
-                line_solver.solve(board, parallel=parallel,
+                propagation.solve(board, parallel=parallel,
                                   contradiction_mode=contradiction_mode)
                 solutions[(parallel, contradiction_mode)] = (
                     stream.getvalue().rstrip(), time.time() - start)
@@ -274,7 +274,7 @@ class TestContradictions(object):
         columns, rows = read_example('smile.txt')
         board = Board(columns, rows)
 
-        line_solver.solve(board)
+        propagation.solve(board)
         assert is_close(board.solution_rate, 0.6)
         # assert is_close(board.solution_rate, 407.0 / 625)
 
@@ -294,7 +294,7 @@ class TestContradictions(object):
 
         board = Board(columns, rows)
 
-        line_solver.solve(board)
+        propagation.solve(board)
         assert board.solution_rate == 0
 
         Solver(board).solve()
@@ -314,7 +314,7 @@ class TestContradictions(object):
         columns = rows = [[1, 1, 1, 1]] * 8
         board = Board(columns, rows)
 
-        line_solver.solve(board)
+        propagation.solve(board)
         assert board.solution_rate == 0
 
         Solver(board).solve()
@@ -323,7 +323,7 @@ class TestContradictions(object):
     def test_depth_search(self):
         board = make_board(*Pbn.read(3469))
 
-        line_solver.solve(board)
+        propagation.solve(board)
         assert board.solution_rate == 0
         assert len(board.solutions) == 0
 
@@ -341,7 +341,7 @@ class TestContradictions(object):
         renderer = BaseAsciiRenderer(stream=stream)
         board = make_board(*Pbn.read(5260), renderer=renderer)
 
-        line_solver.solve(board)
+        propagation.solve(board)
         assert board.solution_rate == 0.9375
         assert len(board.solutions) == 0
 

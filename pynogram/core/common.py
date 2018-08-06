@@ -20,7 +20,15 @@ if _LOG_NAME == '__main__':  # pragma: no cover
 
 LOG = logging.getLogger(_LOG_NAME)
 
-UNKNOWN = None  # this cell have to be solved
+
+class NonogramError(ValueError):
+    """
+    Represents an error occurred when trying
+    to solve a nonogram which has an internal contradiction.
+    """
+
+
+UNKNOWN = None  # this cell has to be solved
 BOX = True
 SPACE = False
 
@@ -154,7 +162,7 @@ def is_color_list(value):
     """Whether value is a list-like of list-likes"""
     # if is_list_like(value):
 
-    # to handle both standard types and numpy arrays
+    # check `len` to handle both standard types and numpy arrays
     # pylint: disable=len-as-condition
     if len(value) and isinstance(value[0], (tuple, list)):
         return True
