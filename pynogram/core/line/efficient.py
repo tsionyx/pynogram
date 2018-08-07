@@ -56,7 +56,7 @@ class EfficientSolver(BaseLineSolver):
     @classmethod
     def min_lengths(cls, description):
         """
-        The mimimum line sizes in which can squeeze from 0 to i-th block
+        The minimum line sizes in which can squeeze from 0 to i-th block
         """
 
         if not description:

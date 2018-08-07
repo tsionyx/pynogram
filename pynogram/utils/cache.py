@@ -157,7 +157,7 @@ class Memoized(object):  # pragma: no cover
             # non cachable, better to not cache than to blow up entirely
             return self.func(*args, **kwargs)
 
-    def __get__(self, obj, objtype):
+    def __get__(self, obj, obj_type):
         """To support instance methods."""
         return partial(self.__call__, obj)
 
