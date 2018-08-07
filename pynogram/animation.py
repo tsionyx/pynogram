@@ -228,6 +228,25 @@ class StringsPager(object):
     # on the other side, if the pause will be too high, the UI can become unresponsive
     PAUSE_ON_IDLE = 0.05
 
+    def handle_pressed_key(self, key):
+        """
+        React when user press the key
+        """
+        if key in (curses.KEY_DOWN, ord(' ')):
+            self.scroll_down()
+        elif key == curses.KEY_END:
+            self.scroll_down(full=True)
+
+        elif key == curses.KEY_UP:
+            self.scroll_up()
+        elif key == curses.KEY_HOME:
+            self.scroll_up(full=True)
+
+        elif key == curses.KEY_RIGHT:
+            self.scroll_right()
+        elif key == curses.KEY_LEFT:
+            self.scroll_left()
+
     @classmethod
     def draw(cls, window, source_queue, restart_on='\n'):
         """
@@ -255,20 +274,7 @@ class StringsPager(object):
         # k is the last character pressed
         k = 0
         while k != ord('q'):
-            if k in (curses.KEY_DOWN, ord(' ')):
-                _self.scroll_down()
-            elif k == curses.KEY_END:
-                _self.scroll_down(full=True)
-
-            elif k == curses.KEY_UP:
-                _self.scroll_up()
-            elif k == curses.KEY_HOME:
-                _self.scroll_up(full=True)
-
-            elif k == curses.KEY_RIGHT:
-                _self.scroll_right()
-            elif k == curses.KEY_LEFT:
-                _self.scroll_left()
+            _self.handle_pressed_key(k)
 
             if _self.update():
                 idle_updates_counter = 0
