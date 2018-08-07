@@ -132,7 +132,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
 
                         next_step = self.reaction(BOX, current_state=state)
                         if next_step is None:
-                            LOG.debug("Cannot go from state '%s' with BOX", state)
+                            LOG.debug('Cannot go from state %r with BOX', state)
                         else:
                             step_possible_states.append(next_step)
 
@@ -141,7 +141,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
 
                         next_step = self.reaction(SPACE, current_state=state)
                         if next_step is None:
-                            LOG.debug("Cannot go from state '%s' with SPACE", state)
+                            LOG.debug('Cannot go from state %r with SPACE', state)
                         else:
                             step_possible_states.append(next_step)
 
@@ -188,7 +188,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
                 solved[i] = SPACE
             else:
                 raise NonogramError(
-                    "The {} cell ({}) in a row '{}' cannot be neither space nor box".format(
+                    'The {} cell ({}) in a row {!r} cannot be neither space nor box'.format(
                         i, cell, original_row))
         return tuple(solved)
 
@@ -495,4 +495,4 @@ def assert_match(row_desc, row):
 
     nfsm = BaseMachineSolver.make_nfsm(row_desc)
     if not nfsm.match(row):
-        raise NonogramError("The row '{}' cannot fit in clue '{}'".format(row, row_desc))
+        raise NonogramError('The row {!r} cannot fit in clue {!r}'.format(row, row_desc))

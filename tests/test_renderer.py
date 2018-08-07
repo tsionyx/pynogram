@@ -290,7 +290,7 @@ class TestSvg(object):
         b.draw()
         table = [line.strip() for line in stream.getvalue().split('\n')]
 
-        svg_def = """
+        svg_def = '''
             <svg baseProfile="full" height="45" version="1.1" width="60" xmlns="
             http://www.w3.org/2000/svg" xmlns:ev=
             "http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -334,7 +334,7 @@ class TestSvg(object):
                 </g>
                 <g class="space" />
                 <g class="box" />
-            </svg>"""
+            </svg>'''
 
         assert table[0] == '<?xml version="1.0" encoding="utf-8" ?>'
         assert table[1] == ''.join([
@@ -347,7 +347,7 @@ class TestSvg(object):
         b.draw()
         table = [line.strip() for line in stream.getvalue().split('\n')]
 
-        svg_def = """
+        svg_def = '''
             <svg baseProfile="full" height="90" version="1.1" width="75" xmlns="
             http://www.w3.org/2000/svg" xmlns:ev=
             "http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -431,7 +431,7 @@ class TestSvg(object):
                 </g>
 
                 <use x="0" xlink:href="#check" y="0" />
-            </svg>"""
+            </svg>'''
 
         assert table[0] == '<?xml version="1.0" encoding="utf-8" ?>'
         svg_def = ''.join([

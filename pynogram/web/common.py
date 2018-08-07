@@ -45,7 +45,7 @@ class BaseHandler(tornado.web.RequestHandler):
             if pretty is not None:
                 chunk += '\n'
 
-            self.set_header(str("Content-Type"), "application/json")
+            self.set_header(str('Content-Type'), 'application/json')
 
         return super(BaseHandler, self).write(chunk)
 
@@ -62,7 +62,7 @@ class BaseHandler(tornado.web.RequestHandler):
         Respond with JSON-formatted error instead of standard one
         """
         message = ''
-        exc_info = kwargs.get("exc_info")
+        exc_info = kwargs.get('exc_info')
         if exc_info:
             exception = exc_info[1]
             if hasattr(exception, 'log_message'):
@@ -73,20 +73,20 @@ class BaseHandler(tornado.web.RequestHandler):
                 message = str(exception)
 
         error = dict(
-            status="%d: %s" % (status_code, self._reason),
+            status='%d: %s' % (status_code, self._reason),
             message=message)
-        if self.settings.get("serve_traceback") and exc_info:
-            error["exc_info"] = ''.join(
+        if self.settings.get('serve_traceback') and exc_info:
+            error['exc_info'] = ''.join(
                 traceback.format_exception(*exc_info))
 
         if (status_code // 100) == 4:
-            LOG.info("Client request problem")
+            LOG.info('Client request problem')
         elif (status_code // 100) == 5:
             # if exc_info:
             #     self.raven_client().captureException(exc_info)
-            LOG.error("Server problem", exc_info=exc_info)
+            LOG.error('Server problem', exc_info=exc_info)
 
-        self.set_header(str("Content-Type"), "application/json")
+        self.set_header(str('Content-Type'), 'application/json')
         self.write_as_json(dict(error=error))
 
 
@@ -104,7 +104,7 @@ class ThreadedHandler(tornado.web.RequestHandler):
     3. whenever your call the time consuming operation, do
         `res = yield self.executor.submit(my_heavy_routine, arg1, arg2, kwarg1=value1)`
     4. provide `max_workers` argument for initializing the thread pool while init your routes:
-        `(r"/my-route/?", TimeConsumedHandler, dict(max_workers=10))`
+        `(r'/my-route/?', TimeConsumedHandler, dict(max_workers=10))`
 
     Based on https://gist.github.com/simplyvikram/6997323
     """
@@ -147,15 +147,15 @@ class HelloHandler(BaseHandler):
         for handler_pair in handlers:
             route, handler = handler_pair[:2]
             methods = [m for m in cls.METHODS if m.lower() in handler.__dict__]
-            route_desc = "{}: {}".format(route, ', '.join(methods))
+            route_desc = '{}: {}'.format(route, ', '.join(methods))
             if issubclass(handler, ThreadedHandler):
-                route_desc += "(threaded)"
+                route_desc += '(threaded)'
             routes.append(route_desc)
         return routes
 
     def get(self):
         res = dict(
-            greeting="This is the start page of a '%s' service" % self.name,
+            greeting='This is the start page of a %r service' % self.name,
             uptime=get_uptime(),
             version='.'.join(map(str, get_version())),
             paths=self.routes)

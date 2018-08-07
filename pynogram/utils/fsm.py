@@ -65,8 +65,8 @@ class FiniteStateMachine(object):
         Change the state of a machine according to the
         `self.state_map` by applying an `action`
         """
-        LOG.debug("Current state: '%s'", self.current_state)
-        LOG.debug("Action: '%s'", action)
+        LOG.debug('Current state: %r', self.current_state)
+        LOG.debug('Action: %r', action)
 
         if action not in self.actions:
             raise StateMachineError("Action '{}' not available".format(
@@ -78,7 +78,7 @@ class FiniteStateMachine(object):
                 action, self.current_state), code=StateMachineError.BAD_TRANSITION)
         else:
             self._state = new_state
-            LOG.debug("New state: '%s'", self.current_state)
+            LOG.debug('New state: %r', self.current_state)
             return self.current_state
 
     def reaction(self, action, current_state=None):
@@ -138,21 +138,21 @@ class FiniteStateMachine(object):
         the words' letters one by one
         """
         if self.current_state != self.initial_state:
-            raise RuntimeError("Only run '{}' when in initial state '{}'".format(
+            raise RuntimeError('Only run {!r} when in initial state {!r}'.format(
                 self.match.__name__, self.initial_state))
 
         if self.final_state is None:
             raise RuntimeError('Cannot match: no final state defined')
 
         for letter in word:
-            LOG.debug("Match letter '%s' of word '%s'", letter, word)
+            LOG.debug('Match letter %r of word %r', letter, word)
             try:
                 prev = self.current_state
                 self.transition(letter)
-                LOG.info("Transition from '%s' to '%s' with action '%s'",
+                LOG.info('Transition from %r to %r with action %r',
                          prev, self.current_state, letter)
             except StateMachineError:
-                LOG.info("Cannot do action '%s' in the state '%s'",
+                LOG.info('Cannot do action %r in the state %r',
                          letter, self.current_state)
                 return False
 

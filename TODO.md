@@ -1,5 +1,4 @@
 - refactoring:
-  - check for " (replace with '), "'{}'" -> '{!r}'
   - comma at the end of every import list
   - use https://codebeat.co
   - check docstrings (+grammarly)

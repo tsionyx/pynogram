@@ -147,7 +147,7 @@ def _solve_with_method(
 
     if parallel:
         # TODO: add parallel logic here
-        LOG.info("Using several processes to solve")
+        LOG.info('Using several processes to solve')
 
     start = time.time()
 
@@ -159,7 +159,7 @@ def _solve_with_method(
     # when adding column, `is_column = True = 1`
     # heap always pops the lowest item, so the rows will go first
 
-    LOG.debug("Solving %s rows and %s columns with '%s' method",
+    LOG.debug('Solving %s rows and %s columns with %r method',
               row_indexes, column_indexes, method)
 
     line_jobs = PriorityDict()
@@ -200,7 +200,7 @@ def _solve_with_method(
 
         # rate = board.solution_rate
         # if rate != 1:
-        #     LOG.warning("The nonogram is not solved full ('%s'). The rate is %.4f",
+        #     LOG.warning('The nonogram is not solved full (%r). The rate is %.4f',
         #                 method, rate)
         LOG.info('Full solution: %.6f sec', time.time() - start)
         LOG.info('Lines solved: %i', lines_solved)

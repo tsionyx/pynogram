@@ -186,7 +186,7 @@ class BoardUpdateNotifier(LongPollNotifier):
 
     def callback_helper(self, callback, *args, **kwargs):
         if args:
-            LOG.warning("Some args: '%s' are ignored", args)
+            LOG.warning('Some args: %r are ignored', args)
         params = dict(kwargs, board=self.get_board_image())
         LOG.debug(params)
         callback(**params)

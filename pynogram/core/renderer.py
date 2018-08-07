@@ -150,7 +150,7 @@ class Renderer(object):
     def board_init(self, board=None):
         """Initialize renderer's properties dependent on board it draws"""
         if board:
-            LOG.info("Init '%s' renderer with board '%s'",
+            LOG.info('Init %r renderer with board %r',
                      self.__class__.__name__, board)
         else:
             if self.board:

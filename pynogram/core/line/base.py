@@ -91,7 +91,7 @@ class BaseLineSolver(object):
     def _error_message(cls, description, line, additional_info=''):
         """Solve the line (or use cached value)"""
         description, line = tuple(description), tuple(line)
-        return "{}: Failed to solve line '{}' with clues '{}'{}".format(
+        return '{}: Failed to solve line {!r} with clues {!r}{}'.format(
             cls.__name__, line, description, additional_info)
 
     @classmethod
@@ -103,7 +103,7 @@ class BaseLineSolver(object):
 
         if solved is False:
             raise NonogramError(
-                cls._error_message(description, line, additional_info=" (cached)"))
+                cls._error_message(description, line, additional_info=' (cached)'))
 
         if solved is not None:
             assert len(solved) == len(line)
@@ -115,7 +115,7 @@ class BaseLineSolver(object):
         except NonogramError as ex:
             cls.save_in_cache((description, line), False)
             raise NonogramError(
-                cls._error_message(description, line, additional_info=": {}".format(ex)))
+                cls._error_message(description, line, additional_info=': {}'.format(ex)))
 
         assert len(solved) == len(line)
         cls.save_in_cache((description, line), solved)

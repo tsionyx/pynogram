@@ -140,7 +140,7 @@ def normalize_row(row):
     for formal, informal in iteritems(INFORMAL_REPRESENTATIONS):
         informal = set(informal) & alphabet
         if not informal:
-            LOG.debug("Not found '%s' in a row", formal)
+            LOG.debug('Not found %r in a row', formal)
             continue
 
         if len(informal) > 1:
@@ -150,7 +150,7 @@ def normalize_row(row):
                     ', '.join(sorted(informal)), formal, original))
 
         informal = informal.pop()
-        LOG.debug("Replace '%s' with a '%s'", informal, formal)
+        LOG.debug('Replace %r with a %r', informal, formal)
         list_replace(row, informal, formal)
 
     assert set(row).issubset(FORMAL_ALPHABET)

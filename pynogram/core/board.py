@@ -417,7 +417,7 @@ class Board(object):
     def add_solution(self, copy_=True):
         """Save full solution found with contradictions"""
 
-        LOG.info("Found one of the solutions!")
+        LOG.info('Found one of the solutions!')
 
         if self._current_state_in_solutions():
             LOG.info('Solution already exists')

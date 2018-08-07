@@ -186,7 +186,7 @@ class Solver(object):
             before_contradiction = None
 
         pos = cell_state.position
-        LOG.info("Found contradiction at (%i, %i)", *pos)
+        LOG.info('Found contradiction at (%i, %i)', *pos)
         try:
             board.unset_state(cell_state)
         except ValueError as ex:
@@ -561,12 +561,12 @@ class Solver(object):
                     continue
 
                 if len(cell_colors) == 1:
-                    LOG.warning("Only one color for cell '%s' left: %s. Solve it unconditionally",
+                    LOG.warning('Only one color for cell %r left: %s. Solve it unconditionally',
                                 pos, assumption)
                     assert assumption == tuple(cell_colors)[0]
                     if unconditional:
                         LOG.warning(
-                            "The board does not change since the last unconditional solving, skip.")
+                            'The board does not change since the last unconditional solving, skip.')
                         continue
 
                     try:

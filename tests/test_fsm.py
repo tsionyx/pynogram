@@ -217,9 +217,9 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
             nfsm.solve_with_partial_match('_0__0____')
 
         exc = ie.value
-        assert str(exc) == ("The 0 cell (None) in a row "
-                            "'(None, False, None, None, False, None, None, None, None)' "
-                            "cannot be neither space nor box")
+        assert str(exc) == ('The 0 cell (None) in a row '
+                            '(None, False, None, None, False, None, None, None, None) '
+                            'cannot be neither space nor box')
 
     # TODO: more solved rows
     SOLVED_ROWS = [
@@ -228,7 +228,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
                                UNKNOWN, UNKNOWN, UNKNOWN]),
     ]
 
-    @pytest.mark.parametrize("description,input_row,expected", SOLVED_ROWS)
+    @pytest.mark.parametrize('description,input_row,expected', SOLVED_ROWS)
     def test_solve(self, description, input_row, expected):
         # both arguments passes work
         # assert solve_row((description, input_row)) == expected
@@ -236,7 +236,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
 
 
 class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
-    @pytest.mark.parametrize("description,input_row,expected",
+    @pytest.mark.parametrize('description,input_row,expected',
                              TestNonogramFSMPartialMatch.SOLVED_ROWS)
     def test_solve(self, description, input_row, expected):
         # both arguments passes work
@@ -306,9 +306,9 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
         with pytest.raises(NonogramError) as ie:
             solve_line('1 1', '__.', method='reverse_tracking')
 
-        assert str(ie.value) == ("ReverseTrackingSolver: Failed to solve line "
-                                 "'(None, None, False)' with clues '(1, 1)': "
-                                 "Bad transition table: final state not found")
+        assert str(ie.value) == ('ReverseTrackingSolver: Failed to solve line '
+                                 '(None, None, False) with clues (1, 1): '
+                                 'Bad transition table: final state not found')
 
     def test_solve_bad_method(self):
         with pytest.raises(KeyError) as ie:
