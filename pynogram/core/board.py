@@ -40,7 +40,6 @@ LOG = logging.getLogger(_LOG_NAME)
 
 class CellPosition(namedtuple('Cell', 'row_index column_index')):
     """2-D coordinates of a board cell"""
-    pass
 
 
 class CellState(namedtuple('CellState', 'row_index column_index color')):

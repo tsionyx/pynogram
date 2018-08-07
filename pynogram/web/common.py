@@ -35,7 +35,6 @@ class BaseHandler(tornado.web.RequestHandler):
 
     def data_received(self, chunk):
         """Prevents warning 'must implement all abstract methods'"""
-        pass
 
     def write_as_json(self, chunk, pretty=True):
         """

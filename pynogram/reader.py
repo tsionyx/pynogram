@@ -163,7 +163,6 @@ def read_ini(content):
 
 class PbnNotFoundError(Exception):
     """Raised when trying to reach webpbn puzzle by non-existing id"""
-    pass
 
 
 class Pbn(object):
