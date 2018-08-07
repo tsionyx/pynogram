@@ -12,6 +12,7 @@ from pynogram.reader import read_example
 
 # TODO: more solved rows
 CASES = [
+    ([], '???', [False, False, False]),
     ([1, 1, 5], '---#--         -      # ', [
         False, False, False, True, False, False, None, None,
         None, None, None, None, None, None, None, False,

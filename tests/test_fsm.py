@@ -12,11 +12,22 @@ from pynogram.core.common import (
     NonogramError,
 )
 from pynogram.core.line import solve_line
-from pynogram.core.line.machine import BaseMachineSolver
+from pynogram.core.line.machine import (
+    BaseMachineSolver,
+    assert_match,
+)
 from pynogram.utils.fsm import (
     StateMachineError,
     FiniteStateMachine,
 )
+from .test_bgu import CASES
+
+# TODO: more solved rows
+CASES = CASES + [
+    ('3 2', '_0__X____', [SPACE, SPACE, UNKNOWN, BOX, BOX, UNKNOWN, UNKNOWN, BOX, UNKNOWN]),
+    ('2 2', '___.X_____', [UNKNOWN, UNKNOWN, UNKNOWN, SPACE, BOX, BOX, SPACE,
+                           UNKNOWN, UNKNOWN, UNKNOWN]),
+]
 
 
 class TestFiniteStateMachine(object):
@@ -221,23 +232,21 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
                             '(None, False, None, None, False, None, None, None, None) '
                             'cannot be neither space nor box')
 
-    # TODO: more solved rows
-    SOLVED_ROWS = [
-        ('3 2', '_0__X____', [SPACE, SPACE, UNKNOWN, BOX, BOX, UNKNOWN, UNKNOWN, BOX, UNKNOWN]),
-        ('2 2', '___.X_____', [UNKNOWN, UNKNOWN, UNKNOWN, SPACE, BOX, BOX, SPACE,
-                               UNKNOWN, UNKNOWN, UNKNOWN]),
-    ]
-
-    @pytest.mark.parametrize('description,input_row,expected', SOLVED_ROWS)
+    @pytest.mark.parametrize('description,input_row,expected', CASES)
     def test_solve(self, description, input_row, expected):
         # both arguments passes work
         # assert solve_row((description, input_row)) == expected
         assert solve_line(description, input_row, method='partial_match') == tuple(expected)
 
+    FULLY_SOLVED = [(d, e) for (d, i, e) in CASES if UNKNOWN not in e]
+
+    @pytest.mark.parametrize('description,solved', FULLY_SOLVED)
+    def test_assert_match(self, description, solved):
+        assert_match(description, solved)
+
 
 class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
-    @pytest.mark.parametrize('description,input_row,expected',
-                             TestNonogramFSMPartialMatch.SOLVED_ROWS)
+    @pytest.mark.parametrize('description,input_row,expected', CASES)
     def test_solve(self, description, input_row, expected):
         # both arguments passes work
         # assert solve_line((description, input_row)) == tuple(expected)
