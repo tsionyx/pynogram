@@ -72,10 +72,17 @@ def cli_args():
                              help='draw only final result, skip all the intermediate steps')
     output_mode.add_argument('--curses', action='store_true',
                              help='use curses for solving animation (experimental)')
-    return parser.parse_args()
+
+    parser.add_argument('--draw-probes', action='store_true',
+                        help='print probes map (if backtracking was used)')
+
+    args = parser.parse_args()
+    if args.draw_probes and args.curses:
+        parser.error('Drawing probes do not supported in curses mode')
+    return args
 
 
-def solve(d_board, draw_final=False, **solver_args):
+def solve(d_board, draw_final=False, draw_probes=False, **solver_args):
     """
     Wrapper for solver that handles errors and prints out the results
     """
@@ -99,7 +106,7 @@ def solve(d_board, draw_final=False, **solver_args):
         if not d_board.is_solved_full:
             d_board.draw_solutions()
 
-        if draw_final and solver.search_map:
+        if draw_probes and solver.search_map:
             print(json.dumps(solver.search_map.to_dict(), indent=1))
 
 
@@ -227,6 +234,7 @@ def main():
     draw_solution(board_def,
                   box_symbol=box_symbol,
                   draw_final=args.draw_final,
+                  draw_probes=args.draw_probes,
                   curses_animation=is_curses,
                   max_solutions=args.max_solutions,
                   timeout=args.timeout,
