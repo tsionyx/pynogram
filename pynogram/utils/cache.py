@@ -162,7 +162,7 @@ class Memoized(object):  # pragma: no cover
         return partial(self.__call__, obj)
 
 
-def memoized_instance(func):
+def memoized_instance(func):  # pragma: no cover
     """
     Decorator to cache function results.
     Can be safely applied to the instance methods.

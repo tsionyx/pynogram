@@ -6,12 +6,14 @@ e.g. manipulations with collections or streams.
 
 from __future__ import unicode_literals, print_function, division
 
+import logging
 import multiprocessing
 import os
 import sys
 from contextlib import contextmanager
 from datetime import datetime
 from functools import wraps
+from threading import Lock
 
 from six import (
     text_type,
@@ -27,25 +29,49 @@ def get_uptime():  # pragma: no cover
     return text_type(datetime.now() - START_TIME)
 
 
+_IMPORT_LOCK = Lock()
+
+
+@contextmanager
+def extend_import_path(dir_name, first=False):
+    """
+    Temporarily add the `dir_name` to the sys.path
+    If `first` flag provided, the directory will be added
+    at the very beginning to override any other imported resources.
+    """
+
+    if dir_name not in sys.path:
+        with _IMPORT_LOCK:  # prevent from doing path manipulations concurrently
+            if first:
+                sys.path.insert(0, dir_name)
+            else:
+                sys.path.append(dir_name)
+
+            logging.info('The %r added to the sys.path', dir_name)
+
+            try:
+                yield
+            finally:
+                if first:
+                    removed_path = sys.path.pop(0)
+                else:
+                    removed_path = sys.path.pop()
+
+                logging.info('The %r removed from the sys.path', removed_path)
+                assert dir_name == removed_path
+
+
 def get_version():
     """Return the program's version from the package root"""
 
     root_dir = os.path.dirname(CURRENT_DIR)
 
-    if root_dir not in sys.path:
-        sys.path.append(root_dir)
-        remove = True
-    else:
-        remove = False
-
-    try:
-        from __version__ import VERSION
-    except ImportError:  # pragma: no cover
-        # noinspection PyPep8Naming
-        VERSION = ()
-
-    if remove:
-        sys.path.remove(root_dir)
+    with extend_import_path(root_dir, first=True):
+        try:
+            from __version__ import VERSION
+        except ImportError:  # pragma: no cover
+            # noinspection PyPep8Naming
+            VERSION = ()
 
     return VERSION
 
