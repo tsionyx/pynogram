@@ -43,8 +43,9 @@ class BguSolver(BaseLineSolver):
 
         line_size = len(line)
         positions = line_size + 1
-        self.job_size = len(description) + 1
-        self.sol = [None] * (self.job_size * positions)
+        job_size = len(description) + 1
+        # self.sol = [None] * (self.job_size * positions)
+        self.sol = [[None] * positions for _ in range(job_size)]
 
     def _solve(self):
         if self.try_solve():
@@ -52,7 +53,7 @@ class BguSolver(BaseLineSolver):
             solved = tuple(UNKNOWN if cell == BOTH_COLORS else cell for cell in solved)
             return solved
 
-        raise NonogramError()
+        raise NonogramError('Bad line')
 
     def try_solve(self):
         """
@@ -61,10 +62,6 @@ class BguSolver(BaseLineSolver):
         """
         position, block = len(self.line) - 1, len(self.description)
         return self.get_sol(position, block)
-
-    def get_mat_index(self, row, col):
-        """Convert the 2D matrix address into a 1D address"""
-        return row * self.job_size + col
 
     @classmethod
     def calc_block_sum(cls, blocks):
@@ -106,7 +103,7 @@ class BguSolver(BaseLineSolver):
         if position == 0:  # reached the end of the line
             if (block == 0) and (self.line[position] != BOX):
                 self.set_sol(position, block, True)
-                self.set_line_cell(position, SPACE)
+                self.add_cell_color(position, SPACE)
             else:
                 self.set_sol(position, block, False)
 
@@ -116,7 +113,7 @@ class BguSolver(BaseLineSolver):
         if block == 0:
             if (self.line[position] != BOX) and self.get_sol(position - 1, block):
                 self.set_sol(position, block, True)
-                self.set_line_cell(position, SPACE)
+                self.add_cell_color(position, SPACE)
             else:
                 self.set_sol(position, block, False)
 
@@ -141,7 +138,7 @@ class BguSolver(BaseLineSolver):
                 return
 
             if white_ans:
-                self.set_line_cell(position, SPACE)
+                self.add_cell_color(position, SPACE)
                 self.set_sol(position, block, True)
 
             if black_ans:  # both space and block
@@ -161,7 +158,7 @@ class BguSolver(BaseLineSolver):
         # if no negations were found, the block can be placed
         return SPACE not in self.line[position: position + length]
 
-    def set_line_cell(self, position, value):
+    def add_cell_color(self, position, value):
         """sets a cell in the solution matrix"""
 
         cell = self.solved_line[position]
@@ -182,9 +179,9 @@ class BguSolver(BaseLineSolver):
 
         # set blacks
         for i in range(start_pos, end_pos):
-            self.set_line_cell(i, BOX)
+            self.add_cell_color(i, BOX)
 
-        self.set_line_cell(end_pos, SPACE)
+        self.add_cell_color(end_pos, SPACE)
 
     def set_sol(self, position, block, value):
         """
@@ -194,10 +191,8 @@ class BguSolver(BaseLineSolver):
         if position < 0:
             return
 
-        self._set_sol(position, block, value)
-
-    def _set_sol(self, position, block, value):
-        self.sol[self.get_mat_index(position, block)] = value
+        # self.sol[self.get_mat_index(position, block)] = value
+        self.sol[block][position] = value
 
     def get_sol(self, position, block):
         """
@@ -209,10 +204,17 @@ class BguSolver(BaseLineSolver):
             # finished placing the last block, exactly at the beginning of the line.
             return block == 0
 
-        if self._get_sol(position, block) is None:
-            self.fill_matrix_top_down(position, block)
+        can_be_solved = self._get_sol(position, block)
+        if can_be_solved is not None:
+            return can_be_solved
 
+        self.fill_matrix_top_down(position, block)
         return self._get_sol(position, block)
 
-    def _get_sol(self, position, block):
-        return self.sol[self.get_mat_index(position, block)]
+    # def get_mat_index(self, row, col):
+    #     """Convert the 2D matrix address into a 1D address"""
+    #     return row * self.job_size + col
+    #
+    # def _get_sol(self, position, block):
+    #     # return self.sol[self.get_mat_index(position, block)]
+    #     return self.sol[block][position]
