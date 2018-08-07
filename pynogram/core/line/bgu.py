@@ -91,59 +91,53 @@ class BguSolver(BaseLineSolver):
         """
 
         if (position < 0) or (block < 0):
-            return
+            return None
 
         # if we have too many blocks to fit this line segment
         # we can stop the recursion and return false
         if position < self.block_sums[block]:
-            self.set_sol(position, block, False)
-            return
+            return False
 
         # base case
         if position == 0:  # reached the end of the line
             if (block == 0) and (self.line[position] != BOX):
-                self.set_sol(position, block, True)
                 self.add_cell_color(position, SPACE)
-            else:
-                self.set_sol(position, block, False)
+                return True
 
-            return
+            return False
 
         # finished filling all blocks (can still fill whitespace)
         if block == 0:
             if (self.line[position] != BOX) and self.get_sol(position - 1, block):
-                self.set_sol(position, block, True)
                 self.add_cell_color(position, SPACE)
-            else:
-                self.set_sol(position, block, False)
+                return True
 
-            return
+            return False
 
         # recursive case
         if self.line[position] == BOX:  # current cell is BOX
-            self.set_sol(position, block, False)  # can't place a block if the cell is black
+            return False  # can't place a block if the cell is black
 
-        else:  # current cell is either white or unknown
-            white_ans = self.get_sol(position - 1, block)  # set cell white and continue
+        # current cell is either white or unknown
+        white_ans = self.get_sol(position - 1, block)  # set cell white and continue
 
-            prev_block_size = self.description[block - 1]
-            # set cell white, place the current block and continue
+        prev_block_size = self.description[block - 1]
+        # set cell white, place the current block and continue
 
-            black_ans = False
-            if self.can_place_block(position - prev_block_size, prev_block_size):
-                black_ans = self.get_sol(position - prev_block_size - 1, block - 1)
+        black_ans = False
+        if self.can_place_block(position - prev_block_size, prev_block_size):
+            black_ans = self.get_sol(position - prev_block_size - 1, block - 1)
 
-            if not white_ans and not black_ans:
-                self.set_sol(position, block, False)  # no solution
-                return
+        if not white_ans and not black_ans:
+            return False  # no solution
 
-            if white_ans:
-                self.add_cell_color(position, SPACE)
-                self.set_sol(position, block, True)
+        if white_ans:
+            self.add_cell_color(position, SPACE)
 
-            if black_ans:  # both space and block
-                self.set_line_block(position - prev_block_size, position)
-                self.set_sol(position, block, True)
+        if black_ans:  # both space and block
+            self.set_line_block(position - prev_block_size, position)
+
+        return True
 
     def can_place_block(self, position, length):
         """
@@ -204,12 +198,15 @@ class BguSolver(BaseLineSolver):
             # finished placing the last block, exactly at the beginning of the line.
             return block == 0
 
-        can_be_solved = self._get_sol(position, block)
+        can_be_solved = self.sol[block][position]  # self._get_sol(position, block)
         if can_be_solved is not None:
             return can_be_solved
 
-        self.fill_matrix_top_down(position, block)
-        return self._get_sol(position, block)
+        can_be_solved = self.fill_matrix_top_down(position, block)
+        if can_be_solved is not None:
+            self.set_sol(position, block, can_be_solved)
+
+        return can_be_solved
 
     # def get_mat_index(self, row, col):
     #     """Convert the 2D matrix address into a 1D address"""
