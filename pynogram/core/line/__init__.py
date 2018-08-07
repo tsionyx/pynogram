@@ -30,7 +30,7 @@ SOLVERS = {
 }
 
 
-def solve_line(desc, line, method='reverse_tracking'):
+def solve_line(desc, line, method='reverse_tracking', normalized=False):
     """
     Utility for row solving that can be used in multiprocessing map
     """
@@ -42,9 +42,10 @@ def solve_line(desc, line, method='reverse_tracking'):
     #
     # desc, line = args
 
-    desc = normalize_description(desc)
-    # desc = tuple(desc)
-    line = normalize_row(line)
+    if not normalized:
+        desc = normalize_description(desc)
+        # desc = tuple(desc)
+        line = normalize_row(line)
 
     try:
         solver = SOLVERS[method]

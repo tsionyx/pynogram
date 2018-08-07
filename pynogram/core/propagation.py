@@ -65,7 +65,7 @@ def solve_row(board, index, is_column, method):
 
     # LOG.debug('Solving %s %s: %s. Partial: %s', index, desc, row_desc, row)
 
-    updated = solve_line(row_desc, row, method=method)
+    updated = solve_line(row_desc, row, method=method, normalized=True)
 
     new_jobs = []
 
