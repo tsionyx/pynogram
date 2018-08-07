@@ -8,7 +8,10 @@ from __future__ import unicode_literals, print_function
 import logging
 import os
 
-from six import iteritems, text_type
+from six import (
+    iteritems,
+    text_type,
+)
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover

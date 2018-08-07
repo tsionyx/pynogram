@@ -9,7 +9,10 @@ import os
 import re
 from xml.etree import ElementTree
 
-from six import string_types, PY2
+from six import (
+    string_types,
+    PY2,
+)
 # I don't want interpolation features, so RawConfigParser (not ConfigParser)
 # noinspection PyUnresolvedReferences
 from six.moves.configparser import RawConfigParser

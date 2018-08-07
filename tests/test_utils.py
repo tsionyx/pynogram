@@ -15,7 +15,10 @@ from pynogram.utils.iter import (
     avg,
 )
 from pynogram.utils.other import get_version
-from pynogram.utils.priority_dict import PriorityDict, PriorityDict2
+from pynogram.utils.priority_dict import (
+    PriorityDict,
+    PriorityDict2,
+)
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 

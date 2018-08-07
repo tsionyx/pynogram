@@ -12,8 +12,7 @@ from sys import stdout
 
 from six import (
     integer_types, text_type, string_types,
-    iteritems,
-    itervalues,
+    iteritems, itervalues,
     PY2,
 )
 

@@ -5,8 +5,10 @@ from __future__ import unicode_literals, print_function
 
 import logging
 
-from six import iteritems, add_metaclass
-from six import itervalues
+from six import (
+    iteritems, itervalues,
+    add_metaclass,
+)
 
 from pynogram.core.common import NonogramError
 from pynogram.utils.cache import Cache

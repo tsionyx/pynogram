@@ -6,7 +6,9 @@ Demos and examples
 from __future__ import unicode_literals, print_function
 
 from pynogram.core.board import make_board
-from pynogram.core.common import BOX, SPACE
+from pynogram.core.common import (
+    BOX, SPACE,
+)
 from pynogram.core.renderer import (
     AsciiRenderer,
     AsciiRendererWithBold,

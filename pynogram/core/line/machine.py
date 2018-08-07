@@ -11,7 +11,9 @@ from __future__ import unicode_literals, print_function
 import logging
 import os
 
-from six import iteritems, itervalues
+from six import (
+    iteritems, itervalues,
+)
 from six.moves import range
 
 from pynogram.core.common import (

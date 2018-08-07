@@ -5,14 +5,20 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import time
-from collections import OrderedDict, defaultdict, deque
+from collections import (
+    OrderedDict,
+    defaultdict,
+    deque,
+)
 from itertools import product
 
 from six import iteritems
 from six.moves import range
 
 from pynogram.core import propagation
-from pynogram.core.board import CellPosition, CellState
+from pynogram.core.board import (
+    CellPosition, CellState,
+)
 from pynogram.core.common import NonogramError
 from pynogram.core.line.base import cache_info
 from pynogram.utils.priority_dict import PriorityDict

@@ -14,7 +14,7 @@ from six.moves import range
 
 from pynogram.core.common import (
     BOX, SPACE, UNKNOWN,
-    NonogramError
+    NonogramError,
 )
 from pynogram.core.line.base import BaseLineSolver
 

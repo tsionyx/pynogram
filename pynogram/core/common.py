@@ -10,7 +10,10 @@ import os
 import re
 from collections import namedtuple
 
-from six import integer_types, string_types, iteritems
+from six import (
+    integer_types, string_types,
+    iteritems,
+)
 
 from pynogram.utils.iter import list_replace
 

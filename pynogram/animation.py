@@ -14,7 +14,10 @@ try:
 except ImportError:
     curses = None
 
-from six import string_types, itervalues
+from six import (
+    string_types,
+    itervalues,
+)
 from six.moves import queue
 
 from pynogram.core.renderer import BaseAsciiRenderer

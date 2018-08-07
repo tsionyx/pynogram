@@ -16,7 +16,11 @@ import os
 import sys
 from shutil import rmtree
 
-from setuptools import setup, find_packages, Command
+from setuptools import (
+    setup,
+    find_packages,
+    Command,
+)
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ME = 'tsionyx'

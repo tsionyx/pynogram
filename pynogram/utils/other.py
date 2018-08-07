@@ -13,7 +13,10 @@ from contextlib import contextmanager
 from datetime import datetime
 from functools import wraps
 
-from six import text_type, iteritems
+from six import (
+    text_type,
+    iteritems,
+)
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 START_TIME = datetime.now()

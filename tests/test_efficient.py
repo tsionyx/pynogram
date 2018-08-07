@@ -5,12 +5,20 @@ from __future__ import unicode_literals
 import pytest
 
 from pynogram.core import propagation
-from pynogram.core.board import Board, make_board
+from pynogram.core.board import (
+    Board, make_board,
+)
 from pynogram.core.common import NonogramError
-from pynogram.core.common import SPACE, ColorBlock
+from pynogram.core.common import (
+    SPACE,
+    ColorBlock,
+)
 from pynogram.core.line import solve_line
 from pynogram.core.line.efficient import EfficientColorSolver
-from pynogram.reader import read_example, Pbn
+from pynogram.reader import (
+    read_example,
+    Pbn,
+)
 from pynogram.utils.other import is_close
 from .test_bgu import CASES, BAD_CASES
 

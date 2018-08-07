@@ -5,7 +5,10 @@ from __future__ import unicode_literals, print_function
 import time
 
 from pynogram.core.line.base import TwoLayerCache
-from pynogram.utils.cache import Cache, ExpirableCache
+from pynogram.utils.cache import (
+    Cache,
+    ExpirableCache,
+)
 
 
 class TestCache(object):

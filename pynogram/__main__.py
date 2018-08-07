@@ -18,16 +18,25 @@ try:
 except ImportError:
     curses = None
 
-from six import PY2, text_type
+from six import (
+    PY2,
+    text_type,
+)
 from six.moves import queue
 
 from pynogram.__version__ import __version__
-from pynogram.animation import CursesRenderer, StringsPager
+from pynogram.animation import (
+    CursesRenderer,
+    StringsPager,
+)
 from pynogram.core.board import make_board
 from pynogram.core.common import BOX
 from pynogram.core.backtracking import Solver
 from pynogram.core.renderer import BaseAsciiRenderer
-from pynogram.reader import read_example, Pbn, PbnLocal, example_file
+from pynogram.reader import (
+    read_example, example_file,
+    Pbn, PbnLocal,
+)
 
 
 def cli_args():

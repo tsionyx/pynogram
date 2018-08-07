@@ -3,7 +3,10 @@
 from __future__ import unicode_literals, print_function
 
 # noinspection PyProtectedMember
-from pynogram.core.board import Board, _solve_on_space_hints
+from pynogram.core.board import (
+    Board,
+    _solve_on_space_hints,
+)
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     invert,

@@ -7,7 +7,10 @@ from __future__ import unicode_literals, print_function, division
 
 import logging
 import os
-from collections import defaultdict, namedtuple
+from collections import (
+    defaultdict,
+    namedtuple,
+)
 from copy import copy
 
 from six.moves import zip, range
