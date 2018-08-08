@@ -5,17 +5,21 @@ Defines methods to parse data file with the board defined
 
 from __future__ import unicode_literals, print_function
 
+import json
 import os
 import re
+from contextlib import closing
 from xml.etree import ElementTree
 
 from six import (
-    string_types,
+    string_types, binary_type,
     PY2,
 )
+from six.moves import range
 # I don't want interpolation features, so RawConfigParser (not ConfigParser)
 # noinspection PyUnresolvedReferences
 from six.moves.configparser import RawConfigParser
+from six.moves.urllib.error import HTTPError
 from six.moves.urllib.request import urlopen
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -226,3 +230,117 @@ class PbnLocal(Pbn):
     @classmethod
     def _get_puzzle_xml(cls, _id):
         return open(_id)
+
+
+def _get_utf8(string):
+    if isinstance(string, binary_type):
+        return string.decode('utf-8', errors='ignore')
+
+    return string
+
+
+class NonogramsOrg(object):
+    """Grab the puzzles from http://www.nonograms.org/"""
+
+    BASE_URL = 'http://www.nonograms.org/'
+
+    def __init__(self, _id, colored=False):
+        self._id = _id
+        self.colored = colored
+
+    def _puzzle_url(self):
+        if self.colored:
+            path = 'nonograms2'
+        else:
+            path = 'nonograms'
+
+        return '{}{}/i/{}'.format(self.BASE_URL, path, self._id)
+
+    def _puzzle_html(self, colored=None, try_other=True):
+        if colored is not None:
+            self.colored = colored
+
+        url = self._puzzle_url()
+        try:
+            with closing(urlopen(url)) as page:
+                return page.read()  # pylint: disable=no-member
+        except HTTPError as ex:
+            if ex.code != 404:
+                raise
+
+            if try_other:
+                return self._puzzle_html(colored=not colored, try_other=False)
+
+            raise PbnNotFoundError(self._id)
+
+    CYPHER_RE = re.compile(r'var[\s]+d\s*=\s*(\[[0-9,\[\]\s]+\]);')
+
+    def _puzzle_cypher(self):
+        html = _get_utf8(self._puzzle_html())
+        match = self.CYPHER_RE.search(html)
+        if not match:
+            raise PbnNotFoundError(self._id, 'Not found puzzle in the HTML')
+
+        return json.loads(match.group(1))
+
+    # pylint: disable=invalid-name
+    @classmethod
+    def decipher(cls, cyphered):
+        """
+        Reverse engineered version of the part of the script
+        http://www.nonograms.org/js/nonogram.min.059.js
+        that produces a nonogram solution for given cyphered solution
+        (it can be found in puzzle HTML in the form 'var d=[...]').
+        """
+        x = cyphered[1]
+        width = x[0] % x[3] + x[1] % x[3] - x[2] % x[3]
+
+        x = cyphered[2]
+        height = x[0] % x[3] + x[1] % x[3] - x[2] % x[3]
+
+        x = cyphered[3]
+        colors_number = x[0] % x[3] + x[1] % x[3] - x[2] % x[3]
+
+        colors = []
+        x = cyphered[4]
+        for i in range(colors_number):
+            color_x = cyphered[i + 5]
+
+            a = color_x[0] - x[1]
+            b = color_x[1] - x[0]
+            c = color_x[2] - x[3]
+            is_black = color_x[3] - a - x[2]
+
+            rgb = hex(a + 256)[3:] + hex((b + 256 << 8) + c)[3:]
+            colors.append((rgb, is_black))
+
+        solution = [[0] * width for _ in range(height)]
+
+        a = colors_number + 5
+        x = cyphered[a]
+        solution_size = x[0] % x[3] * (x[0] % x[3]) + x[1] % x[3] * 2 + x[2] % x[3]
+
+        x = cyphered[a + 1]
+        for i in range(solution_size):
+            y = cyphered[a + 2 + i]
+            vv = y[0] - x[0] - 1
+
+            for j in range(y[1] - x[1]):
+                v = j + vv
+                solution[y[3] - x[3] - 1][v] = y[2] - x[2]
+
+        return [colors, solution]
+
+    def read(self):
+        """
+        Find and parse the colors ans solution of
+        a 'nonograms.org' puzzle by id
+        """
+
+        cypher = self._puzzle_cypher()
+        colors, solution = self.decipher(cypher)
+
+        if len(colors) == 1:
+            return solution
+
+        return colors, solution

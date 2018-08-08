@@ -15,6 +15,7 @@ from pynogram.core.renderer import BaseAsciiRenderer
 from pynogram.reader import (
     example_file, read_ini, read_example,
     Pbn, PbnNotFoundError,
+    NonogramsOrg,
 )
 
 
@@ -82,3 +83,39 @@ class TestPbn(object):
             'red': ('FF0000', '*'),
             'green': ('00B000', '%'),
         }
+
+
+class TestNonogramsOrg(object):
+    def test_black_and_white(self):
+        """http://www.nonograms.org/nonograms/i/4353"""
+        solution = NonogramsOrg(4353).read()
+        assert solution == [
+            [1, 1, 1, 0],
+            [0, 0, 1, 1],
+            [1, 0, 1, 0],
+            [0, 1, 1, 0],
+            [1, 1, 1, 0],
+            [1, 0, 1, 0],
+        ]
+
+    def test_colored(self):
+        """http://www.nonograms.org/nonograms2/i/4374"""
+        colors, solution = NonogramsOrg(4374).read()
+
+        assert colors == [
+            ('fbf204', 0),
+            ('000000', 1),
+            ('f4951c', 0),
+        ]
+
+        assert solution == [
+            [0, 0, 0, 1, 0],
+            [1, 0, 0, 1, 1],
+            [1, 3, 3, 0, 0],
+            [2, 3, 3, 0, 0],
+            [3, 3, 0, 0, 0],
+        ]
+
+    def test_not_found(self):
+        with pytest.raises(PbnNotFoundError, match='444444'):
+            NonogramsOrg(444444).read()

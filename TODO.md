@@ -2,6 +2,9 @@
   - use https://codebeat.co
   - check docstrings (+grammarly)
 
+- colors as binary string (00001, 00010, 00100, 01000, 10000)
+- animation as gif
+
 - backjumping:
     (many repeating dead ends: `grep 'false' 9892.log | sed 's/^[[:space:]]*//' | sort | uniq -c | sort -nr | head`)
 
