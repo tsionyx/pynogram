@@ -14,6 +14,7 @@ from six import (
     integer_types, string_types,
     iteritems,
 )
+from six.moves import range
 
 from pynogram.utils.iter import list_replace
 
@@ -174,3 +175,64 @@ def is_color_list(value):
         return True
 
     return False
+
+
+def clues(solution_matrix):
+    """
+    Generate nonogram description (columns and rows)
+    from a solution matrix.
+    """
+    height = len(solution_matrix)
+    if height == 0:
+        return (), ()
+
+    width = len(solution_matrix[0])
+    if width == 0:
+        return (), ()
+
+    colors = set()
+
+    columns = []
+    for col_index in range(width):
+        column = []
+
+        row_index = 0
+        while row_index < height:
+            block_begin = row_index
+            color_number = solution_matrix[row_index][col_index]
+
+            while (row_index < height) and (solution_matrix[row_index][col_index] == color_number):
+                row_index += 1
+
+            block_size = row_index - block_begin
+            if (block_size > 0) and (color_number > 0):
+                colors.add(color_number)
+                column.append(ColorBlock(block_size, color_number))
+
+        columns.append(column)
+
+    rows = []
+    for row_index in range(height):
+        row = []
+
+        col_index = 0
+        while col_index < width:
+            block_begin = col_index
+            color_number = solution_matrix[row_index][col_index]
+
+            while (col_index < width) and (solution_matrix[row_index][col_index] == color_number):
+                col_index += 1
+
+            block_size = col_index - block_begin
+            if (block_size > 0) and (color_number > 0):
+                colors.add(color_number)
+                row.append(ColorBlock(block_size, color_number))
+
+        rows.append(row)
+
+    # black and white, ignore colors
+    if len(colors) == 1:
+        columns = [[block[0] for block in column] for column in columns]
+        rows = [[block[0] for block in row] for row in rows]
+
+    return columns, rows

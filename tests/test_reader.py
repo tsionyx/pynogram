@@ -11,12 +11,15 @@ from six.moves.configparser import NoSectionError
 
 from pynogram.core import propagation
 from pynogram.core.board import Board
+from pynogram.core.common import clues
+from pynogram.core.propagation import solve
 from pynogram.core.renderer import BaseAsciiRenderer
 from pynogram.reader import (
     example_file, read_ini, read_example,
     Pbn, PbnNotFoundError,
     NonogramsOrg,
 )
+from .test_board import tested_board
 
 
 class TestReader(object):
@@ -119,3 +122,57 @@ class TestNonogramsOrg(object):
     def test_not_found(self):
         with pytest.raises(PbnNotFoundError, match='444444'):
             NonogramsOrg(444444).read()
+
+    def test_black_and_white_with_empty_rows(self):
+        """https://en.wikipedia.org/wiki/Nonogram#Example"""
+        board = tested_board()
+        solve(board)
+
+        sol = board.cells
+        columns, rows = clues(sol)
+
+        assert columns == [
+            [],
+            [9],
+            [9],
+            [2, 2],
+            [2, 2],
+            [4],
+            [4],
+            [],
+        ]
+
+        assert rows == [
+            [],
+            [4],
+            [6],
+            [2, 2],
+            [2, 2],
+            [6],
+            [4],
+            [2],
+            [2],
+            [2],
+            [],
+        ]
+
+    def test_colored_clues(self):
+        """http://www.nonograms.org/nonograms2/i/4374"""
+        sol = NonogramsOrg(4374).read()[1]
+        columns, rows = clues(sol)
+
+        assert columns == [
+            [(2, 1), (1, 2), (1, 3)],
+            [(3, 3)],
+            [(2, 3)],
+            [(2, 1)],
+            [(1, 1)],
+        ]
+
+        assert rows == [
+            [(1, 1)],
+            [(1, 1), (2, 1)],
+            [(1, 1), (2, 3)],
+            [(1, 2), (2, 3)],
+            [(2, 3)],
+        ]

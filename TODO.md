@@ -54,7 +54,6 @@ p_c.sort_stats('cumtime').print_stats(20)
 
 - tests for Web UI
 - load board from file
-- load clues from solved board (check for complexity)
 
 - solve blotted:
   19440, 19629, 19686, 19887, 20742, 20758, 20796, 21151, 21339, 22035, 22385, 22591
