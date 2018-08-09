@@ -19,6 +19,10 @@ from pynogram.utils.priority_dict import (
     PriorityDict,
     PriorityDict2,
 )
+from pynogram.utils.uniq import (
+    UniqueChecker,
+    init_once,
+)
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -273,3 +277,108 @@ class TestVersion(object):
 
         assert len(version) == 3
         assert all(isinstance(v, int) for v in version)
+
+
+class TestUniq(object):
+    # @unique_fields('name', 'rgb')
+    class Color(UniqueChecker):
+        # class Color(namedtuple('Color', 'name rgb symbol')):
+        _UNIQUE_FIELDS = ('name', 'rgb')
+
+        def __init__(self, name, rgb, symbol=None):
+            super(self.__class__, self).__init__(name, rgb, symbol=symbol)
+            self.name = name
+            self.rgb = rgb
+            self.symbol = symbol
+
+    @property
+    def _instances(self):
+        # noinspection PyProtectedMember
+        return self.Color._instances
+
+    def test_simple(self):
+        # assert len(self._instances) == 0
+
+        c1 = self.Color('r', 'f00', '%')
+        assert c1.__dict__['_Cacheable__args_key'] == (
+            ('_positional_args', ('r', 'f00')),
+            ('symbol', '%'),
+        )
+
+        assert len(self._instances) == 1
+
+    def test_same_objects_for_same_init(self):
+        # assert len(self._instances) == 0
+
+        c1 = self.Color('r', 'f00', '%')
+        c2 = self.Color('r', 'f00', '%')
+        assert c1 is c2
+
+        assert len(self._instances) == 1
+
+    @pytest.mark.skip('Args and kwargs are different. Enable Cacheable.__new__2')
+    def test_same_objects_for_arg_and_kwarg(self):
+        # assert len(self._instances) == 0
+
+        c1 = self.Color('r', 'f00', '%')
+        c2 = self.Color('r', 'f00', symbol='%')
+        assert c1 is c2
+
+        assert len(self._instances) == 1
+
+    def test_almost_same_cannot_be_created(self):
+        # assert len(self._instances) == 0
+
+        c1 = self.Color('r', 'f00', '%')
+
+        with pytest.raises(ValueError) as ei:
+            self.Color('r', 'f00')
+        assert str(ei.value).startswith('Cannot create an instance')
+
+        assert len(self._instances) == 1
+        assert list(self._instances.values())[0] is c1
+
+
+class TestInitOnce(object):
+    class Foo(object):
+        counter = 0
+
+        @init_once
+        def foo(self):
+            return self.bar()
+
+        def bar(self):
+            self.counter += 1
+            return dict()
+
+    def test_without_once_every_time_new_dict(self):
+        f = self.Foo()
+        a = f.bar()
+        b = f.bar()
+        assert a is not b
+
+    def test_with_once_the_same_dict(self):
+        f = self.Foo()
+        a = f.foo()
+        b = f.foo()
+        assert a is b
+
+    def test_counter_incremented(self):
+        f = self.Foo()
+        f.bar()
+        f.bar()
+        f.bar()
+        assert f.counter == 3
+
+    def test_counter_do_not_incremented(self):
+        f = self.Foo()
+        f.foo()
+        assert f.counter == 1
+        f.foo()
+        f.foo()
+        f.foo()
+        f.foo()
+        assert f.counter == 1
+
+        f.bar()
+        assert f.counter == 2
