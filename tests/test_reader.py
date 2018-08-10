@@ -80,12 +80,12 @@ class TestPbn(object):
 
     def test_colored(self):
         columns, rows, colors = Pbn.read(898)
-        assert colors == {
-            'white': ('FFFFFF', '.'),
-            'black': ('000000', 'X'),
-            'red': ('FF0000', '*'),
-            'green': ('00B000', '%'),
-        }
+        assert [(c.name, c.rgb, c.symbol) for c in colors.iter_colors()] == [
+            ('white', 'FFFFFF', '.'),
+            ('black', '000000', 'X'),
+            ('red', 'FF0000', '*'),
+            ('green', '00B000', '%'),
+        ]
 
 
 class TestNonogramsOrg(object):
@@ -159,7 +159,7 @@ class TestNonogramsOrg(object):
     def test_colored_clues(self):
         """http://www.nonograms.org/nonograms2/i/4374"""
         sol = NonogramsOrg(4374).read()[1]
-        columns, rows = clues(sol)
+        columns, rows = clues(sol, white_color_code=0)
 
         assert columns == [
             [(2, 1), (1, 2), (1, 3)],

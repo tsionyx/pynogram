@@ -24,10 +24,9 @@ except ImportError:
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE, invert,
     normalize_description,
-    normalize_description_colored,
-    DEFAULT_COLOR, DEFAULT_COLOR_NAME,
     is_list_like,
 )
+from pynogram.core.color import normalize_description_colored
 from pynogram.core.renderer import Renderer
 from pynogram.utils.iter import avg
 
@@ -491,11 +490,12 @@ class ColoredBoard(Board):
     """
 
     def __init__(self, columns, rows, color_map, **renderer_params):
-        self.color_defs = color_map
-        self.color_defs[DEFAULT_COLOR_NAME] = DEFAULT_COLOR
-        colors_as_strings = [SPACE] + sorted(self.color_defs)
-        self._color_id_to_name = dict(enumerate(colors_as_strings))
-        self._color_name_to_id = {v: k for k, v in self._color_id_to_name.items()}
+        """
+        :param columns: iterable of vertical clues
+        :param rows: iterable of horizontal clues
+        :type color_map: ColorMap
+        """
+        self.color_map = color_map
 
         super(ColoredBoard, self).__init__(columns, rows, **renderer_params)
 
@@ -505,8 +505,12 @@ class ColoredBoard(Board):
         self._desc_colors = self._clue_colors(True) | {SPACE}
 
     @property
+    def _color_map_ids(self):
+        return tuple(self.color_map.by_id)
+
+    @property
     def init_cell_state(self):
-        return tuple(self._color_id_to_name)
+        return self._color_map_ids
 
     def cell_solved(self, position):
         i, j = position
@@ -648,7 +652,7 @@ class ColoredBoard(Board):
         """
         Presents given rows in standard format
         """
-        return tuple(normalize_description_colored(row, self._color_name_to_id)
+        return tuple(normalize_description_colored(row, self.color_map)
                      for row in rows)
 
     def validate(self):
@@ -662,8 +666,7 @@ class ColoredBoard(Board):
             raise ValueError('Colors differ: {} (rows) and {} (columns)'.format(
                 horizontal_colors, vertical_colors))
 
-        not_defined_colors = horizontal_colors - set(self._color_name_to_id[name]
-                                                     for name in self.color_defs)
+        not_defined_colors = horizontal_colors - set(self._color_map_ids)
         if not_defined_colors:
             raise ValueError('Some colors not defined: {}'.format(
                 tuple(not_defined_colors)))
@@ -703,31 +706,40 @@ class ColoredBoard(Board):
                 raise ValueError('Cannot allocate row {} in just {} cells'.format(
                     list(row), max_size))
 
-    def char_for_color(self, color_name):
+    def symbol_for_color_id(self, color_id):
         """
-        Return the ASCII character to draw
+        Get the ASCII character to draw
         for given color based on color map
         """
-        if color_name not in self.color_defs:
-            color_name = self.color_name_by_id(color_name)
+        color = self.color_map.find_by_id(color_id)
+        if not color:
+            color = self.color_map.find_by_name(color_id)
 
-        return self.color_defs[color_name][1]
+        if color:
+            return color.symbol
 
-    def rgb_for_color(self, color_name):
-        """Return the RGB triplet for given color based on color map"""
-        if color_name not in self.color_defs:
-            color_name = self.color_name_by_id(color_name)
-        return self.color_defs[color_name][0]
+        return None
 
-    def color_name_by_id(self, color_id):
-        """Return the string color name for given ID"""
+    def rgb_for_color_name(self, color_name):
+        """
+        Get the RGB triplet for given color based on color map
+        """
+        color = self.color_map.find_by_name(color_name)
+        if not color:
+            color = self.color_map.find_by_id(color_name)
 
-        return self._color_id_to_name.get(color_id)
+        if color:
+            return color.svg_name
+
+        return None
 
     def color_id_by_name(self, color_name):
         """Return the color ID for given string name"""
 
-        return self._color_name_to_id.get(color_name)
+        if color_name in self.color_map:
+            return self.color_map[color_name].id_
+
+        return None
 
 
 def _solve_on_space_hints(board, hints):

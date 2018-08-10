@@ -22,6 +22,8 @@ from six.moves.configparser import RawConfigParser
 from six.moves.urllib.error import HTTPError
 from six.moves.urllib.request import urlopen
 
+from pynogram.core.color import ColorMap
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 _INLINE_COMMENT_PREFIXES = '#;'
@@ -152,14 +154,14 @@ def read_ini(content):
     res = [columns, rows]
 
     if parser.has_section('colors'):
-        colors = dict()
+        colors = ColorMap()
         for color_name, color_desc in parser.items('colors'):
             match = _COLOR_RE.match(color_desc)
             # TODO: spit some info if not matched
-            colors[color_name] = match.groups()
 
-        if colors:
-            # noinspection PyTypeChecker
+            colors.make_color(color_name, *match.groups())
+
+        if not colors.black_and_white:
             res.append(colors)
 
     return tuple(res)
@@ -204,24 +206,25 @@ class Pbn(object):
                 raise PbnNotFoundError(_id)
             raise
 
-        colors = {color.attrib['name']: (color.text, color.attrib['char'])
-                  for color in tree.findall('.//color')}
+        colors = ColorMap()
+        for color in tree.findall('.//color'):
+            colors.make_color(color.attrib['name'], color.text, color.attrib['char'])
 
-        if len(colors) > 2:
+        if colors.black_and_white:
+            default_color = None
+        else:
             puzzle = tree.findall('.//puzzle[@type="grid"]')[0]
             default_color = puzzle.attrib['defaultcolor']
-        else:
-            default_color = None
 
         columns = [cls._parse_clue(clue, default_color)
                    for clue in tree.findall('.//clues[@type="columns"]/line')]
         rows = [cls._parse_clue(clue, default_color)
                 for clue in tree.findall('.//clues[@type="rows"]/line')]
 
-        if len(colors) > 2:
-            return columns, rows, colors
+        if colors.black_and_white:
+            return columns, rows
 
-        return columns, rows
+        return columns, rows, colors
 
 
 class PbnLocal(Pbn):

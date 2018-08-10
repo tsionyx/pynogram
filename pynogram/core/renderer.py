@@ -7,11 +7,10 @@ from __future__ import unicode_literals, print_function, division
 
 import codecs
 import logging
-import re
 from sys import stdout
 
 from six import (
-    integer_types, text_type, string_types,
+    integer_types, text_type,
     iteritems, itervalues,
     PY2,
 )
@@ -19,6 +18,7 @@ from six import (
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
+    Color,
 )
 from pynogram.utils.iter import (
     pad,
@@ -119,9 +119,9 @@ class GridCell(Cell):
                 # multiple colors
                 value = UNKNOWN
 
-        value = self.renderer.board.color_name_by_id(value)
-        if value in self.renderer.board.color_defs:
-            return self.renderer.board.char_for_color(value)
+        symbol = self.renderer.board.symbol_for_color_id(value)
+        if symbol is not None:
+            return symbol
 
         return icons.get(value, self.DEFAULT_ICON)
 
@@ -505,10 +505,12 @@ class SvgRenderer(StreamRenderer):
             symbol.add(part)
 
         if color is not None:
-            if self.board.is_colored:
-                color = self.board.color_id_by_name(color)
-
+            # SPACE is already an ID
+            if color != SPACE:
+                if self.board.is_colored:
+                    color = self.board.color_id_by_name(color)
             self.color_symbols[color] = id_
+
         drawing.defs.add(symbol)
 
     def _add_definitions(self):
@@ -526,7 +528,10 @@ class SvgRenderer(StreamRenderer):
         ))
 
         if self.board.is_colored:
-            for color_name in sorted(self.board.color_defs):
+            for color_name in sorted(self.board.color_map):
+                if color_name == Color.white().name:
+                    continue
+
                 self._add_symbol(
                     'color-%s' % color_name, color_name,
                     drawing.rect(
@@ -591,21 +596,8 @@ class SvgRenderer(StreamRenderer):
         """Full height of the SVG board representation"""
         return self.pixel_header_height + self.pixel_board_height
 
-    RGB_TRIPLET_RE = re.compile(r'([0-9]+),[ \t]*([0-9]+),[ \t]*([0-9]+)')
-
     def _color_from_name(self, color_name):
-        color = self.board.rgb_for_color(color_name)
-
-        if len(color) == 6:
-            return '#' + color
-
-        if isinstance(color, string_types) and self.RGB_TRIPLET_RE.match(color):
-            return 'rgb({})'.format(color)
-
-        if isinstance(color, (list, tuple)) and len(color) == 3:
-            return 'rgb({})'.format(','.join(map(str, color)))
-
-        return color
+        return self.board.rgb_for_color_name(color_name)
 
     def block_svg(self, value, is_column, clue_number, block_number):
         """

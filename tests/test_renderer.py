@@ -369,7 +369,7 @@ class TestSvg(object):
                         <rect fill="blue" height="15" width="15" x="0" y="0" />
                     </symbol>
                     <symbol id="color-black">
-                        <rect fill="rgb(0,0,0)" height="15" width="15" x="0" y="0" />
+                        <rect fill="#000" height="15" width="15" x="0" y="0" />
                     </symbol>
                     <symbol id="color-r">
                         <rect fill="red" height="15" width="15" x="0" y="0" />
@@ -423,16 +423,16 @@ class TestSvg(object):
                     <use x="37.5" xlink:href="#space" y="52.5" />
                     <use x="52.5" xlink:href="#space" y="52.5" />
                 </g>
-                <g class="color-b">
-                    <use x="15" xlink:href="#color-b" y="60" />
-                    <use x="30" xlink:href="#color-b" y="60" />
-                    <use x="45" xlink:href="#color-b" y="60" />
-                </g>
                 <g class="color-black" />
                 <g class="color-r">
                     <use x="15" xlink:href="#color-r" y="30" />
                     <use x="30" xlink:href="#color-r" y="30" />
                     <use x="45" xlink:href="#color-r" y="30" />
+                </g>
+                <g class="color-b">
+                    <use x="15" xlink:href="#color-b" y="60" />
+                    <use x="30" xlink:href="#color-b" y="60" />
+                    <use x="45" xlink:href="#color-b" y="60" />
                 </g>
 
                 <use x="0" xlink:href="#check" y="0" />

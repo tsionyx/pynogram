@@ -104,30 +104,30 @@ class TestNonogramFiniteStateMachine(object):
     def test_basic(self, nfsm):
         assert nfsm.current_state == 1
         assert nfsm.states == tuple(range(1, 8))
-        assert nfsm.actions == (False, True)
+        assert nfsm.actions == (SPACE, BOX)
         assert dict(nfsm.state_map) == {
-            (1, False): 1,
-            (1, True): 2,
-            (2, True): 3,
-            (3, True): 4,
-            (4, False): 5,
-            (5, False): 5,
-            (5, True): 6,
-            (6, True): 7,
-            (7, False): 7,
+            (1, SPACE): 1,
+            (1, BOX): 2,
+            (2, BOX): 3,
+            (3, BOX): 4,
+            (4, SPACE): 5,
+            (5, SPACE): 5,
+            (5, BOX): 6,
+            (6, BOX): 7,
+            (7, SPACE): 7,
         }
 
-        nfsm.transition(False)
+        nfsm.transition(SPACE)
         assert nfsm.current_state == 1
 
-        nfsm.transition(True)
+        nfsm.transition(BOX)
         assert nfsm.current_state == 2
 
-        nfsm.transition(True)
+        nfsm.transition(BOX)
         assert nfsm.current_state == 3
 
         with pytest.raises(StateMachineError) as ie:
-            nfsm.transition(False)
+            nfsm.transition(SPACE)
 
         assert ie.value.code == 1
 
@@ -139,31 +139,31 @@ class TestNonogramFiniteStateMachine(object):
         ):
             assert nfsm.current_state == 1
             assert nfsm.states == (1, 2, 3, 4)
-            assert nfsm.actions == (False, True)
+            assert nfsm.actions == (SPACE, BOX)
             assert dict(nfsm.state_map) == {
-                (1, False): 1,
-                (1, True): 2,
-                (2, False): 3,
-                (3, False): 3,
-                (3, True): 4,
-                (4, False): 4,
+                (1, SPACE): 1,
+                (1, BOX): 2,
+                (2, SPACE): 3,
+                (3, SPACE): 3,
+                (3, BOX): 4,
+                (4, SPACE): 4,
             }
 
     def test_str(self, nfsm):
         assert str(nfsm) == '\n'.join([
             'NonogramFSM(1);',
             'All states: [1, 2, 3, 4, 5, 6, 7];',
-            'All actions: [False, True];',
+            'All actions: [1, 2];',
             'States map:',
-            '1, False -> 1',
-            '1, True -> 2',
-            '2, True -> 3',
-            '3, True -> 4',
-            '4, False -> 5',
-            '5, False -> 5',
-            '5, True -> 6',
-            '6, True -> 7',
-            '7, False -> 7',
+            '1, 1 -> 1',
+            '1, 2 -> 2',
+            '2, 2 -> 3',
+            '3, 2 -> 4',
+            '4, 1 -> 5',
+            '5, 1 -> 5',
+            '5, 2 -> 6',
+            '6, 2 -> 7',
+            '7, 1 -> 7',
             'Final state: 7.',
         ])
 
@@ -171,19 +171,19 @@ class TestNonogramFiniteStateMachine(object):
         nfsm = self.fsm()
         assert nfsm.current_state == nfsm.final_state == 1
         assert nfsm.states == (1,)
-        assert nfsm.actions == (False,)
-        assert dict(nfsm.state_map) == {(1, False): 1}
+        assert nfsm.actions == (SPACE,)
+        assert dict(nfsm.state_map) == {(1, SPACE): 1}
 
     def test_matches(self, nfsm):
-        assert nfsm.match([True, True, True, False, True, True])
+        assert nfsm.match([BOX, BOX, BOX, SPACE, BOX, BOX])
 
     def test_not_matches(self, nfsm):
-        assert not nfsm.match([True, True, False, True, True, True])
+        assert not nfsm.match([BOX, BOX, SPACE, BOX, BOX, BOX])
 
     def test_match_not_in_initial(self, nfsm):
-        nfsm.transition(True)
+        nfsm.transition(BOX)
         with pytest.raises(RuntimeError, match="Only run 'match' when in initial state"):
-            nfsm.match([True, True, True, False, True, True])
+            nfsm.match([BOX, BOX, BOX, SPACE, BOX, BOX])
 
 
 class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
@@ -206,7 +206,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
         assert not nfsm.partial_match('++++?????')
 
     def test_current_state_saved(self, nfsm):
-        nfsm.transition(False, True, True)
+        nfsm.transition(SPACE, BOX, BOX)
         assert nfsm.current_state == 3
 
         assert nfsm.partial_match([UNKNOWN] * 9)
@@ -220,7 +220,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
 
         exc = ie.value
         assert str(exc) == ("Cannot contain different representations '., 0' "
-                            "of the same state 'False' in a single row "
+                            "of the same state '1' in a single row "
                             "'_.0_X____'")
 
     def test_solve_with_partial_match_bad_row(self, nfsm):
@@ -229,7 +229,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
 
         exc = ie.value
         assert str(exc) == ('The 0 cell (None) in a row '
-                            '(None, False, None, None, False, None, None, None, None) '
+                            '(None, 1, None, None, 1, None, None, None, None) '
                             'cannot be neither space nor box')
 
     @pytest.mark.parametrize('description,input_row,expected', CASES)
@@ -265,50 +265,50 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
             '(1): []',
             '',
             '1',
-            '(1): [1<-False]',
-            '(2): [1<-True]',
+            '(1): [1<-1]',
+            '(2): [1<-2]',
             '',
             '2',
-            '(1): [1<-False]',
-            '(2): [1<-True]',
-            '(3): [2<-True]',
+            '(1): [1<-1]',
+            '(2): [1<-2]',
+            '(3): [2<-2]',
             '',
             '3',
-            '(1): [1<-False]',
-            '(2): [1<-True]',
-            '(3): [2<-True]',
-            '(4): [3<-False]',
+            '(1): [1<-1]',
+            '(2): [1<-2]',
+            '(3): [2<-2]',
+            '(4): [3<-1]',
             '',
             '4',
-            '(1): [1<-False]',
-            '(4): [3<-False, 4<-False]',
+            '(1): [1<-1]',
+            '(4): [3<-1, 4<-1]',
             '',
             '5',
-            '(2): [1<-True]',
-            '(5): [4<-True]',
+            '(2): [1<-2]',
+            '(5): [4<-2]',
             '',
             '6',
-            '(3): [2<-True]',
-            '(6): [5<-True]',
+            '(3): [2<-2]',
+            '(6): [5<-2]',
             '',
             '7',
-            '(4): [3<-False]',
-            '(6): [6<-False]',
+            '(4): [3<-1]',
+            '(6): [6<-1]',
             '',
             '8',
-            '(4): [4<-False]',
-            '(5): [4<-True]',
-            '(6): [6<-False]',
+            '(4): [4<-1]',
+            '(5): [4<-2]',
+            '(6): [6<-1]',
             '',
             '9',
-            '(4): [4<-False]',
-            '(5): [4<-True]',
-            '(6): [5<-True, 6<-False]',
+            '(4): [4<-1]',
+            '(5): [4<-2]',
+            '(6): [5<-2, 6<-1]',
             '',
             '10',
-            '(4): [4<-False]',
-            '(5): [4<-True]',
-            '(6): [5<-True, 6<-False]',
+            '(4): [4<-1]',
+            '(5): [4<-2]',
+            '(6): [5<-2, 6<-1]',
         ])
 
     def test_solve_bad_row(self):
@@ -316,7 +316,7 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
             solve_line('1 1', '__.', method='reverse_tracking')
 
         assert str(ie.value) == ('ReverseTrackingSolver: Failed to solve line '
-                                 '(None, None, False) with clues (1, 1): '
+                                 '(None, None, 1) with clues (1, 1): '
                                  'Bad transition table: final state not found')
 
     def test_solve_bad_method(self):

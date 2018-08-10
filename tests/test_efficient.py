@@ -8,10 +8,10 @@ from pynogram.core import propagation
 from pynogram.core.board import (
     Board, make_board,
 )
-from pynogram.core.common import NonogramError
+from pynogram.core.color import ColorBlock
 from pynogram.core.common import (
     SPACE,
-    ColorBlock,
+    NonogramError,
 )
 from pynogram.core.line import solve_line
 from pynogram.core.line.efficient import EfficientColorSolver
@@ -22,7 +22,7 @@ from pynogram.reader import (
 from pynogram.utils.other import is_close
 from .test_bgu import CASES, BAD_CASES
 
-CASES = CASES + [([], '???', [False, False, False]), ]
+CASES = CASES + [([], '???', [SPACE, SPACE, SPACE]), ]
 BAD_CASES = BAD_CASES + [([], '??#'), ]
 
 
@@ -84,7 +84,7 @@ class TestEfficientColorSolver(object):
         desc = [ColorBlock(1, 'b'), ColorBlock(1, 'r')]
         line = [colors] * 3
         assert tuple(self.solve_as_color_sets(desc, line)) == (
-            {False, 'b'}, {False, 'b', 'r'}, {False, 'r'})
+            {SPACE, 'b'}, {SPACE, 'b', 'r'}, {SPACE, 'r'})
 
     def test_lengthy(self, colors):
         desc = [ColorBlock(2, 'b'), ColorBlock(1, 'b'), ColorBlock(1, 'r')]

@@ -6,40 +6,43 @@ import pytest
 
 from pynogram.core import propagation
 from pynogram.core.board import Board
-from pynogram.core.common import NonogramError
+from pynogram.core.common import (
+    BOX, SPACE,
+    NonogramError,
+)
 from pynogram.core.line import solve_line
 from pynogram.reader import read_example
 
 # TODO: more solved rows
 CASES = [
     ([1, 1, 5], '---#--         -      # ', [
-        False, False, False, True, False, False, None, None,
-        None, None, None, None, None, None, None, False,
-        None, None, None, True, True, True, True, None]),
+        SPACE, SPACE, SPACE, BOX, SPACE, SPACE, None, None,
+        None, None, None, None, None, None, None, SPACE,
+        None, None, None, BOX, BOX, BOX, BOX, None]),
     ([9, 1, 1, 1], '   --#########-------   #- - ', [
-        False, False, False, False, False, True, True, True,
-        True, True, True, True, True, True, False, False,
-        False, False, False, False, False, None, None, None,
-        True, False, None, False, None]),
+        SPACE, SPACE, SPACE, SPACE, SPACE, BOX, BOX, BOX,
+        BOX, BOX, BOX, BOX, BOX, BOX, SPACE, SPACE,
+        SPACE, SPACE, SPACE, SPACE, SPACE, None, None, None,
+        BOX, SPACE, None, SPACE, None]),
     ([5, 6, 3, 1, 1], '               #- -----      ##-      ---   #-', [
         None, None, None, None, None, None, None, None,
-        None, None, None, None, None, None, None, True,
-        False, None, False, False, False, False, False, None,
-        None, None, None, None, None, True, True, False,
-        None, None, None, None, None, None, False, False,
-        False, None, None, False, True, False]),
+        None, None, None, None, None, None, None, BOX,
+        SPACE, None, SPACE, SPACE, SPACE, SPACE, SPACE, None,
+        None, None, None, None, None, BOX, BOX, SPACE,
+        None, None, None, None, None, None, SPACE, SPACE,
+        SPACE, None, None, SPACE, BOX, SPACE]),
     ([4, 2], ' #   .  ', [
-        None, True, True, True, None, False, True, True]),
+        None, BOX, BOX, BOX, None, SPACE, BOX, BOX]),
     ([4, 2], ' #  .   ', [
-        True, True, True, True, False, None, True, None]),
+        BOX, BOX, BOX, BOX, SPACE, None, BOX, None]),
     ((1, 1, 2, 1, 1, 3, 1),
      [
-         True, False, False, None, None, False, None, True,
-         None, False, False, True, None, None, None, None,
-         None, True, None, None, None, None], [
-         True, False, False, None, None, False, None, True,
-         None, False, False, True, False, None, None, None,
-         None, True, None, None, None, None]),
+         BOX, SPACE, SPACE, None, None, SPACE, None, BOX,
+         None, SPACE, SPACE, BOX, None, None, None, None,
+         None, BOX, None, None, None, None], [
+         BOX, SPACE, SPACE, None, None, SPACE, None, BOX,
+         None, SPACE, SPACE, BOX, SPACE, None, None, None,
+         None, BOX, None, None, None, None]),
 ]
 
 BAD_CASES = [

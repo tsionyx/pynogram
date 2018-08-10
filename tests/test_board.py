@@ -12,6 +12,8 @@ from pynogram.core.backtracking import Solver
 from pynogram.core.board import (
     Board, make_board,
 )
+from pynogram.core.color import ColorMap
+from pynogram.core.common import BOX
 from pynogram.core.renderer import (
     BaseAsciiRenderer,
     AsciiRenderer,
@@ -399,7 +401,9 @@ class TestContradictions(object):
 def color_board_def():
     columns = [['1r', (1, 'b')]] * 3
     rows = ['3r', 0, '3b']
-    colors = {'r': ('red', 'X'), 'b': ('blue', '*')}
+    colors = ColorMap()
+    for color in [('r', 'red', 'X'), ('b', 'blue', '*')]:
+        colors.make_color(*color)
 
     return columns, rows, colors
 
@@ -440,33 +444,34 @@ class TestColorBoard(object):
         assert len(board.rows_descriptions) == 15
 
         assert board.rows_descriptions[:2] == board.rows_descriptions[-1:-3:-1] == tuple([
-            ((3, 3), (11, 1), (3, 3), (11, 1), (3, 3)),
-            ((2, 1), (3, 3), (9, 1), (3, 3), (9, 1), (3, 3), (2, 1))
+            ((3, 8), (11, 4), (3, 8), (11, 4), (3, 8)),
+            ((2, 4), (3, 8), (9, 4), (3, 8), (9, 4), (3, 8), (2, 4))
         ])
 
-        assert set(board.rows_descriptions[6:9]) == {((31, 3),)}
+        assert set(board.rows_descriptions[6:9]) == {((31, 8),)}
 
     def test_columns(self, board):
         assert len(board.columns_descriptions) == 31
 
         assert board.columns_descriptions[:2] == board.columns_descriptions[-1:-3:-1] == tuple([
-            ((1, 3), (5, 1), (3, 3), (5, 1), (1, 3)),
-            ((1, 3), (5, 1), (3, 3), (5, 1), (1, 3))
+            ((1, 8), (5, 4), (3, 8), (5, 4), (1, 8)),
+            ((1, 8), (5, 4), (3, 8), (5, 4), (1, 8))
         ])
 
-        assert set(board.columns_descriptions[14:17]) == {((15, 3),)}
+        assert set(board.columns_descriptions[14:17]) == {((15, 8),)}
 
     def test_colors(self):
         board = make_board(*color_board_def())
-        assert board.char_for_color('r') == 'X'
-        assert board.rgb_for_color('b') == 'blue'
+        assert board.symbol_for_color_id('r') == 'X'
+        assert board.rgb_for_color_name('b') == 'blue'
 
-    @pytest.mark.skip('No color conflicts anymore, catch the KeyError instead')
     def test_colors_conflict(self):
         columns, rows, colors = color_board_def()
         rows[0] = '3g'
-        with pytest.raises(ValueError, match='Colors differ'):
+        with pytest.raises(KeyError) as ie:
             make_board(columns, rows, colors)
+
+        assert str(ie.value).endswith("'g'")
 
     @pytest.mark.skip('No color conflicts anymore, catch the KeyError instead')
     def test_color_not_defined(self):
@@ -484,7 +489,10 @@ class TestColorBoard(object):
     def test_same_boxes_in_a_row(self):
         columns = [['1r', (1, 'b'), (1, 'b')]] * 3
         rows = ['3r', '3b', '3b']
-        colors = {'r': ('red', 'X'), 'b': ('blue', '*')}
+
+        colors = ColorMap()
+        for color in [('r', 'red', 'X'), ('b', 'blue', '*')]:
+            colors.make_color(*color)
 
         with pytest.raises(ValueError, match='Cannot allocate row .+ in just 3 cells'):
             make_board(columns, rows, colors)
@@ -492,25 +500,29 @@ class TestColorBoard(object):
     def test_normalize(self):
         columns = [['1r', 1]] * 3
         rows = [((3, 'r'),), 0, '3']
-        colors = {'r': ('red', 'X')}
+
+        colors = ColorMap()
+        colors.make_color('r', 'red', 'X')
 
         board = make_board(columns, rows, colors)
 
         assert board.rows_descriptions == (
-            ((3, 2),),
+            ((3, 4),),
             (),
-            ((3, 1),),
+            ((3, 2),),
         )
         assert board.columns_descriptions == (
-            ((1, 2), (1, 1)),
-            ((1, 2), (1, 1)),
-            ((1, 2), (1, 1)),
+            ((1, 4), (1, 2)),
+            ((1, 4), (1, 2)),
+            ((1, 4), (1, 2)),
         )
 
     def test_bad_description(self):
         columns = [(('1', 'r', 1),)]
         rows = [((1, 'r'),), 0, '1']
-        colors = {'r': ('red', 'X')}
+
+        colors = ColorMap()
+        colors.make_color('r', 'red', 'X')
 
         with pytest.raises(ValueError, match='Bad description block:'):
             make_board(columns, rows, colors)
@@ -522,13 +534,15 @@ class TestColorBoard(object):
     def test_color_renderer(self, stream):
         columns = [['1r', 1]] * 3
         rows = [((3, 'r'),), 0, '3']
-        colors = {'r': ('red', '%')}
+
+        colors = ColorMap()
+        colors.make_color('r', 'red', '%')
 
         renderer = BaseAsciiRenderer(stream=stream)
         board = make_board(columns, rows, colors, renderer=renderer)
         for i in range(3):
-            board.cells[0][i] = 2
-            board.cells[2][i] = 1
+            board.cells[0][i] = 4
+            board.cells[2][i] = BOX
         # cannot do simply:
         # board.cells[2] = [True, True, True]
         # because of

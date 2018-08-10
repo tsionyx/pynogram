@@ -7,8 +7,6 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
-import re
-from collections import namedtuple
 
 from six import (
     integer_types, string_types,
@@ -16,6 +14,9 @@ from six import (
 )
 from six.moves import range
 
+from pynogram.core.color import (
+    Color, ColorBlock,
+)
 from pynogram.utils.iter import list_replace
 
 _LOG_NAME = __name__
@@ -33,12 +34,10 @@ class NonogramError(ValueError):
 
 
 UNKNOWN = None  # this cell has to be solved
-BOX = True
-SPACE = False
 
-DEFAULT_COLOR_NAME = 'black'
-# RGB black
-DEFAULT_COLOR = ((0, 0, 0), 'X')
+# force to create white and black colors to prevent any name conflicts in the future
+BOX = Color.black().id_
+SPACE = Color.white().id_
 
 
 def invert(cell_state):
@@ -82,39 +81,6 @@ def normalize_description(row, color=False):
         return tuple(map(int, blocks))
     else:
         raise ValueError('Bad row: %s' % row)
-
-
-_COLOR_DESCRIPTION_RE = re.compile('([0-9]+)(.+)')
-
-
-class ColorBlock(namedtuple('ColorBlock', 'size color')):
-    """Represent one block of colored description"""
-
-
-def normalize_description_colored(row, name_to_id_map):
-    """Normalize a colored nonogram description"""
-    row = normalize_description(row, color=True)
-
-    res = []
-    for block in row:
-        item = None
-        if isinstance(block, integer_types):
-            item = (block, DEFAULT_COLOR_NAME)
-        elif isinstance(block, string_types):
-            match = _COLOR_DESCRIPTION_RE.match(block)
-            if match:
-                item = (int(match.group(1)), match.group(2))
-            else:
-                item = (int(block), DEFAULT_COLOR_NAME)
-        elif isinstance(block, (tuple, list)) and len(block) == 2:
-            item = (int(block[0]), block[1])
-
-        if item is None:
-            raise ValueError('Bad description block: {}'.format(block))
-        else:
-            res.append(item)
-
-    return tuple(ColorBlock(size, name_to_id_map[color]) for size, color in res)
 
 
 INFORMAL_REPRESENTATIONS = {
@@ -177,7 +143,7 @@ def is_color_list(value):
     return False
 
 
-def clues(solution_matrix):
+def clues(solution_matrix, white_color_code=SPACE):
     """
     Generate nonogram description (columns and rows)
     from a solution matrix.
@@ -205,7 +171,7 @@ def clues(solution_matrix):
                 row_index += 1
 
             block_size = row_index - block_begin
-            if (block_size > 0) and (color_number > 0):
+            if (block_size > 0) and (color_number != white_color_code):
                 colors.add(color_number)
                 column.append(ColorBlock(block_size, color_number))
 
@@ -224,7 +190,7 @@ def clues(solution_matrix):
                 col_index += 1
 
             block_size = col_index - block_begin
-            if (block_size > 0) and (color_number > 0):
+            if (block_size > 0) and (color_number != white_color_code):
                 colors.add(color_number)
                 row.append(ColorBlock(block_size, color_number))
 
@@ -232,7 +198,7 @@ def clues(solution_matrix):
 
     # black and white, ignore colors
     if len(colors) == 1:
-        columns = [[block[0] for block in column] for column in columns]
-        rows = [[block[0] for block in row] for row in rows]
+        columns = [[block[0] for block in col] for col in columns]
+        rows = [[block[0] for block in r] for r in rows]
 
     return columns, rows
