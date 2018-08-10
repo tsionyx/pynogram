@@ -10,7 +10,7 @@ from six.moves import zip
 
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
-    is_list_like,
+    is_color_cell,
 )
 from pynogram.core.line import solve_line
 # from pynogram.core.line.machine import assert_match
@@ -23,11 +23,9 @@ def _is_pixel_updated(old, new):
     if old == new:
         return False
 
-    if is_list_like(new):  # colored
-        if set(old) == set(new):
-            return False
-        assert len(old) > len(new)
-
+    if is_color_cell(old):
+        # old value contains more '1'-s in the binary representation
+        assert old > new
     else:
         assert old == UNKNOWN
         assert new in (BOX, SPACE)

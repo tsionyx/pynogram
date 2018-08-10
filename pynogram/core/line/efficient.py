@@ -19,6 +19,7 @@ from pynogram.core.line.base import (
     BaseLineSolver,
     NonogramError,
 )
+from pynogram.utils.other import from_two_powers
 
 LOG = logging.getLogger(__name__)
 
@@ -269,7 +270,7 @@ class EfficientColorSolver(EfficientSolver):
     @classmethod
     def _can_be_space(cls, cell):
         # not (len(cell) == 1 and cell[0] in self.colors)
-        return SPACE in cell
+        return SPACE & cell
 
     def _fix(self, i, j):
         res = self._fix_border_conditions(i, j)
@@ -321,7 +322,7 @@ class EfficientColorSolver(EfficientSolver):
             else:
                 return False
 
-        return all(color in cell for cell in line)
+        return all(color & cell for cell in line)
 
     @classmethod
     def _color_block(cls, block_size, color, preceding_space=True):
@@ -330,12 +331,8 @@ class EfficientColorSolver(EfficientSolver):
             block = [cls.empty_cell()]
             block_size -= 1
 
-        block += [{color}] * block_size
+        block += [color] * block_size
         return block
-
-    @classmethod
-    def empty_cell(cls):
-        return {SPACE}
 
     def _paint(self, i, j):
         fix0 = self._fix0(i, j)
@@ -378,7 +375,7 @@ class EfficientColorSolver(EfficientSolver):
 
         res = []
         for cells in zip(*s):
-            res.append(set.union(*cells))
+            res.append(from_two_powers(cells))
 
         return res
 
@@ -390,11 +387,3 @@ class EfficientColorSolver(EfficientSolver):
         lines.append(self._paint_color(i, j))
 
         return self._merge(*lines)
-
-    def _solve(self):
-        res = super(EfficientColorSolver, self)._solve()
-        res_tuple = []
-        for cell in res:
-            res_tuple.append(tuple(cell))
-
-        return tuple(res_tuple)

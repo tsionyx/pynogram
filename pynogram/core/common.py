@@ -97,7 +97,7 @@ def normalize_row(row):
     Normalize an easy-to write row representation with a formal one
     """
     if is_color_list(row):
-        return tuple(map(tuple, row))
+        return tuple(row)
 
     alphabet = set(row)
     if alphabet.issubset(FORMAL_ALPHABET):
@@ -132,13 +132,32 @@ def is_list_like(value):
     return isinstance(value, (tuple, list))
 
 
+BLACK_AND_WHITE_COLORS = (UNKNOWN, SPACE, BOX)
+
+
+def is_color_cell(value):
+    """
+    Whether the value is a combination of several colors
+    """
+    try:
+        value + 1
+    except TypeError:
+        return False  # color is always integer
+
+    return value not in BLACK_AND_WHITE_COLORS
+
+
 def is_color_list(value):
-    """Whether value is a list-like of list-likes"""
-    # if is_list_like(value):
+    """
+    Whether value is a list of black and white or colored puzzle
+
+    If it's a colored row, the value will have values other than
+    (UNKNOWN, SPACE=1, BOX=2)
+    """
 
     # check `len` to handle both standard types and numpy arrays
-    if len(value) and isinstance(value[0], (tuple, list)):
-        return True
+    if len(value):
+        return any(is_color_cell(item) for item in value)
 
     return False
 

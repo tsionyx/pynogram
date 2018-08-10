@@ -141,3 +141,39 @@ def log_call(log_func=print):  # pragma: no cover
         return wrapper
 
     return _decorator
+
+
+def two_powers(num):
+    """
+    Get a 'factorization' of number into powers of 2:
+
+    42 --> [2, 8, 32]
+    """
+
+    # https://stackoverflow.com/a/51786889/1177288
+    # return tuple(1 << i for i, d in enumerate(reversed(bin(num)[2:])) if d == '1')
+    return tuple(_two_powers(num))
+
+
+def _two_powers(num):
+    """
+    https://stackoverflow.com/a/51787245/1177288
+    """
+    power = 1
+    while num >= power:
+        if num & power:
+            yield power
+        power <<= 1
+
+
+def from_two_powers(numbers):
+    """
+    Construct a number from the powers of 2
+    """
+
+    # TODO: consider a simple sum() here
+    result = 0
+    for num in numbers:
+        result |= num
+
+    return result

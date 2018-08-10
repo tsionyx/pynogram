@@ -3,6 +3,7 @@
 from __future__ import unicode_literals, print_function
 
 import os
+import random
 import sys
 
 import pytest
@@ -14,7 +15,10 @@ from pynogram.utils.iter import (
     max_safe,
     avg,
 )
-from pynogram.utils.other import get_version
+from pynogram.utils.other import (
+    get_version,
+    two_powers, from_two_powers,
+)
 from pynogram.utils.priority_dict import (
     PriorityDict,
     PriorityDict2,
@@ -382,3 +386,36 @@ class TestInitOnce(object):
 
         f.bar()
         assert f.counter == 2
+
+
+class TestPowers(object):
+    def test_zero(self):
+        assert two_powers(0) == ()
+
+    def test_one(self):
+        assert two_powers(1) == (1,)
+
+    def test_simple(self):
+        assert two_powers(42) == (2, 8, 32)
+        assert two_powers(103) == (1, 2, 4, 32, 64)
+
+    def test_random(self):
+        for i in range(100):
+            n = random.randint(1, 10 ** 9)
+
+            factors = two_powers(n)
+            assert len(factors) > 0
+            # factors are unique
+            assert len(set(factors)) == len(factors)
+            assert sum(factors) == n
+
+            for f in factors:
+                b = bin(f)
+                assert b == '0b1' + '0' * (len(b) - 3)
+
+    def test_roundtrip(self):
+        for i in range(100):
+            n = random.randint(1, 10 ** 9)
+
+            factors = two_powers(n)
+            assert from_two_powers(factors) == n

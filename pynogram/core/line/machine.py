@@ -26,6 +26,9 @@ from pynogram.core.line.base import BaseLineSolver
 from pynogram.core.line.simpson import FastSolver
 from pynogram.utils import fsm
 from pynogram.utils.cache import Cache
+from pynogram.utils.other import (
+    two_powers, from_two_powers,
+)
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -272,10 +275,6 @@ class NonogramFSM(fsm.FiniteStateMachine):
                 if space == SPACE:
                     return True
 
-                if is_list_like(space):
-                    if len(space) == 1 and space[0] == SPACE:
-                        return True
-
         return super(NonogramFSM, self).match(word)
 
 
@@ -373,7 +372,6 @@ class TransitionTable(list):
                     step_possible_states.add(prev.state)
 
             possible_states = step_possible_states
-            # TODO: set() here
             yield tuple(step_possible_cell_types)
 
 
@@ -384,19 +382,19 @@ class NonogramFSMColored(NonogramFSM):
 
     @classmethod
     def _types_for_cell(cls, cell):
-        # FIXME: store colors as set always
-        return set(cell)
+        return two_powers(cell)
 
     @classmethod
     def _cell_value_from_solved(cls, states):
         # assert states.size
-        return states
+        return from_two_powers(states)
 
     def match(self, word):
         one_color_word = []
 
         for letter in word:
-            if is_list_like(letter) and len(letter) == 1:
+            letter = two_powers(letter)
+            if len(letter) == 1:
                 letter = letter[0]
 
             one_color_word.append(letter)

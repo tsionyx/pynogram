@@ -19,12 +19,14 @@ from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_list_like,
     Color,
+    is_color_cell,
 )
 from pynogram.utils.iter import (
     pad,
     split_seq,
     max_safe,
 )
+from pynogram.utils.other import two_powers
 
 _LOG_NAME = __name__
 LOG = logging.getLogger(_LOG_NAME)
@@ -97,10 +99,7 @@ class GridCell(Cell):
         self.renderer = renderer
         self.colored = colored
         if self.colored:
-            if is_list_like(value):
-                self.value = tuple(value)
-            else:
-                self.value = value
+            self.value = tuple(two_powers(value))
         else:
             self.value = value
 
@@ -111,13 +110,11 @@ class GridCell(Cell):
         if not self.colored:
             return icons[self.value]
 
-        if is_list_like(value):
-            value = tuple(set(value))
-            if len(value) == 1:
-                value = value[0]
-            else:
-                # multiple colors
-                value = UNKNOWN
+        if len(value) == 1:
+            value = value[0]
+        else:
+            # multiple colors
+            value = UNKNOWN
 
         symbol = self.renderer.board.symbol_for_color_id(value)
         if symbol is not None:
@@ -682,8 +679,8 @@ class SvgRenderer(StreamRenderer):
 
     @classmethod
     def _color_code(cls, cell):
-        if is_list_like(cell):
-            cell = tuple(set(cell))
+        if is_color_cell(cell):
+            cell = tuple(two_powers(cell))
             if len(cell) == 1:
                 cell = cell[0]
             else:

@@ -52,54 +52,52 @@ class TestEfficientColorSolver(object):
 
     @pytest.fixture
     def colors(self):
-        return 'r', 'b', SPACE
+        return 127
 
     @classmethod
     def solve_as_color_sets(cls, desc, line):
-        res = EfficientColorSolver.solve(desc, line)
-        for cell in res:
-            yield set(cell)
+        return EfficientColorSolver.solve(desc, line)
 
     def test_empty(self, colors):
         desc = []
         line = [colors]
-        assert tuple(self.solve_as_color_sets(desc, line)) == ({SPACE},)
+        assert tuple(self.solve_as_color_sets(desc, line)) == (SPACE,)
 
     def test_simplest(self, colors):
-        desc = [ColorBlock(1, 'b')]
+        desc = [ColorBlock(1, 4)]
         line = [colors]
-        assert tuple(self.solve_as_color_sets(desc, line)) == ({'b'},)
+        assert tuple(self.solve_as_color_sets(desc, line)) == (4,)
 
     def test_undefined(self, colors):
-        desc = [ColorBlock(1, 'b')]
+        desc = [ColorBlock(1, 4)]
         line = [colors] * 2
-        assert tuple(self.solve_as_color_sets(desc, line)) == ({'b', SPACE}, {'b', SPACE})
+        assert tuple(self.solve_as_color_sets(desc, line)) == (4 | SPACE, 4 | SPACE)
 
     def test_same_color(self, colors):
-        desc = [ColorBlock(1, 'b'), ColorBlock(1, 'b')]
+        desc = [ColorBlock(1, 4), ColorBlock(1, 4)]
         line = [colors] * 3
-        assert tuple(self.solve_as_color_sets(desc, line)) == ({'b'}, {SPACE}, {'b'})
+        assert tuple(self.solve_as_color_sets(desc, line)) == (4, SPACE, 4)
 
     def test_different_colors(self, colors):
-        desc = [ColorBlock(1, 'b'), ColorBlock(1, 'r')]
+        desc = [ColorBlock(1, 4), ColorBlock(1, 8)]
         line = [colors] * 3
         assert tuple(self.solve_as_color_sets(desc, line)) == (
-            {SPACE, 'b'}, {SPACE, 'b', 'r'}, {SPACE, 'r'})
+            4 | SPACE, 4 | 8 | SPACE, 8 | SPACE)
 
     def test_lengthy(self, colors):
-        desc = [ColorBlock(2, 'b'), ColorBlock(1, 'b'), ColorBlock(1, 'r')]
+        desc = [ColorBlock(2, 4), ColorBlock(1, 4), ColorBlock(1, 8)]
         line = [colors] * 5
         assert tuple(self.solve_as_color_sets(desc, line)) == (
-            {'b'}, {'b'}, {SPACE}, {'b'}, {'r'})
+            4, 4, SPACE, 4, 8)
 
     def test_lengthy_undefined(self, colors):
-        desc = [ColorBlock(2, 'b'), ColorBlock(1, 'b'), ColorBlock(1, 'r')]
+        desc = [ColorBlock(2, 4), ColorBlock(1, 4), ColorBlock(1, 8)]
         line = [colors] * 6
         assert tuple(self.solve_as_color_sets(desc, line)) == (
-            {'b', SPACE}, {'b'}, {'b', SPACE}, {'b', SPACE}, {'b', 'r', SPACE}, {'r', SPACE})
+            4 | SPACE, 4, 4 | SPACE, 4 | SPACE, 4 | 8 | SPACE, 8 | SPACE)
 
     def test_bad(self, colors):
-        desc = [ColorBlock(2, 'b'), ColorBlock(1, 'b'), ColorBlock(1, 'r')]
+        desc = [ColorBlock(2, 4), ColorBlock(1, 4), ColorBlock(1, 8)]
         line = [colors] * 4
         with pytest.raises(NonogramError):
             tuple(self.solve_as_color_sets(desc, line))

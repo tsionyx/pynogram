@@ -15,8 +15,6 @@ from copy import copy
 
 from six.moves import zip, range
 
-from pynogram.utils.uniq import init_once
-
 try:
     # noinspection PyPackageRequirements
     import numpy as np
@@ -26,11 +24,15 @@ except ImportError:
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE, invert,
     normalize_description,
-    is_list_like,
+    is_color_cell,
 )
 from pynogram.core.color import normalize_description_colored
 from pynogram.core.renderer import Renderer
 from pynogram.utils.iter import avg
+from pynogram.utils.other import (
+    two_powers, from_two_powers,
+)
+from pynogram.utils.uniq import init_once
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -133,9 +135,10 @@ class Board(object):
 
     def cell_colors(self, position):
         """
-        All the possible states that the cell can be in
+        All the possible states that the cell can be in.
 
         :type position: CellPosition
+        :returns set
         """
         if not self.cell_solved(position):
             return self.colors()
@@ -369,18 +372,16 @@ class Board(object):
                 old_cell = old_cells[i][j]
 
                 if have_deletions:
-                    if is_list_like(new_cell):
-                        if set(new_cell) != set(old_cell):
-                            yield i, j
-                    elif new_cell != old_cell:
+                    if new_cell != old_cell:
                         yield i, j
 
                 else:
-                    if is_list_like(new_cell):
-                        if set(new_cell) < set(old_cell):
+                    if is_color_cell(old_cell):
+                        if new_cell < old_cell:
                             yield i, j
                         else:
-                            assert set(new_cell) == set(old_cell)
+                            assert new_cell == old_cell
+
                     elif new_cell != old_cell:
                         assert old_cell == UNKNOWN  # '%s: %s --> %s' % ((i, j), old_cell, new_cell)
                         yield i, j
@@ -506,17 +507,12 @@ class ColoredBoard(Board):
 
     @property
     def init_cell_state(self):
-        return self._color_map_ids
+        return from_two_powers(self._color_map_ids)
 
     def cell_solved(self, position):
         i, j = position
         cell = self.cells[i][j]
-        if is_list_like(cell):
-            colors = tuple(set(cell))
-            assert colors
-            return len(colors) == 1
-
-        return True
+        return cell in self.colors()
 
     @init_once
     def colors(self):
@@ -530,32 +526,32 @@ class ColoredBoard(Board):
     def is_colored(self):
         return True
 
+    @classmethod
+    def _colors_as_set(cls, cell_value):
+        return set(two_powers(cell_value))
+
     def cell_colors(self, position):
         i, j = position
-
         cell = self.cells[i][j]
-        if is_list_like(cell):
-            return set(cell)
-
-        return {cell}
+        return self._colors_as_set(cell)
 
     def unset_state(self, cell_state):
         row_index, column_index, bad_state = cell_state
-        colors = self.cell_colors(cell_state.position)
-        if is_list_like(bad_state):
-            bad_state = set(bad_state)
-        else:
-            bad_state = {bad_state}
+        colors = set(self.cell_colors(cell_state.position))
+
+        bad_state = self._colors_as_set(bad_state)
 
         LOG.debug('(%d, %d) previous state: %s',
                   row_index, column_index, colors)
         LOG.debug('Bad states: %s', bad_state)
 
         new_value = colors - bad_state
+
         if set() < new_value < colors:
             LOG.debug('(%d, %d) new state: %s',
                       row_index, column_index, new_value)
-            self.cells[row_index][column_index] = tuple(new_value)
+            new_value = from_two_powers(new_value)
+            self.cells[row_index][column_index] = new_value
         else:
             raise ValueError("Cannot unset the colors '%s' from cell %s (%s)" %
                              (bad_state, (row_index, column_index), colors))
@@ -567,13 +563,13 @@ class ColoredBoard(Board):
         """
 
         row_index, column_index, color = cell_state
-        self.cells[row_index][column_index] = (color,)
+        self.cells[row_index][column_index] = color
 
     def cell_value_solved(self, cell, full_colors=None):
         if full_colors is None:
             full_colors = self.colors()
 
-        cell_colors = set(cell) & full_colors
+        cell_colors = self._colors_as_set(cell) & full_colors
         return len(cell_colors) == 1
 
     def cell_solution_rate(self, cell, full_colors=None):
@@ -601,7 +597,7 @@ class ColoredBoard(Board):
         if full_colors is None:
             full_colors = self.colors()
 
-        cell_colors = set(cell) & full_colors
+        cell_colors = self._colors_as_set(cell) & full_colors
         current_size = len(cell_colors)
 
         if current_size == 1:

@@ -1,4 +1,3 @@
-- colors as binary string (00001, 00010, 00100, 01000, 10000)
 - refactor board (extract matrix operations)
 
 
