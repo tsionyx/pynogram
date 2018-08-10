@@ -15,6 +15,8 @@ from copy import copy
 
 from six.moves import zip, range
 
+from pynogram.utils.uniq import init_once
+
 try:
     # noinspection PyPackageRequirements
     import numpy as np
@@ -496,13 +498,7 @@ class ColoredBoard(Board):
         :type color_map: ColorMap
         """
         self.color_map = color_map
-
         super(ColoredBoard, self).__init__(columns, rows, **renderer_params)
-
-        # clue colors can only be defined after the super().__init__
-        # yet they are described the board more precisely than the color_defs
-        # (it can contains excess colors like 'white')
-        self._desc_colors = self._clue_colors(True) | {SPACE}
 
     @property
     def _color_map_ids(self):
@@ -522,8 +518,13 @@ class ColoredBoard(Board):
 
         return True
 
+    @init_once
     def colors(self):
-        return self._desc_colors
+        """
+        Clue colors described the board more precisely than the color_map
+        (ast it can contains excess colors like 'white').
+        """
+        return self._clue_colors(True) | {SPACE}
 
     @property
     def is_colored(self):
