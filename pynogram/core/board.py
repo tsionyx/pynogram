@@ -410,8 +410,8 @@ class Board(object):
                     LOG.debug('Move found solution to the beginning of the list')
                     self.solutions.insert(0, self.solutions.pop(i))
                 return True
-            else:
-                LOG.info('The solution differs from %d-th one: first differ cell: %s', i, diff)
+
+            LOG.info('The solution differs from %d-th one: first differ cell: %s', i, diff)
 
         return False
 

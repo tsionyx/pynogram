@@ -79,8 +79,8 @@ def normalize_description(row, color=False):
         if color:
             return tuple(blocks)
         return tuple(map(int, blocks))
-    else:
-        raise ValueError('Bad row: %s' % row)
+
+    raise ValueError('Bad row: %s' % row)
 
 
 INFORMAL_REPRESENTATIONS = {
@@ -198,7 +198,7 @@ def clues(solution_matrix, white_color_code=SPACE):
 
     # black and white, ignore colors
     if len(colors) == 1:
-        columns = [[block[0] for block in col] for col in columns]
-        rows = [[block[0] for block in r] for r in rows]
+        columns = [[block.size for block in col] for col in columns]
+        rows = [[block.size for block in r] for r in rows]
 
     return columns, rows

@@ -1,12 +1,17 @@
+- colors as binary string (00001, 00010, 00100, 01000, 10000)
+- refactor board (extract matrix operations)
+
+
+- rewrite backtracking:
+  - extract probing to another module
+  - flag to choose next candidates without probing
+  - backjumping (many repeating dead ends: `grep 'false' 9892.log | sed 's/^[[:space:]]*//' | sort | uniq -c | sort -nr | head`)
+
 - refactoring:
   - use https://codebeat.co
   - check docstrings (+grammarly)
 
-- colors as binary string (00001, 00010, 00100, 01000, 10000)
 - animation as gif
-
-- backjumping:
-    (many repeating dead ends: `grep 'false' 9892.log | sed 's/^[[:space:]]*//' | sort | uniq -c | sort -nr | head`)
 
 - Use `np.array(dtype=np.int8)` for board
 - check that it always a set, get rid of `is_list_like` as much as possible
