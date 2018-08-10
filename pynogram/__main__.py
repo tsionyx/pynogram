@@ -36,6 +36,7 @@ from pynogram.core.renderer import BaseAsciiRenderer
 from pynogram.reader import (
     read_example, example_file,
     Pbn, PbnLocal,
+    Nonograms,
 )
 
 
@@ -56,6 +57,8 @@ def cli_args():
                                help='ID of a board to solve on the http://webpbn.com')
     puzzle_source.add_argument('--local-pbn',
                                help='read PBN-formatted puzzle from a local file')
+    puzzle_source.add_argument('--nonograms-org', type=int,
+                               help='read a puzzle from nonograms.org')
 
     parser.add_argument('--max-solutions', type=int,
                         help='stop after finding specified number of solutions')
@@ -222,6 +225,8 @@ def main():
         board_def = Pbn.read(args.pbn)
     elif args.local_pbn:
         board_def = PbnLocal.read(args.local_pbn)
+    elif args.nonograms_org:
+        board_def = Nonograms.read(args.nonograms_org)
     else:
         board_def = read_example(args.board)
 

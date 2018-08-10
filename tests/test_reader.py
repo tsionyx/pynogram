@@ -17,7 +17,7 @@ from pynogram.core.renderer import BaseAsciiRenderer
 from pynogram.reader import (
     example_file, read_ini, read_example,
     Pbn, PbnNotFoundError,
-    NonogramsOrg,
+    NonogramsOrg, Nonograms,
 )
 from .test_board import tested_board
 
@@ -88,41 +88,7 @@ class TestPbn(object):
         ]
 
 
-class TestNonogramsOrg(object):
-    def test_black_and_white(self):
-        """http://www.nonograms.org/nonograms/i/4353"""
-        solution = NonogramsOrg(4353).read()
-        assert solution == [
-            [1, 1, 1, 0],
-            [0, 0, 1, 1],
-            [1, 0, 1, 0],
-            [0, 1, 1, 0],
-            [1, 1, 1, 0],
-            [1, 0, 1, 0],
-        ]
-
-    def test_colored(self):
-        """http://www.nonograms.org/nonograms2/i/4374"""
-        colors, solution = NonogramsOrg(4374).read()
-
-        assert colors == [
-            ('fbf204', 0),
-            ('000000', 1),
-            ('f4951c', 0),
-        ]
-
-        assert solution == [
-            [0, 0, 0, 1, 0],
-            [1, 0, 0, 1, 1],
-            [1, 3, 3, 0, 0],
-            [2, 3, 3, 0, 0],
-            [3, 3, 0, 0, 0],
-        ]
-
-    def test_not_found(self):
-        with pytest.raises(PbnNotFoundError, match='444444'):
-            NonogramsOrg(444444).read()
-
+class TestCluesGenerator(object):
     def test_black_and_white_with_empty_rows(self):
         """https://en.wikipedia.org/wiki/Nonogram#Example"""
         board = tested_board()
@@ -156,23 +122,76 @@ class TestNonogramsOrg(object):
             [],
         ]
 
-    def test_colored_clues(self):
-        """http://www.nonograms.org/nonograms2/i/4374"""
-        sol = NonogramsOrg(4374).read()[1]
-        columns, rows = clues(sol, white_color_code=0)
 
+class TestNonogramsOrg(object):
+    def test_black_and_white(self):
+        """http://www.nonograms.org/nonograms/i/4353"""
+        n = NonogramsOrg(4353)
+        colors, solution = n.definition()
+        assert solution == [
+            [1, 1, 1, 0],
+            [0, 0, 1, 1],
+            [1, 0, 1, 0],
+            [0, 1, 1, 0],
+            [1, 1, 1, 0],
+            [1, 0, 1, 0],
+        ]
+        columns, rows = n.read()
+        assert columns == [[1, 1, 2], [1, 2], [6], [1]]
+        assert rows == [[3], [2], [1, 1], [2], [3], [1, 1]]
+
+    def test_colored(self):
+        """http://www.nonograms.org/nonograms2/i/4374"""
+        n = NonogramsOrg(4374)
+
+        colors, solution = n.definition()
+
+        assert colors == [
+            ('fbf204', 0),
+            ('000000', 1),
+            ('f4951c', 0),
+        ]
+
+        assert solution == [
+            [0, 0, 0, 1, 0],
+            [1, 0, 0, 1, 1],
+            [1, 3, 3, 0, 0],
+            [2, 3, 3, 0, 0],
+            [3, 3, 0, 0, 0],
+        ]
+
+        columns, rows, colors = n.read()
         assert columns == [
-            [(2, 1), (1, 2), (1, 3)],
-            [(3, 3)],
-            [(2, 3)],
-            [(2, 1)],
-            [(1, 1)],
+            [(2, 'color-1'), (1, 'black'), (1, 'color-3')],
+            [(3, 'color-3')],
+            [(2, 'color-3')],
+            [(2, 'color-1')],
+            [(1, 'color-1')],
         ]
 
         assert rows == [
-            [(1, 1)],
-            [(1, 1), (2, 1)],
-            [(1, 1), (2, 3)],
-            [(1, 2), (2, 3)],
-            [(2, 3)],
+            [(1, 'color-1')],
+            [(1, 'color-1'), (2, 'color-1')],
+            [(1, 'color-1'), (2, 'color-3')],
+            [(1, 'black'), (2, 'color-3')],
+            [(2, 'color-3')],
         ]
+
+        assert set(colors) == {'black', 'white', 'color-1', 'color-3'}
+
+    def test_not_found(self):
+        with pytest.raises(PbnNotFoundError, match='444444'):
+            NonogramsOrg(444444).read()
+
+    def test_not_found_on_org_but_found_on_ru(self):
+        x = 19836
+        with pytest.raises(PbnNotFoundError):
+            NonogramsOrg(x).read()
+
+        columns, rows, colors = Nonograms.read(x)
+        assert set(colors) == {
+            'black', 'white',
+            'color-1', 'color-2',
+            'color-4', 'color-5',
+            'color-6', 'color-7',
+        }

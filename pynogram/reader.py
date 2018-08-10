@@ -22,7 +22,14 @@ from six.moves.configparser import RawConfigParser
 from six.moves.urllib.error import HTTPError
 from six.moves.urllib.request import urlopen
 
-from pynogram.core.color import ColorMap
+from pynogram.core.common import (
+    clues,
+    BOX,
+)
+from pynogram.core.color import (
+    ColorMap,
+    ColorBlock,
+)
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -334,16 +341,66 @@ class NonogramsOrg(object):
 
         return [colors, solution]
 
+    def definition(self):
+        """
+        Return the definition of the puzzle
+        in form of final solution
+        """
+        cypher = self._puzzle_cypher()
+        return self.decipher(cypher)
+
     def read(self):
         """
-        Find and parse the colors ans solution of
+        Find and parse the colors and solution of
         a 'nonograms.org' puzzle by id
         """
-
-        cypher = self._puzzle_cypher()
-        colors, solution = self.decipher(cypher)
+        colors, solution = self.definition()
+        columns, rows = clues(solution, white_color_code=0)
 
         if len(colors) == 1:
-            return solution
+            return columns, rows
 
-        return colors, solution
+        color_map = ColorMap()
+        # reassign the IDs
+        id_map = {}
+        for old_id, color in enumerate(colors, 1):
+            rgb, unknown_flag = color
+
+            is_black = (rgb == '000000')
+            if is_black:
+                name = color_map.by_id[BOX].name
+            else:
+                name = 'color-{}'.format(old_id)
+                color_map.make_color(name, rgb)
+
+            id_map[old_id] = name
+
+        columns = [[ColorBlock(size, id_map[old_color])
+                    for size, old_color in col] for col in columns]
+        rows = [[ColorBlock(size, id_map[old_color])
+                 for size, old_color in r] for r in rows]
+
+        return columns, rows, color_map
+
+
+class NonogramsRu(NonogramsOrg):
+    """Grab the puzzles from http://www.nonograms.ru/"""
+
+    BASE_URL = 'http://www.nonograms.ru/'
+
+
+class Nonograms(object):
+    """
+    Grab the puzzles from http://www.nonograms.org/
+    or http://www.nonograms.ru/
+    """
+
+    @classmethod
+    def read(cls, _id, colored=False):
+        """
+        Search for puzzle on any of available http://www.nonograms.* sites
+        """
+        try:
+            return NonogramsRu(_id, colored=colored).read()
+        except PbnNotFoundError:
+            return NonogramsOrg(_id, colored=colored).read()

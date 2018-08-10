@@ -25,6 +25,7 @@ from pynogram.core.renderer import (
 from pynogram.reader import (
     read_example, list_examples, read_example_source,
     Pbn, PbnNotFoundError,
+    Nonograms,
 )
 from .common import (
     BaseHandler,
@@ -43,7 +44,7 @@ class BoardHandler(ThreadedBaseHandler):
 
     @property
     def board_mode(self):
-        """The sting that identifies board's source (local, pbn)"""
+        """The sting that identifies board's source (local, pbn, nonograms.org)"""
         raise NotImplementedError()
 
     @property
@@ -117,6 +118,14 @@ class BoardPbnHandler(BoardHandler):
     @property
     def board_mode(self):
         return 'pbn'
+
+
+class BoardNonogramsOrgHandler(BoardHandler):
+    """Renders nonograms.org boards"""
+
+    @property
+    def board_mode(self):
+        return 'nonograms.org'
 
 
 class BoardStatusHandler(BaseHandler):
@@ -216,6 +225,7 @@ class Application(tornado.web.Application):
             (r'/board/local/source/(.+)/?', BoardLocalSourceHandler),
             (r'/board/local/(.+)/?', BoardLocalHandler),
             (r'/board/pbn/([0-9]+)/?', BoardPbnHandler),
+            (r'/board/nonograms.org/([0-9]+)/?', BoardNonogramsOrgHandler),
             (r'/board/status/(.+)/(.+)/?', BoardStatusHandler),
         ]
         # noinspection PyTypeChecker
@@ -237,6 +247,8 @@ class Application(tornado.web.Application):
             board_def = read_example(_id)
         elif create_mode == 'pbn':
             board_def = Pbn.read(_id)
+        elif create_mode == 'nonograms.org':
+            board_def = Nonograms.read(_id)
         else:
             raise tornado.web.HTTPError(400, 'Bad mode: %s', create_mode)
 

@@ -54,6 +54,7 @@ You can solve puzzles from different sources:
 - local puzzles, created by yourself
 - puzzles from http://webpbn.com (without downloading)
 - locally saved webpbn puzzles (mainly for development/debug purpose)
+- nonograms.org (nonograms.ru) puzzles
 
 `Local <pynogram/examples/>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -213,6 +214,72 @@ If you want to come over the network overhead when solving the webpbn puzzle,
 you can download it prior to solving (e.g. http://webpbn.com/survey/puzzles).
 Then run the solver ``pynogram --local-pbn=path/to/pbn/puzzle.xml``.
 
+
+nonograms.org
+~~~~~~~~~~~~~
+
+simple black-and-white puzzle http://www.nonograms.org/nonograms/i/19833
+
+.. code-block::
+
+    $ pynogram --nonograms-org=19833
+    # # # # # #                       2
+    # # # # # #   1               3   2 2
+    # # # # # #   3   10    6 1 6 2 2 2 5 3
+    # # # # # # 9 1 101 1 103 3 2 2 3 1 1 2 4
+    # # # # # # 4 2 1 1 5 1 2 2 1 3 1 1 2 2 5
+          1 1 8 . ⬛ . . ⬛ . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
+        1 2 2 7 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
+      1 2 2 2 2 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ ⬛ . . . ⬛ ⬛
+      1 2 2 1 1 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ . . . . . ⬛
+      1 2 2 1 2 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ . . ⬛ ⬛ . .
+      1 2 2 2 3 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ ⬛ ⬛ .
+      1 2 2 2 2 ⬛ . ⬛ ⬛ . ⬛ ⬛ . . ⬛ ⬛ . ⬛ ⬛ .
+          6 1 3 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ . . ⬛ ⬛ ⬛ . .
+              13⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . .
+              10⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . .
+            5 1 . . ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . ⬛
+          2 1 3 ⬛ ⬛ . . ⬛ . . . . . . . ⬛ ⬛ ⬛
+    1 1 1 1 3 2 ⬛ . . ⬛ . ⬛ . ⬛ . ⬛ ⬛ ⬛ . ⬛ ⬛
+      3 2 1 1 1 ⬛ ⬛ ⬛ . . . ⬛ ⬛ . ⬛ . . ⬛ . ⬛
+    2 1 1 2 2 1 ⬛ ⬛ . ⬛ . . ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛
+
+
+
+simple color puzzle http://www.nonograms.org/nonograms2/i/19784
+
+.. code-block::
+
+    $ pynogram --nonograms-org=19784
+    # # # # # # #                     2
+    # # # # # # #                 2 2 1
+    # # # # # # #                 1 4 1
+    # # # # # # #               2 1 6 2 3
+    # # # # # # #               2 2 1 6 3 4
+    # # # # # # #         1 2 2 2 6 2 1 7 6
+    # # # # # # #     1   1 1 5 5 2 1 5 5 2 3
+    # # # # # # # 1 1 4 111 1 1 1 1 1 1 1 1 4 4 1 1
+                4                 " " " "
+                6               " " " " " "
+            1 3 2               " ! ! ! " "
+      1 1 1 1 1 1               ! X ! X ! "
+              5 1               ! ! ! ! ! "
+                4                 ! ! ! !
+                3                   # # #
+                5                 # # # # #
+            1 2 9     ! " " # # # # # # # # #
+            1 1 9       " ! # # # # # # # # #
+              1 6       "         # # # # # #
+              1 5       "         # # # # #
+          1 1 2 2       "         # ! ! # #
+              1 7       "     $ $ $ $ $ $ $
+              1 7       "     $ $ $ $ $ $ $
+    3 1 2 2 2 2 5 X X X " X X $ $ X X $ $ X X X X X
+        1 1 2 2 2     X "     $ $     $ $   X X
+        1 1 2 2 2     X "     $ $     $ $   X X
+        1 1 3 3 2     X "   X X X   X X X   X X
+
+
 Modes
 ~~~~~
 
@@ -277,6 +344,7 @@ Web-solver
 
 - you can solve any of local puzzles (with */board/local* path)
   or webpbn puzzles (with */board/pbn* path)
+  or nonograms.org ones (with */board/nonograms.org* path)
 
 - you can specify render mode (with the *?render=MODE* argument).
   Now the four are supported:
