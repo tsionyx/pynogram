@@ -10,10 +10,6 @@ python setup.py develop
 
 You can run the old-school `setup.py test` or simply `tox`.
 
-Unfortunately tests requirements do not install
-automatically (see comments in _setup.py_) for now.
-Just do `pip install tox` before you run test suite.
-
 
 #### Lint the project
 

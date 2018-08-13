@@ -21,6 +21,8 @@ from setuptools import (
     find_packages,
     Command,
 )
+# noinspection PyPep8Naming
+from setuptools.command.test import test as TestCommand
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 ME = 'tsionyx'
@@ -98,7 +100,7 @@ SCRIPTS = [
 ]
 
 
-class ToxTest(Command):
+class ToxTest(TestCommand):
     description = 'Run tests with tox'
 
     user_options = []
@@ -111,9 +113,10 @@ class ToxTest(Command):
         if 'test' in sys.argv:
             sys.argv.remove('test')
 
-    # noinspection PyPackageRequirements
-    @classmethod
-    def run(cls):
+    def run(self):
+        self.install_dists(self.distribution)
+
+        # noinspection PyUnresolvedReferences
         import tox
         tox.cmdline()
 
@@ -202,8 +205,6 @@ if __name__ == '__main__':
 
         long_description=read_file('README.rst'),
         classifiers=CLASSIFIERS,
-        # TODO: force tests_require to install on test
-        # try to inherit ToxTest from setuptools.command.test
         cmdclass={
             'test': ToxTest,
             'upload': UploadCommand,
