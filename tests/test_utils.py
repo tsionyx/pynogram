@@ -19,10 +19,7 @@ from pynogram.utils.other import (
     get_version,
     two_powers, from_two_powers,
 )
-from pynogram.utils.priority_dict import (
-    PriorityDict,
-    PriorityDict2,
-)
+from pynogram.utils.priority_dict import PriorityDict
 from pynogram.utils.uniq import (
     UniqueChecker,
     init_once,
@@ -232,24 +229,24 @@ class TestPriorityDictOld(TestPriorityDict):
         assert id(p_dict._heap) != old_heap_id
 
 
-class TestPriorityDict2(TestPriorityDict):
-    @pytest.fixture
-    def p_dict(self):
-        res = PriorityDict2()
-        res['foo'] = 1
-        res['bar'] = 3
-        res['baz'] = 2
-        return res
-
-    def test_repeating_priorities(self, p_dict):
-        p_dict['baz'] = 1
-
-        # undefined
-        assert p_dict.pop_smallest()[0] == 'foo'
-        assert p_dict.pop_smallest()[0] == 'baz'
-        assert p_dict.pop_smallest() == ('bar', 3)
-
-        assert not p_dict
+# class TestPriorityDict2(TestPriorityDict):
+#     @pytest.fixture
+#     def p_dict(self):
+#         res = PriorityDict2()
+#         res['foo'] = 1
+#         res['bar'] = 3
+#         res['baz'] = 2
+#         return res
+#
+#     def test_repeating_priorities(self, p_dict):
+#         p_dict['baz'] = 1
+#
+#         # undefined
+#         assert p_dict.pop_smallest()[0] == 'foo'
+#         assert p_dict.pop_smallest()[0] == 'baz'
+#         assert p_dict.pop_smallest() == ('bar', 3)
+#
+#         assert not p_dict
 
 
 class TestVersion(object):

@@ -46,7 +46,6 @@ REQUIRED = [
     'six',
     'memoized',
     'svgwrite',
-    'pqdict',
 ]
 
 # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-extras-optional-features-with-their-own-dependencies
