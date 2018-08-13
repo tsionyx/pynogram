@@ -1,32 +1,45 @@
-six >= 1.10.0
-pqdict  # efficient priority dict
-numpy; platform_python_implementation != 'PyPy'
-# numpy's `__copy__` does not work on pypy, so simply skip it
-# git+https://bitbucket.org/pypy/numpy.git; platform_python_implementation == 'PyPy'
+six >= 1.10.0                                           # python2/python3 compatibility
+memoized                                                # remember functions results
+svgwrite                                                # generate SVG solutions
+
+
+
+# ==================== pynogram-web =================== #
 futures; python_version < '3.2'
-memoized
-
 # https://github.com/tornadoweb/tornado/issues/2304
-tornado < 5.0
-svgwrite
+tornado < 5.0                                           # supports long-polling
 
 
+
+# =============== optional dependencies =============== #
+# numpy's `__copy__` does not work on PyPy, so simply skip it
+numpy; platform_python_implementation != 'PyPy'         # fast matrix operations
+
+# or you can install numpy for PyPy like this
+# git+https://bitbucket.org/pypy/numpy.git; platform_python_implementation == 'PyPy'
+
+
+
+# ======================= tests ======================= #
 # it's possible to run tests with simply `setup.py test`
 # without cluttering your current virtualenv
 # but sometimes it may be convenient to run them another way:
 
-# manual invocation
-tox
+# a) manual invocation
+tox                                                     # task management
 coverage
-flake8
+flake8                                                  # style checker (PEP8)
+
 # pylint cannot be installed on PyPy3
 # because of 'typed-ast' dependency (through 'astroid' dependency)
 # https://github.com/PyCQA/astroid/blob/5cc50abb/astroid/__pkginfo__.py#L33
 pylint ; platform_python_implementation != 'PyPy' or python_version < '3'
 
-# via PyCharm's 'Run Configuration'
-#nose
-pytest >= 3.3
 
-# to upload to PyPi
-twine
+# b) via PyCharm's 'Run Configuration'
+pytest >= 3.3                                           # unit test framework
+
+
+
+# ===================== deployment ==================== #
+twine                                                   # secure upload to PyPi
