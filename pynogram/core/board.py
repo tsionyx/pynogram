@@ -84,6 +84,39 @@ class Board(object):
 
         self.solutions = []
 
+        self.densities = {
+            True: [self.line_density(True, index) for index in range(self.width)],
+            False: [self.line_density(False, index) for index in range(self.height)],
+        }
+
+    def line_density(self, is_column, index):
+        """
+        The value in range [0..1] that shows how dense will be the solved line.
+        The minimum density (0) is for the empty description.
+        The maximum density is for the description that does not allow extra spaces between blocks.
+
+        In general, the more this value the easier this line has to be solved.
+        """
+        if is_column:
+            desc = self.columns_descriptions[index]
+            full = self.height
+        else:
+            desc = self.rows_descriptions[index]
+            full = self.width
+
+        density = self.desc_sum(desc) / full
+
+        assert 0 <= density <= 1
+        return density
+
+    @classmethod
+    def desc_sum(cls, desc):
+        """Minimal length that will be sufficient to store the given description"""
+        if not desc:
+            return 0
+
+        return sum(desc) + (len(desc) - 1)
+
     @property
     def init_cell_state(self):
         """Initial value of a board cell"""
@@ -505,6 +538,19 @@ class ColoredBoard(Board):
     @property
     def _color_map_ids(self):
         return tuple(self.color_map.by_id)
+
+    @classmethod
+    def desc_sum(cls, desc):
+        res = 0
+        prev_color = None
+        for size, color in desc:
+            res += size
+            if color == prev_color:
+                res += 1
+
+            prev_color = color
+
+        return res
 
     @property
     def init_cell_state(self):

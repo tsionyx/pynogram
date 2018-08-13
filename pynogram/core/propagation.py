@@ -6,7 +6,9 @@ from __future__ import unicode_literals, print_function
 import logging
 import time
 
-from six.moves import zip
+from six.moves import (
+    zip, range,
+)
 
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
@@ -169,15 +171,33 @@ def _solve_with_method(
 
     if row_indexes is None:
         row_indexes = range(board.height)
-
     for row_index in row_indexes:
-        _add_job((False, row_index), 0)
+        # the more this line solved
+        # priority = 1 - board.row_solution_rate(row_index)
+
+        # the closer to edge
+        # priority = 1 - abs(2.0 * row_index / board.height - 1)
+
+        # the more 'dense' this line
+        # priority = 1 - board.densities[False][row_index]
+
+        priority = 0
+        _add_job((False, row_index), priority)
 
     if column_indexes is None:
         column_indexes = range(board.width)
-
     for column_index in column_indexes:
-        _add_job((True, column_index), 0)
+        # the more this line solved
+        # priority = 1 - board.column_solution_rate(column_index)
+
+        # the closer to edge
+        # priority = 1 - abs(2.0 * column_index / board.width - 1)
+
+        # the more 'dense' this line
+        # priority = 1 - board.densities[True][column_index]
+
+        priority = 0
+        _add_job((True, column_index), priority)
 
     total_cells_solved = 0
 
