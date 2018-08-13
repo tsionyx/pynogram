@@ -7,11 +7,8 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
-from collections import defaultdict
-from functools import partial, wraps
 from time import time
 
-from six import iteritems
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -133,63 +130,14 @@ class ExpirableCache(Cache):
         return value
 
 
-class Memoized(object):  # pragma: no cover
-    """
-    Decorator to cache function results
-    """
-
-    def __init__(self, func):
-        self.func = func
-        self._cache = {}
-
-    def __call__(self, *args, **kwargs):
-        key = tuple(args)
-        if kwargs:
-            key += tuple(iteritems(kwargs))
-
-        try:
-            return self._cache[key]
-        except KeyError:
-            res = self.func(*args, **kwargs)
-            self._cache[key] = res
-            return res
-        except TypeError:
-            # non cachable, better to not cache than to blow up entirely
-            return self.func(*args, **kwargs)
-
-    def __get__(self, obj, obj_type):
-        """To support instance methods."""
-        return partial(self.__call__, obj)
-
-
-def memoized_instance(func):  # pragma: no cover
+def memoized(func):
     """
     Decorator to cache function results.
-    Can be safely applied to the instance methods.
+    Use memoized PyPi library, if available
     """
 
-    func_name = func.__name__
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        _self = args[0]
-        _args = args[1:]
-
-        try:
-            cache = _self._memoized[func_name]
-        except AttributeError:
-            cache = defaultdict(dict)
-            _self._memoized = cache
-
-        key = tuple(_args)
-        if kwargs:
-            key += tuple(iteritems(kwargs))
-
-        try:
-            return cache[key]
-        except KeyError:
-            res = func(*args, **kwargs)
-            cache[key] = res
-            return res
-
-    return wrapper
+    try:
+        from memoized import memoized as _m
+        return _m(func)
+    except ImportError:
+        return func

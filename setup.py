@@ -44,6 +44,7 @@ LICENSE = 'Apache License 2.0',
 
 REQUIRED = [
     'six',
+    'memoized',
     'svgwrite',
     'pqdict',
 ]

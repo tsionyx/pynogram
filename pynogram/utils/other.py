@@ -20,6 +20,8 @@ from six import (
     iteritems,
 )
 
+from pynogram.utils.cache import memoized
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 START_TIME = datetime.now()
 
@@ -143,6 +145,7 @@ def log_call(log_func=print):  # pragma: no cover
     return _decorator
 
 
+@memoized
 def two_powers(num):
     """
     Get a 'factorization' of number into powers of 2:

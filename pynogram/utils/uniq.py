@@ -333,7 +333,7 @@ def init_once(func):
         except AttributeError:
             res = func(self)
 
-            # only save the result if `func` is an instance method
+            # only save the result if `func` is an instance or class method
             if hasattr(arg, func_name):
                 setattr(self, result_member, res)
             return res

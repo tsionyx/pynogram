@@ -28,6 +28,7 @@ from pynogram.core.common import (
 )
 from pynogram.core.color import normalize_description_colored
 from pynogram.core.renderer import Renderer
+from pynogram.utils.cache import memoized
 from pynogram.utils.iter import avg
 from pynogram.utils.other import (
     two_powers, from_two_powers,
@@ -527,6 +528,7 @@ class ColoredBoard(Board):
         return True
 
     @classmethod
+    @memoized
     def _colors_as_set(cls, cell_value):
         return set(two_powers(cell_value))
 
