@@ -160,13 +160,12 @@ def two_powers(num):
 
 def _two_powers(num):
     """
-    https://stackoverflow.com/a/51787245/1177288
+    https://stackoverflow.com/a/51859187/1177288
     """
-    power = 1
-    while num >= power:
-        if num & power:
-            yield power
-        power <<= 1
+    while num > 0:
+        rest = num & (num - 1)
+        yield num - rest
+        num = rest
 
 
 def from_two_powers(numbers):
