@@ -788,6 +788,10 @@ class ColoredBoard(Board):
         return None
 
 
+class ColoredNumpyBoard(ColoredBoard, NumpyBoard):
+    """Colored board that uses numpy matrix to store the cells"""
+
+
 def _solve_on_space_hints(board, hints):
     """
     Pseudo solving with spaces given
@@ -815,6 +819,10 @@ def make_board(*args, **kwargs):
             return Board(*args, **kwargs)
 
     elif len(args) == 3:
-        return ColoredBoard(*args, **kwargs)
+
+        try:
+            return ColoredNumpyBoard(*args, **kwargs)
+        except AttributeError:
+            return ColoredBoard(*args, **kwargs)
 
     raise ValueError('Bad number of *args')
