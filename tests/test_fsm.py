@@ -7,7 +7,7 @@ from copy import copy
 import pytest
 
 from pynogram.core.common import (
-    UNKNOWN, BOX, SPACE,
+    UNKNOWN, BOX, SPACE, SPACE_COLORED,
     normalize_row,
     NonogramError,
 )
@@ -153,17 +153,17 @@ class TestNonogramFiniteStateMachine(object):
         assert str(nfsm) == '\n'.join([
             'NonogramFSM(1);',
             'All states: [1, 2, 3, 4, 5, 6, 7];',
-            'All actions: [1, 2];',
+            'All actions: [False, True];',
             'States map:',
-            '1, 1 -> 1',
-            '1, 2 -> 2',
-            '2, 2 -> 3',
-            '3, 2 -> 4',
-            '4, 1 -> 5',
-            '5, 1 -> 5',
-            '5, 2 -> 6',
-            '6, 2 -> 7',
-            '7, 1 -> 7',
+            '1, False -> 1',
+            '1, True -> 2',
+            '2, True -> 3',
+            '3, True -> 4',
+            '4, False -> 5',
+            '5, False -> 5',
+            '5, True -> 6',
+            '6, True -> 7',
+            '7, False -> 7',
             'Final state: 7.',
         ])
 
@@ -171,8 +171,13 @@ class TestNonogramFiniteStateMachine(object):
         nfsm = self.fsm()
         assert nfsm.current_state == nfsm.final_state == 1
         assert nfsm.states == (1,)
-        assert nfsm.actions == (SPACE,)
-        assert dict(nfsm.state_map) == {(1, SPACE): 1}
+        assert len(nfsm.actions) == 1
+
+        # if the description is empty, the previous state_map
+        # from the ColoredNfsm can be cached, so we can receive SPACE_COLORED here
+        action = nfsm.actions[0]
+        assert action in (SPACE, SPACE_COLORED)
+        assert dict(nfsm.state_map) == {(1, action): 1}
 
     def test_matches(self, nfsm):
         assert nfsm.match([BOX, BOX, BOX, SPACE, BOX, BOX])
@@ -220,7 +225,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
 
         exc = ie.value
         assert str(exc) == ("Cannot contain different representations '., 0' "
-                            "of the same state '1' in a single row "
+                            "of the same state 'False' in a single row "
                             "'_.0_X____'")
 
     def test_solve_with_partial_match_bad_row(self, nfsm):
@@ -229,7 +234,7 @@ class TestNonogramFSMPartialMatch(TestNonogramFiniteStateMachine):
 
         exc = ie.value
         assert str(exc) == ('The 0 cell (None) in a row '
-                            '(None, 1, None, None, 1, None, None, None, None) '
+                            '(None, False, None, None, False, None, None, None, None) '
                             'cannot be neither space nor box')
 
     @pytest.mark.parametrize('description,input_row,expected', CASES)
@@ -265,50 +270,50 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
             '(1): []',
             '',
             '1',
-            '(1): [1<-1]',
-            '(2): [1<-2]',
+            '(1): [1<-False]',
+            '(2): [1<-True]',
             '',
             '2',
-            '(1): [1<-1]',
-            '(2): [1<-2]',
-            '(3): [2<-2]',
+            '(1): [1<-False]',
+            '(2): [1<-True]',
+            '(3): [2<-True]',
             '',
             '3',
-            '(1): [1<-1]',
-            '(2): [1<-2]',
-            '(3): [2<-2]',
-            '(4): [3<-1]',
+            '(1): [1<-False]',
+            '(2): [1<-True]',
+            '(3): [2<-True]',
+            '(4): [3<-False]',
             '',
             '4',
-            '(1): [1<-1]',
-            '(4): [3<-1, 4<-1]',
+            '(1): [1<-False]',
+            '(4): [3<-False, 4<-False]',
             '',
             '5',
-            '(2): [1<-2]',
-            '(5): [4<-2]',
+            '(2): [1<-True]',
+            '(5): [4<-True]',
             '',
             '6',
-            '(3): [2<-2]',
-            '(6): [5<-2]',
+            '(3): [2<-True]',
+            '(6): [5<-True]',
             '',
             '7',
-            '(4): [3<-1]',
-            '(6): [6<-1]',
+            '(4): [3<-False]',
+            '(6): [6<-False]',
             '',
             '8',
-            '(4): [4<-1]',
-            '(5): [4<-2]',
-            '(6): [6<-1]',
+            '(4): [4<-False]',
+            '(5): [4<-True]',
+            '(6): [6<-False]',
             '',
             '9',
-            '(4): [4<-1]',
-            '(5): [4<-2]',
-            '(6): [5<-2, 6<-1]',
+            '(4): [4<-False]',
+            '(5): [4<-True]',
+            '(6): [5<-True, 6<-False]',
             '',
             '10',
-            '(4): [4<-1]',
-            '(5): [4<-2]',
-            '(6): [5<-2, 6<-1]',
+            '(4): [4<-False]',
+            '(5): [4<-True]',
+            '(6): [5<-True, 6<-False]',
         ])
 
     def test_solve_bad_row(self):
@@ -316,8 +321,8 @@ class TestNonogramFSMReverseTracking(TestNonogramFiniteStateMachine):
             solve_line('1 1', '__.', method='reverse_tracking')
 
         assert str(ie.value) == ('ReverseTrackingSolver: Failed to solve line '
-                                 '(None, None, 1) with clues (1, 1): '
-                                 'Bad transition table: final state not found')
+                                 '(None, None, False) with clues (1, 1): '
+                                 'Bad transition table: final state 4 not found')
 
     def test_solve_bad_method(self):
         with pytest.raises(KeyError) as ie:

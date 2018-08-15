@@ -7,6 +7,11 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
+try:
+    # available since 3.4
+    from enum import Enum
+except ImportError:
+    Enum = object
 
 from six import (
     integer_types, string_types,
@@ -35,9 +40,20 @@ class NonogramError(ValueError):
 
 UNKNOWN = None  # this cell has to be solved
 
-# force to create white and black colors to prevent any name conflicts in the future
-BOX = Color.black().id_
-SPACE = Color.white().id_
+
+class BlackAndWhite(Enum):
+    """
+    Enums are faster than simple integers
+    """
+    WHITE = Color.white().id_
+    BLACK = Color.black().id_
+
+
+# but boolean constants are even faster than Enums
+BOX = True  # BlackAndWhite.BLACK
+SPACE = False  # BlackAndWhite.WHITE
+
+# for colored puzzles only integer is allowed
 SPACE_COLORED = Color.white().id_
 
 
