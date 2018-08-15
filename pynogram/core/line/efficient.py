@@ -13,7 +13,8 @@ import logging
 from six.moves import zip
 
 from pynogram.core.common import (
-    UNKNOWN, BOX, SPACE,
+    UNKNOWN, BOX,
+    SPACE, SPACE_COLORED,
 )
 from pynogram.core.line.base import (
     BaseLineSolver,
@@ -268,9 +269,13 @@ class EfficientColorSolver(EfficientSolver):
         return minimum_lengths
 
     @classmethod
+    def empty_cell(cls):
+        return SPACE_COLORED
+
+    @classmethod
     def _can_be_space(cls, cell):
         # not (len(cell) == 1 and cell[0] in self.colors)
-        return SPACE & cell
+        return cls.empty_cell() & cell
 
     def _fix(self, i, j):
         res = self._fix_border_conditions(i, j)
@@ -344,7 +349,7 @@ class EfficientColorSolver(EfficientSolver):
 
         if fix0:
             if fix_colors:
-                fix_colors.append(SPACE)
+                fix_colors.append(self.empty_cell())
                 return self._paint_all(i, j, fix_colors)
 
             return self._paint0(i, j)
@@ -381,7 +386,7 @@ class EfficientColorSolver(EfficientSolver):
 
     def _paint_all(self, i, j, colors):
         lines = []
-        if SPACE in colors:
+        if self.empty_cell() in colors:
             lines.append(self._paint0(i, j))
 
         lines.append(self._paint_color(i, j))

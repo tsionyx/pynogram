@@ -22,11 +22,9 @@ from six.moves.configparser import RawConfigParser
 from six.moves.urllib.error import HTTPError
 from six.moves.urllib.request import urlopen
 
-from pynogram.core.common import (
-    clues,
-    BOX,
-)
+from pynogram.core.common import clues
 from pynogram.core.color import (
+    Color,
     ColorMap,
     ColorBlock,
 )
@@ -368,7 +366,7 @@ class NonogramsOrg(object):
 
             is_black = (rgb == '000000')
             if is_black:
-                name = color_map.by_id[BOX].name
+                name = Color.black().name
             else:
                 name = 'color-{}'.format(old_id)
                 color_map.make_color(name, rgb)

@@ -17,7 +17,7 @@ from six import (
 from six.moves import range
 
 from pynogram.core.common import (
-    UNKNOWN, BOX, SPACE,
+    UNKNOWN, BOX, SPACE, SPACE_COLORED,
     normalize_description, normalize_row,
     is_list_like,
     NonogramError,
@@ -52,8 +52,26 @@ class NonogramFSM(fsm.FiniteStateMachine):
         super(NonogramFSM, self).__init__(initial_state, state_map, final=final)
 
     @classmethod
+    def _space(cls):
+        return SPACE
+
+    @classmethod
+    def _can_be_space(cls, cell):
+        """
+        Whether the cell can be a space
+        """
+        return cell in (UNKNOWN, cls._space())
+
+    @classmethod
+    def _can_be_empty(cls, row):
+        """
+        Whether the row can contain only spaces
+        """
+        return all(cls._can_be_space(cell) for cell in row)
+
+    @classmethod
     def _optional_space(cls, state):
-        return (state, SPACE), state
+        return (state, cls._space()), state
 
     @classmethod
     def _required_color(cls, state, color):
@@ -65,7 +83,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
 
     @classmethod
     def _required_space(cls, state):
-        return cls._required_color(state, SPACE)
+        return cls._required_color(state, cls._space())
 
     INITIAL_STATE = 1
 
@@ -167,6 +185,9 @@ class NonogramFSM(fsm.FiniteStateMachine):
         """
         original_row = normalize_row(row)
 
+        if not self.description and self._can_be_empty(row):
+            return (self._space(),) * len(row)
+
         # do not change original
         solved = list(original_row)
         for i, cell in enumerate(original_row):
@@ -252,12 +273,15 @@ class NonogramFSM(fsm.FiniteStateMachine):
         """
         Solve the nonogram `row` using the FSM and reverse tracking
         """
+        if not self.description and self._can_be_empty(row):
+            return (self._space(),) * len(row)
 
         transition_table = self._make_transition_table(row)
 
         # print(transition_table)
         if self.final_state not in transition_table[-1]:
-            raise NonogramError('Bad transition table: final state not found')
+            raise NonogramError('Bad transition table: final state {!r} not found'.format(
+                self.final_state))
 
         solved_row = tuple(
             self._cell_value_from_solved(states)
@@ -272,7 +296,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
             word = tuple(set(word))
             if len(word) == 1:
                 space = word[0]
-                if space == SPACE:
+                if space == self._space():
                     return True
 
         return super(NonogramFSM, self).match(word)
@@ -379,6 +403,14 @@ class NonogramFSMColored(NonogramFSM):
     """
     FSM-based line solver for colored puzzles
     """
+
+    @classmethod
+    def _space(cls):
+        return SPACE_COLORED
+
+    @classmethod
+    def _can_be_space(cls, cell):
+        return bool(cell & cls._space())
 
     @classmethod
     def _types_for_cell(cls, cell):

@@ -10,7 +10,7 @@ from pynogram.core.board import (
 )
 from pynogram.core.color import ColorBlock
 from pynogram.core.common import (
-    SPACE,
+    SPACE, SPACE_COLORED as SPACE_C,
     NonogramError,
 )
 from pynogram.core.line import solve_line
@@ -61,7 +61,7 @@ class TestEfficientColorSolver(object):
     def test_empty(self, colors):
         desc = []
         line = [colors]
-        assert tuple(self.solve_as_color_sets(desc, line)) == (SPACE,)
+        assert tuple(self.solve_as_color_sets(desc, line)) == (SPACE_C,)
 
     def test_simplest(self, colors):
         desc = [ColorBlock(1, 4)]
@@ -71,30 +71,30 @@ class TestEfficientColorSolver(object):
     def test_undefined(self, colors):
         desc = [ColorBlock(1, 4)]
         line = [colors] * 2
-        assert tuple(self.solve_as_color_sets(desc, line)) == (4 | SPACE, 4 | SPACE)
+        assert tuple(self.solve_as_color_sets(desc, line)) == (4 | SPACE_C, 4 | SPACE_C)
 
     def test_same_color(self, colors):
         desc = [ColorBlock(1, 4), ColorBlock(1, 4)]
         line = [colors] * 3
-        assert tuple(self.solve_as_color_sets(desc, line)) == (4, SPACE, 4)
+        assert tuple(self.solve_as_color_sets(desc, line)) == (4, SPACE_C, 4)
 
     def test_different_colors(self, colors):
         desc = [ColorBlock(1, 4), ColorBlock(1, 8)]
         line = [colors] * 3
         assert tuple(self.solve_as_color_sets(desc, line)) == (
-            4 | SPACE, 4 | 8 | SPACE, 8 | SPACE)
+            4 | SPACE_C, 4 | 8 | SPACE_C, 8 | SPACE_C)
 
     def test_lengthy(self, colors):
         desc = [ColorBlock(2, 4), ColorBlock(1, 4), ColorBlock(1, 8)]
         line = [colors] * 5
         assert tuple(self.solve_as_color_sets(desc, line)) == (
-            4, 4, SPACE, 4, 8)
+            4, 4, SPACE_C, 4, 8)
 
     def test_lengthy_undefined(self, colors):
         desc = [ColorBlock(2, 4), ColorBlock(1, 4), ColorBlock(1, 8)]
         line = [colors] * 6
         assert tuple(self.solve_as_color_sets(desc, line)) == (
-            4 | SPACE, 4, 4 | SPACE, 4 | SPACE, 4 | 8 | SPACE, 8 | SPACE)
+            4 | SPACE_C, 4, 4 | SPACE_C, 4 | SPACE_C, 4 | 8 | SPACE_C, 8 | SPACE_C)
 
     def test_bad(self, colors):
         desc = [ColorBlock(2, 4), ColorBlock(1, 4), ColorBlock(1, 8)]

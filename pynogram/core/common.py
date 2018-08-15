@@ -38,6 +38,7 @@ UNKNOWN = None  # this cell has to be solved
 # force to create white and black colors to prevent any name conflicts in the future
 BOX = Color.black().id_
 SPACE = Color.white().id_
+SPACE_COLORED = Color.white().id_
 
 
 def invert(cell_state):

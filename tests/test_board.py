@@ -12,8 +12,9 @@ from pynogram.core.backtracking import Solver
 from pynogram.core.board import (
     Board, make_board,
 )
-from pynogram.core.color import ColorMap
-from pynogram.core.common import BOX
+from pynogram.core.color import (
+    ColorMap, Color,
+)
 from pynogram.core.renderer import (
     BaseAsciiRenderer,
     AsciiRenderer,
@@ -542,7 +543,7 @@ class TestColorBoard(object):
         board = make_board(columns, rows, colors, renderer=renderer)
         for i in range(3):
             board.cells[0][i] = 4
-            board.cells[2][i] = BOX
+            board.cells[2][i] = Color.black().id_
         # cannot do simply:
         # board.cells[2] = [True, True, True]
         # because of

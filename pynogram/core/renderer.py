@@ -16,7 +16,7 @@ from six import (
 )
 
 from pynogram.core.common import (
-    UNKNOWN, BOX, SPACE,
+    UNKNOWN, BOX, SPACE, SPACE_COLORED,
     is_list_like,
     Color,
     is_color_cell,
@@ -203,6 +203,11 @@ class Renderer(object):
         """
         raise NotImplementedError()
 
+    @property
+    def is_colored(self):
+        """Whether the linked board is colored board"""
+        return self.board.is_colored
+
 
 # noinspection PyAbstractClass
 class StreamRenderer(Renderer):
@@ -295,7 +300,7 @@ class BaseAsciiRenderer(StreamRenderer):
         if cells is None:
             cells = self.board.cells
 
-        is_colored = self.board.is_colored
+        is_colored = self.is_colored
 
         for i, row in enumerate(cells):
             rend_i = i + self.header_height
@@ -503,8 +508,8 @@ class SvgRenderer(StreamRenderer):
 
         if color is not None:
             # SPACE is already an ID
-            if color != SPACE:
-                if self.board.is_colored:
+            if color not in (SPACE, SPACE_COLORED):
+                if self.is_colored:
                     color = self.board.color_id_by_name(color)
             self.color_symbols[color] = id_
 
@@ -524,7 +529,7 @@ class SvgRenderer(StreamRenderer):
             )
         ))
 
-        if self.board.is_colored:
+        if self.is_colored:
             for color_name in sorted(self.board.color_map):
                 if color_name == Color.white().name:
                     continue
@@ -535,6 +540,13 @@ class SvgRenderer(StreamRenderer):
                         size=(self.cell_size, self.cell_size),
                         fill=self._color_from_name(color_name),
                     ))
+
+            self._add_symbol(
+                'space', SPACE_COLORED,
+                drawing.circle(
+                    r=self.cell_size / 10
+                ))
+
         else:
             self._add_symbol(
                 'box', BOX,
@@ -542,11 +554,11 @@ class SvgRenderer(StreamRenderer):
                     size=(self.cell_size, self.cell_size),
                 ))
 
-        self._add_symbol(
-            'space', SPACE,
-            drawing.circle(
-                r=self.cell_size / 10
-            ))
+            self._add_symbol(
+                'space', SPACE,
+                drawing.circle(
+                    r=self.cell_size / 10
+                ))
 
         self._add_symbol(
             'check', None,
@@ -738,6 +750,8 @@ class SvgRenderer(StreamRenderer):
         for cell_value, id_ in iteritems(self.color_symbols):
             cell_groups[cell_value] = drawing.g(class_=id_)
 
+        space_cell = SPACE_COLORED if self.is_colored else SPACE
+
         for j, row in enumerate(cells):
             for i, cell in enumerate(row):
                 cell = self._color_code(cell)
@@ -745,7 +759,7 @@ class SvgRenderer(StreamRenderer):
                 if cell == UNKNOWN:
                     continue
 
-                if cell == SPACE:
+                if cell == space_cell:
                     insert_point = (
                         self.pixel_side_width + (i + 0.5) * self.cell_size,
                         self.pixel_header_height + (j + 0.5) * self.cell_size)

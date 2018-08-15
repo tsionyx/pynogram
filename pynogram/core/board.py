@@ -22,7 +22,8 @@ except ImportError:
     np = None
 
 from pynogram.core.common import (
-    UNKNOWN, BOX, SPACE, invert,
+    UNKNOWN, BOX, SPACE, SPACE_COLORED,
+    invert,
     normalize_description,
     is_color_cell,
 )
@@ -567,7 +568,7 @@ class ColoredBoard(Board):
         Clue colors described the board more precisely than the color_map
         (ast it can contains excess colors like 'white').
         """
-        return self._clue_colors(True) | {SPACE}
+        return self._clue_colors(True) | {SPACE_COLORED}
 
     @property
     def is_colored(self):
