@@ -4,6 +4,8 @@
 
 - find valid range for every color
 
+- bgu: speed up set_line_block, can_place_block
+
 - test black-and white SVG renderer
 
 - refactoring:

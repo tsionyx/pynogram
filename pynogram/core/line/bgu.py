@@ -69,13 +69,10 @@ class BguSolver(BaseLineSolver):
         res = [0]
 
         if blocks:
-            res.append(blocks[0])
+            res.append(blocks[0] - 1)
 
-        for i, block in enumerate(blocks[1:]):
-            res.append(res[i + 1] + block)
-
-        for i in range(1, len(res)):
-            res[i] += i - 2
+        for block in blocks[1:]:
+            res.append(res[-1] + block + 1)
 
         return res
 
@@ -96,46 +93,38 @@ class BguSolver(BaseLineSolver):
         if position < self.block_sums[block]:
             return False
 
-        # base case
-        if position == 0:  # reached the end of the line
-            if (block == 0) and (self.line[position] != BOX):
-                self.add_cell_color(position, SPACE)
-                return True
-
-            return False
-
-        # finished filling all blocks (can still fill whitespace)
-        if block == 0:
-            if (self.line[position] != BOX) and self.get_sol(position - 1, block):
-                self.add_cell_color(position, SPACE)
-                return True
-
-            return False
-
         # recursive case
         if self.line[position] == BOX:  # current cell is BOX
             return False  # can't place a block if the cell is black
 
+        # base case
+        if position == 0:  # reached the end of the line
+            if block == 0:
+                self.add_cell_color(position, SPACE)
+                return True
+
+            return False
+
         # current cell is either white or unknown
-        white_ans = self.get_sol(position - 1, block)  # set cell white and continue
+        white_ans = self.get_sol(position - 1, block)
 
-        prev_block_size = self.description[block - 1]
-        # set cell white, place the current block and continue
+        # block == 0 means we finished filling all the blocks (can still fill whitespace)
+        if block > 0:
+            block_size = self.description[block - 1]
 
-        black_ans = False
-        if self.can_place_block(position - prev_block_size, prev_block_size):
-            black_ans = self.get_sol(position - prev_block_size - 1, block - 1)
+            if self.can_place_block(position - block_size, block_size):
+                black_ans = self.get_sol(position - block_size - 1, block - 1)
+                if black_ans:
+                    # set cell white, place the current block and continue
+                    self.set_line_block(position - block_size, position)
+                    return True
 
-        if not white_ans and not black_ans:
-            return False  # no solution
-
-        if white_ans:  # only space
+        if white_ans:
+            # set cell white and continue
             self.add_cell_color(position, SPACE)
+            return True
 
-        if black_ans:  # both space and block
-            self.set_line_block(position - prev_block_size, position)
-
-        return True
+        return False  # no solution
 
     def can_place_block(self, position, length):
         """
@@ -198,7 +187,8 @@ class BguSolver(BaseLineSolver):
         can_be_solved = self.sol[block][position]  # self._get_sol(position, block)
         if can_be_solved is None:
             can_be_solved = self.fill_matrix_top_down(position, block)
-            if can_be_solved is not None:
-                self.set_sol(position, block, can_be_solved)
+
+            # self.set_sol(position, block, can_be_solved)
+            self.sol[block][position] = can_be_solved
 
         return can_be_solved
