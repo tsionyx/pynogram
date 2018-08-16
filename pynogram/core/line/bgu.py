@@ -35,16 +35,13 @@ class BguSolver(BaseLineSolver):
         super(BguSolver, self).__init__(description, line)
         self.block_sums = self.calc_block_sum(description)
 
-        # define the internal representation of a line to be
-        # one cell larger then the original
+        # define the internal representation of a line to be one cell larger then the original
         # this is done to avoid an edge case later in our recursive formula
         self.line = list(line) + [UNKNOWN]
         self.solved_line = list(self.line)
 
-        line_size = len(line)
-        positions = line_size + 1
+        positions = len(self.line)
         job_size = len(description) + 1
-        # self.sol = [None] * (self.job_size * positions)
         self.sol = [[None] * positions for _ in range(job_size)]
 
     def _solve(self):
@@ -84,17 +81,18 @@ class BguSolver(BaseLineSolver):
 
     def fill_matrix_top_down(self, position, block):
         """
-        fills the solution matrix in a top-down
-        using memoization to determine if a recursive call has already been calculated
+        Calculate the solution for line[:position+1]
+        in respect to description[:block]
+
         :param position: position of cell we're currently trying to fill
-        :param block: current block of the cell
+        :param block: current block number
+        :return: whether the segment of line solvable
         """
 
         if (position < 0) or (block < 0):
             return None
 
-        # if we have too many blocks to fit this line segment
-        # we can stop the recursion and return false
+        # too many blocks left to fit this line segment
         if position < self.block_sums[block]:
             return False
 
@@ -131,7 +129,7 @@ class BguSolver(BaseLineSolver):
         if not white_ans and not black_ans:
             return False  # no solution
 
-        if white_ans:
+        if white_ans:  # only space
             self.add_cell_color(position, SPACE)
 
         if black_ans:  # both space and block
@@ -185,7 +183,6 @@ class BguSolver(BaseLineSolver):
         if position < 0:
             return
 
-        # self.sol[self.get_mat_index(position, block)] = value
         self.sol[block][position] = value
 
     def get_sol(self, position, block):
@@ -199,19 +196,9 @@ class BguSolver(BaseLineSolver):
             return block == 0
 
         can_be_solved = self.sol[block][position]  # self._get_sol(position, block)
-        if can_be_solved is not None:
-            return can_be_solved
-
-        can_be_solved = self.fill_matrix_top_down(position, block)
-        if can_be_solved is not None:
-            self.set_sol(position, block, can_be_solved)
+        if can_be_solved is None:
+            can_be_solved = self.fill_matrix_top_down(position, block)
+            if can_be_solved is not None:
+                self.set_sol(position, block, can_be_solved)
 
         return can_be_solved
-
-    # def get_mat_index(self, row, col):
-    #     """Convert the 2D matrix address into a 1D address"""
-    #     return row * self.job_size + col
-    #
-    # def _get_sol(self, position, block):
-    #     # return self.sol[self.get_mat_index(position, block)]
-    #     return self.sol[block][position]
