@@ -555,7 +555,7 @@ class TestColorBoard(object):
             '# 1 1 1',
             '# 1 1 1',
             '3 % % %',
-            '0 _ _ _',
+            '0      ',
             '3 X X X',
         ])
 

@@ -535,6 +535,25 @@ class ColoredBoard(Board):
         """
         self.color_map = color_map
         super(ColoredBoard, self).__init__(columns, rows, **renderer_params)
+        self._reduce_colors()
+
+    @classmethod
+    def _desc_colors(cls, description):
+        return from_two_powers(block.color for block in description)
+
+    def _reduce_colors(self):
+        """
+        For every cell reduce the possible colors to only those
+        appeared on the corresponding row and column.
+        """
+        for row_index, (row, row_desc) in enumerate(zip(self.cells, self.rows_descriptions)):
+            for column_index, (cell, column_desc) in enumerate(zip(row, self.columns_descriptions)):
+                new_color = self._desc_colors(row_desc) & self._desc_colors(column_desc)
+                new_color |= SPACE_COLORED
+                if new_color != cell:
+                    LOG.info('Update cell (%i, %i): %i --> %i',
+                             row_index, column_index, cell, new_color)
+                    row[column_index] = new_color
 
     @property
     def _color_map_ids(self):

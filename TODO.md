@@ -1,8 +1,8 @@
-- colored board: pre-calculate cell colors on the cross (find valid range for every color)
-
 - colored BGU
 
 - refactor board (extract matrix operations)
+
+- find valid range for every color
 
 - test black-and white SVG renderer
 
