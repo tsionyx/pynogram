@@ -29,7 +29,10 @@ from pynogram.core.common import (
 )
 from pynogram.core.color import normalize_description_colored
 from pynogram.core.renderer import Renderer
-from pynogram.utils.cache import memoized
+from pynogram.utils.cache import (
+    memoized,
+    memoized_two_args,
+)
 from pynogram.utils.iter import avg
 from pynogram.utils.other import (
     two_powers, from_two_powers,
@@ -589,25 +592,33 @@ class ColoredBoard(Board):
         """
         return self._clue_colors(True) | {SPACE_COLORED}
 
+    @init_once
+    def _all_colors_as_single_number(self):
+        """
+        To use in the memoized functions
+        """
+        return from_two_powers(self.colors())
+
     @property
     def is_colored(self):
         return True
 
-    @classmethod
+    @staticmethod  # much more efficient memoization
     @memoized
-    def _colors_as_set(cls, cell_value):
+    def cell_as_color_set(cell_value):
+        """Represent a numbered color as a set of individual colors"""
         return set(two_powers(cell_value))
 
     def cell_colors(self, position):
         i, j = position
         cell = self.cells[i][j]
-        return self._colors_as_set(cell)
+        return self.cell_as_color_set(cell)
 
     def unset_state(self, cell_state):
         row_index, column_index, bad_state = cell_state
         colors = set(self.cell_colors(cell_state.position))
 
-        bad_state = self._colors_as_set(bad_state)
+        bad_state = self.cell_as_color_set(bad_state)
 
         LOG.debug('(%d, %d) previous state: %s',
                   row_index, column_index, colors)
@@ -635,53 +646,24 @@ class ColoredBoard(Board):
 
     def cell_value_solved(self, cell, full_colors=None):
         if full_colors is None:
-            full_colors = self.colors()
+            full_colors = self._all_colors_as_single_number()
 
-        cell_colors = self._colors_as_set(cell) & full_colors
-        return len(cell_colors) == 1
+        return _color_cell_solution_rate(cell, full_colors) == 1
 
     def cell_solution_rate(self, cell, full_colors=None):
         """
         How the cell's color set is close
         to the full solution (one color).
-
-        The formula is like that:
-        `rate = (N - n) / (N - 1)`, where
-        N = full puzzle color set
-        n = current color set for given cell,
-
-        in particular:
-        a) when the cell is completely unsolved
-           rate = (N - N) / (N - 1) = 0
-        b) when the cell is solved
-           rate = (N - 1) / (N - 1) = 1
         """
 
-        # if is_list_like(cell):
-        #     cell_colors = set(cell)
-        # else:
-        #     cell_colors = {cell}
-
         if full_colors is None:
-            full_colors = self.colors()
+            full_colors = self._all_colors_as_single_number()
 
-        cell_colors = self._colors_as_set(cell) & full_colors
-        current_size = len(cell_colors)
-
-        if current_size == 1:
-            return 1
-
-        assert current_size > 1
-
-        full_size = len(full_colors)
-        rate = full_size - current_size
-        normalized_rate = rate / (full_size - 1)
-
-        # assert 0 <= normalized_rate <= 1, 'Full: {}, Cell: {}'.format(full_colors, cell_colors)
-        return normalized_rate
+        # separate out to enable memoization
+        return _color_cell_solution_rate(cell, full_colors)
 
     def is_line_solved(self, row):
-        full_colors = self.colors()
+        full_colors = self._all_colors_as_single_number()
         for cell in row:
             if not self.cell_value_solved(cell, full_colors=full_colors):
                 return False
@@ -691,7 +673,7 @@ class ColoredBoard(Board):
         """
         How many cells in a row are known to be of particular color
         """
-        full_colors = self.colors()
+        full_colors = self._all_colors_as_single_number()
         if size is None:
             size = len(row)
 
@@ -805,6 +787,42 @@ class ColoredBoard(Board):
             return self.color_map[color_name].id_
 
         return None
+
+
+@memoized_two_args
+def _color_cell_solution_rate(cell, all_colors):
+    """
+    Calculate the rate of the given cell.
+
+    The formula is like that:
+        `rate = (N - n) / (N - 1)`, where
+        N = full puzzle color set
+        n = current color set for given cell,
+
+        in particular:
+        a) when the cell is completely unsolved
+           rate = (N - N) / (N - 1) = 0
+        b) when the cell is solved
+           rate = (N - 1) / (N - 1) = 1
+    """
+    all_colors = ColoredBoard.cell_as_color_set(all_colors)
+    cell_colors = ColoredBoard.cell_as_color_set(cell) & all_colors
+    current_size = len(cell_colors)
+
+    if current_size == 1:
+        # _all_colors_specific_cache[cell] = 1
+        return 1
+
+    assert current_size > 1
+
+    full_size = len(all_colors)
+    rate = full_size - current_size
+    normalized_rate = rate / (full_size - 1)
+
+    assert 0 <= normalized_rate <= 1, 'Full: {}, Cell: {}'.format(all_colors, cell_colors)
+
+    # _all_colors_specific_cache[cell] = normalized_rate
+    return normalized_rate
 
 
 class ColoredNumpyBoard(ColoredBoard, NumpyBoard):

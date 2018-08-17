@@ -7,8 +7,9 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
+from collections import defaultdict
+from functools import wraps
 from time import time
-
 
 _LOG_NAME = __name__
 if _LOG_NAME == '__main__':  # pragma: no cover
@@ -141,3 +142,23 @@ def memoized(func):
         return _m(func)
     except ImportError:
         return func
+
+
+def memoized_two_args(func, cache=None):
+    """
+    Memoize results of two-argument function.
+    The first argument should be more 'volatile' and the second one more 'constant'.
+    """
+    if cache is None:
+        cache = defaultdict(dict)
+
+    @wraps(func)
+    def wrapper(arg1, arg2):
+        arg2_cache = cache[arg2]
+        try:
+            return arg2_cache[arg1]
+        except KeyError:
+            arg2_cache[arg1] = value = func(arg1, arg2)
+            return value
+
+    return wrapper
