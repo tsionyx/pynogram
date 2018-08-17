@@ -104,7 +104,8 @@ def solve(board, parallel=False,
 
     if methods is None:
         if board.is_colored:
-            methods = ('reverse_tracking_color',)
+            # methods = ('reverse_tracking_color',)
+            methods = ('bgu_color',)
         else:
             # methods = ('simpson', 'reverse_tracking')
             methods = ('bgu',)

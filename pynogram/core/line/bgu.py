@@ -13,7 +13,7 @@ import logging
 from six.moves import range
 
 from pynogram.core.common import (
-    UNKNOWN, BOX, SPACE,
+    UNKNOWN, BOX, SPACE, SPACE_COLORED,
 )
 from pynogram.core.line.base import (
     BaseLineSolver,
@@ -192,3 +192,159 @@ class BguSolver(BaseLineSolver):
             self.sol[block][position] = can_be_solved
 
         return can_be_solved
+
+
+UNKNOWN_COLORED = 0
+
+
+class BguColoredSolver(BguSolver):
+    """
+    The BGU solver for colored puzzles
+    """
+
+    def __init__(self, description, line):
+        super(BguColoredSolver, self).__init__(description, line)
+        self.line = list(line)
+        self.solved_line = [UNKNOWN_COLORED] * len(self.line)
+
+    def _solve(self):
+        if self.try_solve():
+            solved = self.solved_line  # [:-1]
+            return solved
+
+        raise NonogramError('Bad line')
+
+    @classmethod
+    def calc_block_sum(cls, blocks):
+        res = [0]
+
+        if blocks:
+            res.append(blocks[0].size - 1)
+
+        for i, block in enumerate(blocks[1:], 1):
+            size, color = block
+            prev = res[-1]
+            if blocks[i - 1].color == color:
+                # at least one space + block size
+                current = prev + 1 + size
+            else:
+                # only block size, can be no delimited space
+                current = prev + size
+
+            res.append(current)
+
+        return res
+
+    def _precede_with_space(self, j):
+        current_color = self.description[j].color
+
+        if j > 0:
+            prev_color = self.description[j - 1].color
+            if prev_color == current_color:
+                return True
+
+        return False
+
+    def _trail_with_space(self, block):
+        current_color = self.description[block - 1].color
+
+        if block < len(self.description):
+            next_color = self.description[block].color
+            if next_color == current_color:
+                return True
+
+        return False
+
+    def fill_matrix_top_down(self, position, block):
+        if (position < 0) or (block < 0):
+            return None
+
+        # too many blocks left to fit this line segment
+        if position < self.block_sums[block]:
+            return False
+
+        # recursive case
+        # if self.line[position] == BOX:  # current cell is BOX
+        #     return False  # can't place a block if the cell is black
+
+        # base case
+        if position == -1:  # reached the end of the line
+            if block == 0:
+                return True
+
+            return False
+
+        white_ans = False
+        if self.can_be_space(position):
+            # current cell is either white or unknown
+            white_ans = self.get_sol(position - 1, block)
+            if white_ans:
+                # set cell white and continue
+                self.add_cell_color(position, SPACE_COLORED)
+
+        color_ans = False
+        # block == 0 means we finished filling all the blocks (can still fill whitespace)
+        if block > 0:
+            block_size, current_color = self.description[block - 1]
+            trailing_space = self._trail_with_space(block)
+            if trailing_space:
+                block_size += 1
+
+            # (position-block_size, position]
+            if self.can_place_color(position - block_size + 1, position,
+                                    current_color, trailing_space=trailing_space):
+                color_ans = self.get_sol(position - block_size, block - 1)
+                if color_ans:
+                    # set cell white, place the current block and continue
+                    self.set_color_block(position - block_size + 1, position,
+                                         current_color, trailing_space=trailing_space)
+
+        return color_ans or white_ans
+
+    def can_be_space(self, position):
+        """The symbol at given position can be a space"""
+        return bool(self.line[position] & SPACE_COLORED)
+
+    def can_place_color(self, position, end_pos, color, trailing_space=True):
+        """
+        check if we can place a colored block of a specific length in this position
+        we check that our partial solution does not negate the line's partial solution
+        :param position:  position to place block at
+        :param end_pos:   postion to stop placing the block
+        :param color:     color number
+        :param trailing_space: whether to check for trailing space
+        """
+        if position < 0:
+            return False
+
+        if trailing_space:
+            if not self.can_be_space(end_pos):
+                return False
+        else:
+            end_pos += 1
+
+        # the color can be placed in every cell
+        return all(cell & color
+                   for cell in self.line[position: end_pos])
+
+    def add_cell_color(self, position, color):
+        self.solved_line[position] |= color
+
+    def set_color_block(self, start_pos, end_pos, color, trailing_space=True):
+        """
+        sets a block in the solution matrix. all cells are painted black,
+        except the end_pos which is white.
+        :param start_pos: position to start painting
+        :param end_pos: position to stop painting
+        :param color:     color number
+        :param trailing_space: whether to set the trailing space
+        """
+
+        if trailing_space:
+            self.add_cell_color(end_pos, SPACE_COLORED)
+        else:
+            end_pos += 1
+
+        # set blacks
+        for i in range(start_pos, end_pos):
+            self.add_cell_color(i, color)

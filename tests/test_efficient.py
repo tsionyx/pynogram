@@ -58,10 +58,19 @@ class TestEfficientColorSolver(object):
     def solve_as_color_sets(cls, desc, line):
         return EfficientColorSolver.solve(desc, line)
 
+    @classmethod
+    def method_name(cls):
+        return 'efficient_color'
+
     def test_empty(self, colors):
         desc = []
         line = [colors]
         assert tuple(self.solve_as_color_sets(desc, line)) == (SPACE_C,)
+
+    def test_empty2(self, colors):
+        desc = []
+        line = [colors] * 3
+        assert tuple(self.solve_as_color_sets(desc, line)) == (SPACE_C, SPACE_C, SPACE_C)
 
     def test_simplest(self, colors):
         desc = [ColorBlock(1, 4)]
@@ -96,6 +105,13 @@ class TestEfficientColorSolver(object):
         assert tuple(self.solve_as_color_sets(desc, line)) == (
             4 | SPACE_C, 4, 4 | SPACE_C, 4 | SPACE_C, 4 | 8 | SPACE_C, 8 | SPACE_C)
 
+    def test_first_not_space(self, colors):
+        desc = (ColorBlock(2, 4), ColorBlock(1, 8))
+        line = [4] + [colors] * 3
+
+        assert tuple(self.solve_as_color_sets(desc, line)) == (
+            4, 4, 8 | SPACE_C, 8 | SPACE_C)
+
     def test_bad(self, colors):
         desc = [ColorBlock(2, 4), ColorBlock(1, 4), ColorBlock(1, 8)]
         line = [colors] * 4
@@ -104,7 +120,7 @@ class TestEfficientColorSolver(object):
 
     def test_backtracking(self):
         board = make_board(*Pbn.read(4581))
-        propagation.solve(board, methods='efficient_color')
+        propagation.solve(board, methods=self.method_name())
 
         assert is_close(board.solution_rate, 0.75416666667)
         assert len(board.solutions) == 0

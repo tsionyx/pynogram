@@ -22,6 +22,7 @@ SOLVERS = {
     'simpson': simpson.FastSolver,
 
     'bgu': bgu.BguSolver,
+    'bgu_color': bgu.BguColoredSolver,
 
     'efficient': efficient.EfficientSolver,
     'efficient_color': efficient.EfficientColorSolver,
