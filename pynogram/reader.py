@@ -211,11 +211,13 @@ class Pbn(object):
                 raise PbnNotFoundError(_id)
             raise
 
+        new_colors = 0
         colors = ColorMap()
         for color in tree.findall('.//color'):
+            new_colors += 1
             colors.make_color(color.attrib['name'], color.text, color.attrib['char'])
 
-        if colors.black_and_white:
+        if new_colors < 3:
             default_color = None
         else:
             puzzle = tree.findall('.//puzzle[@type="grid"]')[0]
@@ -226,7 +228,7 @@ class Pbn(object):
         rows = [cls._parse_clue(clue, default_color)
                 for clue in tree.findall('.//clues[@type="rows"]/line')]
 
-        if colors.black_and_white:
+        if new_colors < 3:
             return columns, rows
 
         return columns, rows, colors
