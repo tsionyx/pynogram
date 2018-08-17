@@ -33,20 +33,31 @@ class BguSolver(BaseLineSolver):
 
     def __init__(self, description, line):
         super(BguSolver, self).__init__(description, line)
-        self.block_sums = self.calc_block_sum(description)
+        self._additional_space = self._set_additional_space()
 
-        # define the internal representation of a line to be one cell larger then the original
-        # this is done to avoid an edge case later in our recursive formula
-        self.line = list(line) + [UNKNOWN]
+        self.block_sums = self.calc_block_sum(description)
         self.solved_line = list(self.line)
 
         positions = len(self.line)
         job_size = len(description) + 1
         self.sol = [[None] * positions for _ in range(job_size)]
 
+    def _set_additional_space(self):
+        """
+        Define the internal representation of a line to be one cell larger then the original.
+        This is done to avoid an edge case later in our recursive formula.
+        """
+        if self.line[-1] != SPACE:
+            self.line = list(self.line) + [SPACE]
+            return True
+
+        return False
+
     def _solve(self):
         if self.try_solve():
-            solved = self.solved_line[:-1]
+            solved = self.solved_line
+            if self._additional_space:
+                solved = solved[:-1]
             solved = tuple(UNKNOWN if cell == BOTH_COLORS else cell for cell in solved)
             return solved
 
@@ -204,8 +215,11 @@ class BguColoredSolver(BguSolver):
 
     def __init__(self, description, line):
         super(BguColoredSolver, self).__init__(description, line)
-        self.line = list(line)
         self.solved_line = [UNKNOWN_COLORED] * len(self.line)
+
+    def _set_additional_space(self):
+        """Additional space is useless in colored"""
+        return False
 
     def _solve(self):
         if self.try_solve():
