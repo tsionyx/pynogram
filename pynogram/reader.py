@@ -22,12 +22,12 @@ from six.moves.configparser import RawConfigParser
 from six.moves.urllib.error import HTTPError
 from six.moves.urllib.request import urlopen
 
-from pynogram.core.common import clues
 from pynogram.core.color import (
     Color,
     ColorMap,
     ColorBlock,
 )
+from pynogram.core.common import clues
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 

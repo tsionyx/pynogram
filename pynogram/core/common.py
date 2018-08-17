@@ -7,6 +7,7 @@ from __future__ import unicode_literals, print_function
 
 import logging
 import os
+
 try:
     # available since 3.4
     from enum import Enum

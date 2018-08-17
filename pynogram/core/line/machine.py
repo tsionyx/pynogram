@@ -283,10 +283,10 @@ class NonogramFSM(fsm.FiniteStateMachine):
             raise NonogramError('Bad transition table: final state {!r} not found'.format(
                 self.final_state))
 
+        reversed_states = list(transition_table.reverse_tracking(self.final_state))
         solved_row = (
             self._cell_value_from_solved(states)
-            for states in reversed(list(
-                transition_table.reverse_tracking(self.final_state))))
+            for states in reversed(reversed_states))
 
         return solved_row
 

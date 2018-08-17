@@ -96,7 +96,6 @@ class PriorityDict(dict):
         while self:
             yield self.pop_smallest()
 
-
 # class PriorityDict2(pqdict):
 #     """
 #     Wrapper for https://github.com/nvictus/priority-queue-dictionary
