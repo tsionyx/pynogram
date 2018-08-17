@@ -10,7 +10,10 @@ from six import (
     add_metaclass,
 )
 
-from pynogram.core.common import NonogramError
+from pynogram.core.common import (
+    NonogramError,
+    SPACE_COLORED,
+)
 from pynogram.utils.cache import Cache
 
 
@@ -140,6 +143,53 @@ class BaseLineSolver(object):
         You should return something iterable (tuple, list or even generator!).
         """
         return self.line
+
+
+class ColoredSolver(BaseLineSolver):  # pragma: no cover
+    """Define some helpers for colored puzzle solvers"""
+
+    @classmethod
+    def non_space_indexes(cls, line):
+        """
+        Skip some heading and trailing spaces in line.
+        """
+        first_non_space, last_non_space = 0, 0
+
+        if line:
+            for first_non_space, cell in enumerate(line):
+                if cell != SPACE_COLORED:
+                    break
+
+            for last_non_space, cell in enumerate(reversed(line)):
+                if cell != SPACE_COLORED:
+                    break
+
+        return first_non_space, last_non_space
+
+    @classmethod
+    def solve(cls, description, line):
+        """Optimize line solving by trimming off the spaces"""
+
+        original = line
+        first_non_space, last_non_space = cls.non_space_indexes(line)
+        if first_non_space:
+            if last_non_space:
+                line = line[first_non_space: -last_non_space]
+            else:
+                line = line[first_non_space:]
+        elif last_non_space:
+            line = line[:-last_non_space]
+
+        if not line:  # if consists only of spaces
+            return (SPACE_COLORED,) * len(original)
+
+        solved = super(ColoredSolver, cls).solve(description, line)
+
+        if first_non_space or last_non_space:
+            space_t = (SPACE_COLORED,)
+            solved = space_t * first_non_space + solved + space_t * last_non_space
+
+        return solved
 
 
 _set_solvers_log_level()
