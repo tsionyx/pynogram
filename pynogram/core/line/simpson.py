@@ -316,4 +316,4 @@ class FastSolver(BaseLineSolver):
         k = line_size
         work[j: k] = [SPACE] * (k - j)
 
-        return tuple(work)
+        return work

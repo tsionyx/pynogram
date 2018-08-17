@@ -99,6 +99,9 @@ class BaseLineSolver(object):
     @classmethod
     def solve(cls, description, line):
         """Solve the line (or use cached value)"""
+        if not line:
+            return line
+
         description, line = tuple(description), tuple(line)
 
         solved = cls.solutions_cache.get((description, line))
@@ -113,7 +116,7 @@ class BaseLineSolver(object):
 
         solver = cls(description, line)
         try:
-            solved = solver._solve()
+            solved = tuple(solver._solve())
         except NonogramError as ex:
             cls.save_in_cache((description, line), False)
             raise NonogramError(
@@ -132,6 +135,10 @@ class BaseLineSolver(object):
         cls.solutions_cache.save(original, solved)
 
     def _solve(self):
+        """
+        Override this function with actual solving algorithm.
+        You should return something iterable (tuple, list or even generator!).
+        """
         return self.line
 
 

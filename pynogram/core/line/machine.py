@@ -216,7 +216,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
                 raise NonogramError(
                     'The {} cell ({}) in a row {!r} cannot be neither space nor box'.format(
                         i, cell, original_row))
-        return tuple(solved)
+        return solved
 
     @classmethod
     def _types_for_cell(cls, cell):
@@ -283,7 +283,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
             raise NonogramError('Bad transition table: final state {!r} not found'.format(
                 self.final_state))
 
-        solved_row = tuple(
+        solved_row = (
             self._cell_value_from_solved(states)
             for states in reversed(list(
                 transition_table.reverse_tracking(self.final_state))))

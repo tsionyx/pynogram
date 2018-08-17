@@ -58,7 +58,7 @@ class BguSolver(BaseLineSolver):
             solved = self.solved_line
             if self._additional_space:
                 solved = solved[:-1]
-            solved = tuple(UNKNOWN if cell == BOTH_COLORS else cell for cell in solved)
+            solved = (UNKNOWN if cell == BOTH_COLORS else cell for cell in solved)
             return solved
 
         raise NonogramError('Bad line')

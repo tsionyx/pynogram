@@ -233,7 +233,7 @@ class EfficientSolver(BaseLineSolver):
         if self.additional_space:
             res = res[1:]
 
-        return tuple(res)
+        return res
 
 
 class EfficientColorSolver(EfficientSolver):
