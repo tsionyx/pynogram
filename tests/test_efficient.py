@@ -20,7 +20,7 @@ from pynogram.reader import (
     Pbn,
 )
 from pynogram.utils.other import is_close
-from .test_bgu import CASES, BAD_CASES
+from .cases import CASES, BAD_CASES
 
 CASES = CASES + [([], '???', [SPACE, SPACE, SPACE]), ]
 BAD_CASES = BAD_CASES + [([], '??#'), ]

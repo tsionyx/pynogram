@@ -20,7 +20,7 @@ from pynogram.utils.fsm import (
     StateMachineError,
     FiniteStateMachine,
 )
-from .test_bgu import CASES
+from .cases import CASES
 
 # TODO: more solved rows
 CASES = CASES + [
