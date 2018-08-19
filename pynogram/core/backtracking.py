@@ -70,14 +70,17 @@ class Solver(object):
         self.max_solutions = max_solutions
         self.timeout = timeout
         if max_depth is None:
-            # why 400?
+            # why 440?
             # I simply searched for some value that will be somehow bigger
-            # than 351 (the maximum useful search depth reached on the test set so far),
+            # than 434 (the maximum useful search depth reached on the test set so far),
             # but still reachable for recursion calls.
+            #
+            # https://webpbn.com/30654 can be solved only with max_depth > 429
+            # and the maximum depth reached on this puzzle is 434.
             #
             # NB: in current implementation depth=444 fails with
             # 'RuntimeError: maximum recursion depth exceeded'
-            self.max_depth = 400
+            self.max_depth = 440
         else:
             self.max_depth = max_depth
 
