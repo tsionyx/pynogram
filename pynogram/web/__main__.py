@@ -29,7 +29,7 @@ def main():
         LOG.warning('Only debug mode supported for now. Switching.')
         debug = True
 
-    run(port=port, debug=debug)
+    run(port=port, debug=debug, autoreload=False)
 
 
 if __name__ == '__main__':

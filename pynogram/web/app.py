@@ -282,11 +282,11 @@ class Application(tornado.web.Application):
         return board_notifier
 
 
-def run(port, debug=False):
+def run(port, debug=False, **kwargs):
     """
     Starts the tornado application on a given port
     """
-    app = Application(debug=debug)
+    app = Application(debug=debug, **kwargs)
 
     try:
         host = socket.gethostbyname(socket.gethostname())
