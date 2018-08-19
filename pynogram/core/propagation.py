@@ -140,7 +140,7 @@ def _solve_with_method(
     if row_indexes is None or column_indexes is None or \
             len(row_indexes) > 2 or len(column_indexes) > 2:
 
-        # do not call if contradiction_mode == False
+        # do not shortcut in contradiction_mode
         if not contradiction_mode and board.is_solved_full:
             return 0, ()
 

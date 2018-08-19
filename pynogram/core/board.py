@@ -14,7 +14,7 @@ from collections import (
 from copy import copy
 
 from memoized import memoized
-from six.moves import zip, range
+from six.moves import zip, range, map
 
 try:
     # noinspection PyPackageRequirements
@@ -86,6 +86,7 @@ class Board(object):
 
         self.solutions = []
 
+        # True =_column; False = row
         self.densities = {
             True: [self.line_density(True, index) for index in range(self.width)],
             False: [self.line_density(False, index) for index in range(self.height)],
@@ -306,16 +307,18 @@ class Board(object):
     def is_line_solved(self, row):
         """Is the given row fully solved"""
 
+        cell_value_solved_func = self.cell_value_solved
         for cell in row:
-            if not self.cell_value_solved(cell):
+            if not cell_value_solved_func(cell):
                 return False
         return True
 
     @property
     def is_solved_full(self):
         """Whether no unsolved cells in a board left"""
+        is_line_solved_func = self.is_line_solved
         for row in self.cells:
-            if not self.is_line_solved(row):
+            if not is_line_solved_func(row):
                 return False
 
         return True
@@ -662,8 +665,10 @@ class ColoredBoard(Board):
 
     def is_line_solved(self, row):
         full_colors = self._all_colors_as_single_number()
+
+        cell_value_solved_func = self.cell_value_solved
         for cell in row:
-            if not self.cell_value_solved(cell, full_colors=full_colors):
+            if not cell_value_solved_func(cell, full_colors=full_colors):
                 return False
         return True
 
