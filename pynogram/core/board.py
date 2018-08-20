@@ -13,6 +13,7 @@ from collections import (
 )
 from copy import copy
 
+from memoized import memoized
 from six.moves import zip, range
 
 try:
@@ -29,10 +30,7 @@ from pynogram.core.common import (
 )
 from pynogram.core.color import normalize_description_colored
 from pynogram.core.renderer import Renderer
-from pynogram.utils.cache import (
-    memoized,
-    memoized_two_args,
-)
+from pynogram.utils.cache import memoized_two_args
 from pynogram.utils.iter import avg
 from pynogram.utils.other import (
     two_powers, from_two_powers,

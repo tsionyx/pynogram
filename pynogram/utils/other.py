@@ -20,7 +20,7 @@ from six import (
     iteritems,
 )
 
-from pynogram.utils.cache import memoized
+from memoized import memoized
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 START_TIME = datetime.now()

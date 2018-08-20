@@ -131,19 +131,6 @@ class ExpirableCache(Cache):
         return value
 
 
-def memoized(func):
-    """
-    Decorator to cache function results.
-    Use memoized PyPi library, if available
-    """
-
-    try:
-        from memoized import memoized as _m
-        return _m(func)
-    except ImportError:
-        return func
-
-
 def memoized_two_args(func, cache=None):
     """
     Memoize results of two-argument function.
