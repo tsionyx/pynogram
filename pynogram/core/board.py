@@ -151,11 +151,6 @@ class Board(object):
         return cell != UNKNOWN
 
     @classmethod
-    def cell_value_solved(cls, cell):
-        """Whether the given value is a complete solution for a cell"""
-        return cell != UNKNOWN
-
-    @classmethod
     def colors(cls):
         """All the possible states that a cell can be in"""
         return {BOX, SPACE}
@@ -304,23 +299,13 @@ class Board(object):
     def __str__(self):
         return '{}({}x{})'.format(self.__class__.__name__, self.height, self.width)
 
-    def is_line_solved(self, row):
-        """Is the given row fully solved"""
-
-        cell_value_solved_func = self.cell_value_solved
-        for cell in row:
-            if not cell_value_solved_func(cell):
-                return False
-        return True
-
     @property
     def is_solved_full(self):
         """Whether no unsolved cells in a board left"""
-        is_line_solved_func = self.is_line_solved
         for row in self.cells:
-            if not is_line_solved_func(row):
-                return False
-
+            for cell in row:
+                if cell == UNKNOWN:
+                    return False
         return True
 
     @property
@@ -645,12 +630,6 @@ class ColoredBoard(Board):
         row_index, column_index, color = cell_state
         self.cells[row_index][column_index] = color
 
-    def cell_value_solved(self, cell, full_colors=None):
-        if full_colors is None:
-            full_colors = self._all_colors_as_single_number()
-
-        return _color_cell_solution_rate(cell, full_colors) == 1
-
     def cell_solution_rate(self, cell, full_colors=None):
         """
         How the cell's color set is close
@@ -663,13 +642,15 @@ class ColoredBoard(Board):
         # separate out to enable memoization
         return _color_cell_solution_rate(cell, full_colors)
 
-    def is_line_solved(self, row):
+    @property
+    def is_solved_full(self):
+        """Whether no unsolved cells in a board left"""
         full_colors = self._all_colors_as_single_number()
 
-        cell_value_solved_func = self.cell_value_solved
-        for cell in row:
-            if not cell_value_solved_func(cell, full_colors=full_colors):
-                return False
+        for row in self.cells:
+            for cell in row:
+                if _color_cell_solution_rate(cell, full_colors) != 1:
+                    return False
         return True
 
     def line_solution_rate(self, row, size=None):

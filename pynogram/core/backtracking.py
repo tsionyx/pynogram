@@ -173,16 +173,15 @@ class Solver(object):
 
         try:
             solved_cells = self.propagate_change(cell_state)
-
-            if board.is_solved_full:
-                self._add_solution()
-
         except NonogramError:
             LOG.debug('Contradiction', exc_info=True)
             # rollback solved cells
             board.restore(save)
 
         else:
+            if board.is_solved_full:
+                self._add_solution()
+
             if rollback:
                 board.restore(save)
                 return False, solved_cells
