@@ -216,4 +216,12 @@ def normalize_description_colored(row, color_map):
         else:
             res.append(item)
 
-    return tuple(ColorBlock(size, color_map[color_name].id_) for size, color_name in res)
+    desc = []
+    for size, color_name in res:
+        if color_name in color_map.by_id:
+            id_ = color_name
+        else:
+            id_ = color_map[color_name].id_
+        desc.append(ColorBlock(size, id_))
+
+    return tuple(desc)

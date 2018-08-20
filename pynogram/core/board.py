@@ -28,7 +28,10 @@ from pynogram.core.common import (
     normalize_description,
     is_color_cell,
 )
-from pynogram.core.color import normalize_description_colored
+from pynogram.core.color import (
+    normalize_description_colored,
+    ColorBlock,
+)
 from pynogram.core.renderer import Renderer
 from pynogram.utils.iter import avg
 from pynogram.utils.other import (
@@ -69,6 +72,8 @@ class Board(object):
     def __init__(self, columns, rows, **renderer_params):
         self.columns_descriptions = self.normalize(columns)
         self.rows_descriptions = self.normalize(rows)
+        # save original descriptions to support reducing
+        self.descriptions = (self.columns_descriptions, self.rows_descriptions)
 
         init_state = self.init_cell_state
         self.cells = [[init_state] * self.width for _ in range(self.height)]
@@ -90,6 +95,9 @@ class Board(object):
             True: [self.line_density(True, index) for index in range(self.width)],
             False: [self.line_density(False, index) for index in range(self.height)],
         }
+
+        self.solved_columns = None
+        self.solved_rows = None
 
     def line_density(self, is_column, index):
         """
@@ -479,6 +487,231 @@ class Board(object):
                 diff = list(self.diff(sol1, sol2, have_deletions=True))
                 LOG.info('%d vs %d: %d', i, j, len(diff))
 
+    @classmethod
+    def _space_value(cls):
+        return SPACE
+
+    @classmethod
+    def _reduce_orthogonal_description(cls, col_desc, cell_value, first_rows=False):
+        assert cell_value == BOX
+        if first_rows:
+            first_block = col_desc[0]
+            if first_block == 1:
+                col_desc.pop(0)
+            else:
+                col_desc[0] = first_block - 1
+        else:
+            last_block = col_desc[-1]
+            if last_block == 1:
+                col_desc.pop()
+            else:
+                col_desc[-1] = last_block - 1
+
+    @classmethod
+    def _reduce_edge(cls, cells, straight_desc, orthogonal_desc,
+                     line_solution_rate_func, first_rows=True):
+        # top, bottom
+        solved_rows = []
+
+        if first_rows:
+            rows_enum = list(enumerate(zip(cells, straight_desc)))
+        else:
+            rows_enum = reversed(list(enumerate(zip(cells, straight_desc))))
+
+        for row_index, (row, row_desc) in rows_enum:
+            if line_solution_rate_func(row_index) != 1:
+                break
+
+            LOG.info('Reducing solved row (column) %i: %r', row_index, row_desc)
+
+            if first_rows:
+                # remove from the board description
+                removed_desc = straight_desc.pop(0)
+
+                # remove the cells itself
+                cells = cells[1:]
+
+                # save solved
+                solved_rows.append(row)
+            else:
+                removed_desc = straight_desc.pop()
+                cells = cells[:-1]
+                solved_rows.insert(0, row)
+
+            LOG.info('Removed description %r', removed_desc)
+
+            for col_index, (cell, col_desc) in enumerate(
+                    zip(row, orthogonal_desc)):
+                if not col_desc:  # skip empty description
+                    continue
+
+                if cell == cls._space_value():
+                    continue
+
+                LOG.info('Reducing orthogonal description %i: %r', col_index, col_desc)
+                cls._reduce_orthogonal_description(col_desc, cell, first_rows=first_rows)
+
+        return solved_rows, cells
+
+    def reduce(self):
+        """
+        Cut out fully solved lines from the edges of the board, e.g.
+
+           1 1 1
+           1 1 1 1            1 1 1
+        4  X X X X
+        1  ? 0 ? 0   -->    1 ? 0 ?
+        1  ? X ? 0          1 ? X ?
+        """
+
+        columns_descriptions = [list(col_desc) for col_desc in self.columns_descriptions]
+        rows_descriptions = [list(row_desc) for row_desc in self.rows_descriptions]
+
+        original_size = self.height, self.width
+
+        # ====== ROWS ====== #
+        cells = self.make_snapshot()
+        first_solved_rows, cells = self._reduce_edge(
+            cells, rows_descriptions, columns_descriptions,
+            self.row_solution_rate, first_rows=True)
+        self.restore(cells)  # to correctly check line_solution_rate further
+
+        last_solved_rows, cells = self._reduce_edge(
+            cells, rows_descriptions, columns_descriptions,
+            self.row_solution_rate, first_rows=False)
+        self.restore(cells)  # to correctly check line_solution_rate further
+
+        self.columns_descriptions = self.normalize(columns_descriptions)
+        self.rows_descriptions = self.normalize(rows_descriptions)
+
+        # ====== COLS ====== #
+        # transpose the matrix
+        width = len(cells[0])
+        cells = [list(self.get_column(col_index)) for col_index in range(width)]
+        first_solved_columns, cells = self._reduce_edge(
+            cells, columns_descriptions, rows_descriptions,
+            self.column_solution_rate, first_rows=True)
+
+        # transpose it back
+        height = len(cells[0])
+        # to correctly check line_solution_rate further
+        self.restore([[col[row_index] for col in cells] for row_index in range(height)])
+
+        last_solved_columns, cells = self._reduce_edge(
+            cells, columns_descriptions, rows_descriptions,
+            self.column_solution_rate, first_rows=False)
+
+        # transpose it back
+        height = len(cells[0])
+        # to correctly check line_solution_rate further
+        self.restore([[col[row_index] for col in cells] for row_index in range(height)])
+
+        self.columns_descriptions = self.normalize(columns_descriptions)
+        self.rows_descriptions = self.normalize(rows_descriptions)
+
+        # ================== #
+        self.solved_columns = (first_solved_columns, last_solved_columns)
+        self.solved_rows = (first_solved_rows, last_solved_rows)
+
+        for sol_index, solution in enumerate(self.solutions):
+            first, last = self.solved_rows
+            if first:
+                solution = solution[len(first):]
+            if last:
+                solution = solution[:-len(last)]
+
+            first, last = self.solved_columns
+            if first:
+                solution = [row[len(first):] for row in solution]
+            if last:
+                solution = [row[:-len(last)] for row in solution]
+
+            assert len(solution) == self.height
+            assert len(solution[0]) == self.width
+
+            self.solutions[sol_index] = solution
+
+        reduced_size = self.height, self.width
+
+        if original_size != reduced_size:
+            LOG.warning('Reduced the board: %r --> %r', original_size, reduced_size)
+
+        return self.solved_columns, self.solved_rows
+
+    @classmethod
+    def restore_cells(cls, cells, edge_rows, edge_columns):
+        """
+        Return matrix by given center and the edges.
+        Current implementation restores the columns first then the rows.
+        """
+        restore_rows = False
+        if edge_rows:
+            if edge_rows[0] or edge_rows[1]:
+                restore_rows = True
+
+        restore_cols = False
+        if edge_columns:
+            if edge_columns[0] or edge_columns[1]:
+                restore_cols = True
+
+        if not restore_rows and not restore_cols:
+            return cells
+
+        # do not touch original
+        cells = [list(row) for row in cells]
+
+        if edge_columns:
+            first, last = edge_columns
+            # insert one column at a time
+            for col in reversed(first):
+                assert len(col) == len(cells)
+                cells = [[col_cell] + row for col_cell, row in zip(col, cells)]
+
+            # append one column at a time
+            for col in last:
+                assert len(col) == len(cells)
+                cells = [row + [col_cell] for col_cell, row in zip(col, cells)]
+
+        if edge_rows:
+            first, last = edge_rows
+            # insert one row at a time
+            for row in reversed(first):
+                assert len(row) == len(cells[-1])
+                cells.insert(0, row)
+
+            # append one column at a time
+            for row in last:
+                assert len(row) == len(cells[0])
+                cells.append(row)
+
+        return cells
+
+    def restore_reduced(self):
+        """
+        Restore the original size of the board if it was reduced before.
+        Do it before rendering or yielding the final result.
+        """
+
+        current = self.cells
+        reduced_size = self.height, self.width
+        assert reduced_size == (len(current), len(current[0]))
+
+        for sol_index, solution in enumerate(self.solutions):
+            cells = self.restore_cells(solution, self.solved_rows, self.solved_columns)
+            self.restore(cells)
+            self.solutions[sol_index] = self.cells
+
+        cells = self.restore_cells(current, self.solved_rows, self.solved_columns)
+        self.restore(cells)
+
+        self.columns_descriptions, self.rows_descriptions = self.descriptions
+
+        original_size = self.height, self.width
+        assert original_size == (len(self.cells), len(self.cells[0]))
+
+        if original_size != reduced_size:
+            LOG.warning('Restored the board: %r --> %r', reduced_size, original_size)
+
 
 class NumpyBoard(Board):
     """
@@ -487,7 +720,7 @@ class NumpyBoard(Board):
 
     def __init__(self, columns, rows, **renderer_params):
         super(NumpyBoard, self).__init__(columns, rows, **renderer_params)
-        self.cells = np.array(self.cells)
+        self.restore(self.cells)
 
     def get_column(self, index):
         # self.cells.transpose([1, 0, 2])[index]
@@ -501,6 +734,9 @@ class NumpyBoard(Board):
 
     def make_snapshot(self):
         return copy(self.cells)
+
+    def restore(self, snapshot):
+        self.cells = np.array(snapshot)
 
     def _current_state_in_solutions(self):
         for solution in self.solutions:
@@ -776,6 +1012,31 @@ class ColoredBoard(Board):
             return self.color_map[color_name].id_
 
         return None
+
+    @classmethod
+    def _space_value(cls):
+        return SPACE_COLORED
+
+    @classmethod
+    def _reduce_orthogonal_description(cls, col_desc, cell_value, first_rows=False):
+        if first_rows:
+            block = col_desc[0]  # type: ColorBlock
+        else:
+            block = col_desc[-1]  # type: ColorBlock
+
+        assert block.color == cell_value
+
+        if block.size == 1:
+            if first_rows:
+                col_desc.pop(0)
+            else:
+                col_desc.pop()
+        else:
+            new_block = ColorBlock(block.size - 1, cell_value)
+            if first_rows:
+                col_desc[0] = new_block
+            else:
+                col_desc[-1] = new_block
 
 
 def _color_cell_solution_rate(cell, all_colors):

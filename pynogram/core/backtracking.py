@@ -354,7 +354,7 @@ class Solver(object):
             for color, rate in colors:
                 jobs.append(CellState.from_position(pos, color))
 
-        return tuple(jobs)
+        return jobs
 
     def _get_all_unsolved_jobs(self, choose_from_cells=None):
         board = self.board
@@ -394,6 +394,40 @@ class Solver(object):
         probe_jobs = self._get_all_unsolved_jobs()
         return self._solve_jobs(probe_jobs, refill=to_the_max)
 
+    @classmethod
+    def shrink_board(cls, board, candidates=()):
+        """
+        Skip the solved rows in a board before backtracking.
+        Also fix candidate states.
+        """
+        solved_columns, solved_rows = board.reduce()
+
+        if solved_rows and solved_rows[0]:
+            skip_first_rows = len(solved_rows[0])
+
+            for index, candidate in enumerate(candidates):  # type: CellState
+                if candidate.row_index < skip_first_rows:
+                    raise ValueError('Bad candidate: %r. The row skipped' % candidate)
+
+                row_index, col_index, color = candidate
+                new_candidate = CellState(row_index - skip_first_rows, col_index, color)
+                candidates[index] = new_candidate
+                LOG.info('Fixed candidate: %r -> %r', candidate, new_candidate)
+
+        if solved_columns and solved_columns[0]:
+            skip_first_columns = len(solved_columns[0])
+
+            for index, candidate in enumerate(candidates):  # type: CellState
+                if candidate.column_index < skip_first_columns:
+                    raise ValueError('Bad candidate: %r. The column skipped' % candidate)
+
+                row_index, col_index, color = candidate
+                new_candidate = CellState(row_index, col_index - skip_first_columns, color)
+                candidates[index] = new_candidate
+                LOG.info('Fixed candidate: %r -> %r', candidate, new_candidate)
+
+        return candidates
+
     def solve(self):
         """
         Solve the nonogram to the most with contradictions
@@ -419,7 +453,9 @@ class Solver(object):
             # if stalled with sophisticated selection of cells
             # do the brute force search
             LOG.warning('Starting DFS (intelligent brute-force)')
+            best_candidates = self.shrink_board(board, candidates=best_candidates)
             self.search(best_candidates)
+            board.restore_reduced()
 
             current_solution_rate = board.solution_rate
             LOG.warning('Search completed (depth reached: %d, solutions found: %d)',

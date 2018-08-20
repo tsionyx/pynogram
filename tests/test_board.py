@@ -569,3 +569,37 @@ class TestColorBoard(object):
         Solver(board).solve()
         assert board.is_solved_full
         assert board.is_finished
+
+
+class TestReduction(object):
+    def test_black_and_white(self):
+        board = make_board(*Pbn.read(2903))
+
+        propagation.solve(board)
+        assert len(board.solutions) == 0
+
+        Solver(board, max_solutions=2, timeout=600).solve()
+        assert board.is_solved_full
+        assert len(board.solutions) == 1
+
+        assert len(board.solved_rows[0]) == 6
+        assert len(board.solved_rows[1]) == 6
+        assert len(board.solved_columns[0]) == 4
+        assert len(board.solved_columns[1]) == 0
+
+        assert board.is_finished
+
+    def test_colored(self):
+        board = make_board(*Pbn.read(10282))
+
+        propagation.solve(board)
+        assert len(board.solutions) == 0
+
+        Solver(board, max_solutions=2, timeout=600).solve()
+        assert is_close(board.solution_rate, 0.91625)
+        assert len(board.solutions) == 2
+
+        assert len(board.solved_rows[0]) == 3
+        assert len(board.solved_rows[1]) == 2
+        assert len(board.solved_columns[0]) == 5
+        assert len(board.solved_columns[1]) == 9
