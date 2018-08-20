@@ -131,7 +131,7 @@ class ExpirableCache(Cache):
         return value
 
 
-def memoized_two_args(func, cache=None):
+def memoized_two_args(func, cache=None):  # pragma: no cover
     """
     Memoize results of two-argument function.
     The first argument should be more 'volatile' and the second one more 'constant'.

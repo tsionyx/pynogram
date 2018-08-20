@@ -30,7 +30,6 @@ from pynogram.core.common import (
 )
 from pynogram.core.color import normalize_description_colored
 from pynogram.core.renderer import Renderer
-from pynogram.utils.cache import memoized_two_args
 from pynogram.utils.iter import avg
 from pynogram.utils.other import (
     two_powers, from_two_powers,
@@ -524,6 +523,8 @@ class ColoredBoard(Board):
         """
         self.color_map = color_map
         super(ColoredBoard, self).__init__(columns, rows, **renderer_params)
+
+        self._cell_rate_memo = {}
         self._reduce_colors()
 
     @classmethod
@@ -630,26 +631,28 @@ class ColoredBoard(Board):
         row_index, column_index, color = cell_state
         self.cells[row_index][column_index] = color
 
-    def cell_solution_rate(self, cell, full_colors=None):
+    def cell_solution_rate(self, cell):
         """
         How the cell's color set is close
         to the full solution (one color).
         """
 
-        if full_colors is None:
+        try:
+            return self._cell_rate_memo[cell]
+        except KeyError:
             full_colors = self._all_colors_as_single_number()
-
-        # separate out to enable memoization
-        return _color_cell_solution_rate(cell, full_colors)
+            self._cell_rate_memo[cell] = value = _color_cell_solution_rate(cell, full_colors)
+            return value
 
     @property
     def is_solved_full(self):
         """Whether no unsolved cells in a board left"""
-        full_colors = self._all_colors_as_single_number()
+
+        cell_solution_rate_func = self.cell_solution_rate
 
         for row in self.cells:
             for cell in row:
-                if _color_cell_solution_rate(cell, full_colors) != 1:
+                if cell_solution_rate_func(cell) != 1:
                     return False
         return True
 
@@ -657,11 +660,13 @@ class ColoredBoard(Board):
         """
         How many cells in a row are known to be of particular color
         """
-        full_colors = self._all_colors_as_single_number()
+
         if size is None:
             size = len(row)
 
-        solved = sum(self.cell_solution_rate(cell, full_colors=full_colors) for cell in row)
+        cell_solution_rate_func = self.cell_solution_rate
+
+        solved = sum(cell_solution_rate_func(cell) for cell in row)
         return solved / size
 
     def _clue_colors(self, horizontal):
@@ -773,7 +778,6 @@ class ColoredBoard(Board):
         return None
 
 
-@memoized_two_args
 def _color_cell_solution_rate(cell, all_colors):
     """
     Calculate the rate of the given cell.
