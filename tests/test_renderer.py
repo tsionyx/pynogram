@@ -320,13 +320,13 @@ class TestSvg(object):
 
                 <rect class="nonogram-header" height="15" width="30" x="15" y="0" />
                 <g class="header-clues">
-                    <text fill="currentColor" x="27.75" y="10.5">1</text>
-                    <text fill="currentColor" x="42.75" y="10.5">1</text>
+                    <text x="27.75" y="10.5">1</text>
+                    <text x="42.75" y="10.5">1</text>
                 </g>
 
                 <rect class="nonogram-side" height="15" width="15" x="0" y="15" />
                 <g class="side-clues">
-                    <text fill="currentColor" x="10.5" y="26.25">2</text>
+                    <text x="10.5" y="26.25">2</text>
                 </g>
 
                 <rect class="nonogram-grid" height="15" width="30" x="15" y="15" />
@@ -388,23 +388,35 @@ class TestSvg(object):
                 <rect class="nonogram-header" height="30" width="45" x="15" y="0" />
                 <g class="header-clues">
                     <rect class="solved" height="30" width="15" x="15" y="0" />
-                    <text fill="blue" x="27.75" y="25.5">1</text>
-                    <text fill="red" x="27.75" y="10.5">1</text>
+                    <use x="15" xlink:href="#color-b" y="15" />
+                    <text x="27.75" y="25.5">1</text>
+                    <use x="15" xlink:href="#color-r" y="0" />
+                    <text x="27.75" y="10.5">1</text>
+
                     <rect class="solved" height="30" width="15" x="30" y="0" />
-                    <text fill="blue" x="42.75" y="25.5">1</text>
-                    <text fill="red" x="42.75" y="10.5">1</text>
+                    <use x="30" xlink:href="#color-b" y="15" />
+                    <text x="42.75" y="25.5">1</text>
+                    <use x="30" xlink:href="#color-r" y="0" />
+                    <text x="42.75" y="10.5">1</text>
+
                     <rect class="solved" height="30" width="15" x="45" y="0" />
-                    <text fill="blue" x="57.75" y="25.5">1</text>
-                    <text fill="red" x="57.75" y="10.5">1</text>
+                    <use x="45" xlink:href="#color-b" y="15" />
+                    <text x="57.75" y="25.5">1</text>
+                    <use x="45" xlink:href="#color-r" y="0" />
+                    <text x="57.75" y="10.5">1</text>
                 </g>
 
                 <rect class="nonogram-side" height="45" width="15" x="0" y="30" />
                 <g class="side-clues">
                     <rect class="solved" height="15" width="15" x="0" y="30" />
-                    <text fill="red" x="10.5" y="41.25">3</text>
+                    <use x="0" xlink:href="#color-r" y="30" />
+                    <text x="10.5" y="41.25">3</text>
+
                     <rect class="solved" height="15" width="15" x="0" y="45" />
+
                     <rect class="solved" height="15" width="15" x="0" y="60" />
-                    <text fill="blue" x="10.5" y="71.25">3</text>
+                    <use x="0" xlink:href="#color-b" y="60" />
+                    <text x="10.5" y="71.25">3</text>
                 </g>
 
                 <rect class="nonogram-grid" height="45" width="45" x="15" y="30" />

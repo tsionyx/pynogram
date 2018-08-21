@@ -621,18 +621,39 @@ class SvgRenderer(StreamRenderer):
         if isinstance(value, (list, tuple)):
             # colored board
             value, color_id = value[:2]
-            color = self._color_from_name(color_id)
         else:
-            color = 'currentColor'
+            color_id = None
 
-        return self.drawing.text(
+        block_color = None
+        if color_id is not None:
+            id_ = self.color_symbols[color_id]
+
+            if is_column:
+                color_box = (i, j - 1)
+            else:
+                color_box = (i - 1, j)
+
+            # drawing.g(class_=id_)
+            insert_point = (
+                self.pixel_side_width + (color_box[0] * self.cell_size),
+                self.pixel_header_height + (color_box[1] * self.cell_size))
+
+            block_color = (id_, insert_point)
+
+        kwargs = dict()
+        if color_id == Color.black().id_:
+            kwargs['fill'] = 'white'
+
+        block_text = self.drawing.text(
             str(value),
-            fill=color,
             insert=(
                 self.pixel_side_width + (i + shift[0]) * self.cell_size,
                 self.pixel_header_height + (j + shift[1]) * self.cell_size,
-            )
+            ),
+            **kwargs
         )
+
+        return block_color, block_text
 
     def draw_header(self):
         drawing = self.drawing
@@ -660,7 +681,19 @@ class SvgRenderer(StreamRenderer):
                 ))
 
             for j, desc_item in enumerate(reversed(col_desc)):
-                header_group.add(self.block_svg(desc_item, True, i, j))
+                color, text = self.block_svg(desc_item, True, i, j)
+
+                # color first, text next (to write on color)
+                if color:
+                    id_, insert_point = color
+                    icon = drawing.use(
+                        href='#' + id_,
+                        insert=insert_point,
+                    )
+
+                    header_group.add(icon)
+
+                header_group.add(text)
 
         drawing.add(header_group)
 
@@ -685,7 +718,19 @@ class SvgRenderer(StreamRenderer):
                 ))
 
             for i, desc_item in enumerate(reversed(row_desc)):
-                side_group.add(self.block_svg(desc_item, False, j, i))
+                color, text = self.block_svg(desc_item, False, j, i)
+
+                # color first, text next (to write on color)
+                if color:
+                    id_, insert_point = color
+                    icon = drawing.use(
+                        href='#' + id_,
+                        insert=insert_point,
+                    )
+
+                    side_group.add(icon)
+
+                side_group.add(text)
 
         drawing.add(side_group)
 

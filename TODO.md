@@ -4,8 +4,6 @@
 
 - bgu: speed up set_line_block, can_place_block
 
-- colors in SVG descriptions (black font when unsolved, white (or background) when solved)
-
 - test black-and white SVG renderer
 
 - refactoring:
