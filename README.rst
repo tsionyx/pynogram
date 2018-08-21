@@ -20,15 +20,16 @@ Install
 
     pip install pynogram
 
-You can also install *numpy* for better performance
+You can also install *numpy* for slightly better performance
+when running on CPython interpreter
 (it's not listed in requirements to keep the package lightweight).
-However, numpy does not work with PyPy interpreter.
+Numpy does not work with PyPy interpreter.
 
 
 Console
 -------
 
-Console-based solver works on a wide variety of pythons: python2.7+, python3.5+, PyPy 2.7, PyPy 3.5.
+Console-based solver works on a wide variety of pythons: CPython2.7 and 3.5+, PyPy 2.7 and 3.5.
 The best performance, however, achieved on PyPy (version 3 is always preferable), so try it out.
 
 Firstly, make sure it works (if not, see the `Errors`_ section):
@@ -288,7 +289,7 @@ By default, in the process of solving the new information will instantly appear 
 mixed with logs (if you specify any verbosity level with *-v* flag). But you can always disable
 the board updates and force to show only the final result with *--draw-final* flag.
 
-Also the new experimental mode *--curses* was added recently, that allows you to see the solving
+Also the *--curses* mode is available, that allows you to see the solving
 inside a separate console (`ncurses <https://en.wikipedia.org/wiki/Ncurses>`_) window.
 
 Examples:
@@ -338,18 +339,14 @@ Web-solver
 
   ``pip install pynogram[web]`` and **start the server**: ``pynogram-web``
 
-- the web-solver gives bad user experience on PyPy (both 2.7 and 3.5)
-  (somehow tornado cannot get its share of CPU to update the screen), so I recommend
-  using old good CPython (preferably 3 for slightly better performance).
-
-- you can solve any of local puzzles (with */board/local* path)
-  or webpbn puzzles (with */board/pbn* path)
-  or nonograms.org ones (with */board/nonograms.org* path)
+- you can solve any of local puzzles (with */board/local/* path)
+  or webpbn puzzles (with */board/pbn/* path)
+  or nonograms.org ones (with */board/nonograms.org/* path)
 
 - you can specify render mode (with the *?render=MODE* argument).
   Now the four are supported:
 
-  - **svg** (default) - draws a nice vector image. It can seriously
+  - **svg** (default) - draw nice vector image. It can seriously
     slows down the viewing and solving on a large boards (e.g. 50x50 and more),
     since the resulted SVG can be pretty huge.
     In the future releases I plan to apply more advanced SVG drawing to eliminate the problem.
@@ -387,24 +384,29 @@ The following sites and articles were used when making this solver:
 
 1. `The 'pbnsolve' Paint-by-Number Puzzle Solver by Jan Wolter
 <http://webpbn.com/pbnsolve.html>`_
+and the `survey <http://webpbn.com/survey/>`_
 
-2. `Решение японских кроссвордов с использованием конечных автоматов
-<http://window.edu.ru/resource/781/57781>`_
-
-3. `'Nonolib' library by Dr. Steven Simpson
-<http://www.lancaster.ac.uk/~simpsons/nonogram/howitworks>`_
-
-4. `Solving Nonograms by combining relaxations
-<http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.177.76&rep=rep1&type=pdf>`_
-
-5. `The BGU Nonograms Project
+2. `The BGU Nonograms Project
 <https://www.cs.bgu.ac.il/~benr/nonograms/>`_
 
+3. `Solving Nonograms by combining relaxations
+<http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.177.76&rep=rep1&type=pdf>`_
+
+4. `An Efficient Approach to Solving Nonograms
+<https://ir.nctu.edu.tw/bitstream/11536/22772/1/000324586300005.pdf>`_
+
+5. `Решение цветных японских кроссвордов со скоростью света
+<https://habr.com/post/418069/>`_
+
+6. `Решение японских кроссвордов с использованием конечных автоматов
+<http://window.edu.ru/resource/781/57781>`_
+
+7. `'Nonolib' library by Dr. Steven Simpson
+<http://www.lancaster.ac.uk/~simpsons/nonogram/howitworks>`_
 
 -----
 
-The software developed and tested on Ubuntu 16.04 LTS using CPython 2.7 and 3.5.
-Also PyPy 2.7 and 3.5 are supported.
+The software developed and tested on Ubuntu 16.04 LTS using PyPy 3.5 (mostly).
 If you have any issues, drop a line to the
 `project site <https://github.com/tsionyx/pynogram/issues>`_.
 
