@@ -226,7 +226,7 @@ class StringsPager(object):
     NO_OF_IDLE_UPDATES_TO_PAUSE = 1000
     # if you make it too low, the CPU will use its power for useless looping
     # on the other side, if the pause will be too high, the UI can become unresponsive
-    PAUSE_ON_IDLE = 0.05
+    PAUSE_ON_IDLE = 0.005
 
     def handle_pressed_key(self, key):
         """
@@ -274,7 +274,8 @@ class StringsPager(object):
         # k is the last character pressed
         k = 0
         while k != ord('q'):
-            _self.handle_pressed_key(k)
+            if k != -1:
+                _self.handle_pressed_key(k)
 
             if _self.update():
                 idle_updates_counter = 0
