@@ -290,8 +290,9 @@ class TestSvg(object):
         rows = [width]
         return Board(cols, rows, renderer=SvgRenderer, stream=stream)
 
-    def test_small_table(self, stream):
+    def test_small_table_solved(self, stream):
         b = self.one_row_table(2, stream)
+        propagation.solve(b)
         b.draw()
         table = [line.strip() for line in stream.getvalue().split('\n')]
 
@@ -320,12 +321,15 @@ class TestSvg(object):
 
                 <rect class="nonogram-header" height="15" width="30" x="15" y="0" />
                 <g class="header-clues">
+                    <rect class="solved" height="15" width="15" x="15" y="0" />
                     <text x="27.75" y="10.5">1</text>
+                    <rect class="solved" height="15" width="15" x="30" y="0" />
                     <text x="42.75" y="10.5">1</text>
                 </g>
 
                 <rect class="nonogram-side" height="15" width="15" x="0" y="15" />
                 <g class="side-clues">
+                    <rect class="solved" height="15" width="15" x="0" y="15" />
                     <text x="10.5" y="26.25">2</text>
                 </g>
 
@@ -338,7 +342,11 @@ class TestSvg(object):
                     <line class="bold" x1="45" x2="45" y1="0" y2="30" />
                 </g>
                 <g class="space" />
-                <g class="box" />
+                <g class="box">
+                    <use x="15" xlink:href="#box" y="15" />
+                    <use x="30" xlink:href="#box" y="15" />
+                </g>
+                <use x="0" xlink:href="#check" y="0" />
             </svg>'''
 
         assert table[0] == '<?xml version="1.0" encoding="utf-8" ?>'
