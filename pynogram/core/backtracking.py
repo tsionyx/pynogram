@@ -428,6 +428,20 @@ class Solver(object):
 
         return candidates
 
+    @classmethod
+    def _fix_candidates_colors(cls, candidates, color_mapping):
+        for index, candidate in enumerate(candidates):  # type: CellState
+            row_index, col_index, color = candidate
+            if color not in color_mapping:
+                LOG.warning('Bad candidate %r', candidate)
+                continue
+
+            new_candidate = CellState(row_index, col_index, color_mapping[color])
+            candidates[index] = new_candidate
+            LOG.info('Fixed candidate: %r -> %r', candidate, new_candidate)
+
+        return candidates
+
     def solve(self):
         """
         Solve the nonogram to the most with contradictions
@@ -454,6 +468,16 @@ class Solver(object):
             # do the brute force search
             LOG.warning('Starting DFS (intelligent brute-force)')
             best_candidates = self.shrink_board(board, candidates=best_candidates)
+            if board.is_colored:
+                single_colored, color_mapping = board.reduce_to_single_color()
+                if single_colored is not None:
+                    LOG.warning('Replacing colored board with the '
+                                'equivalent black and white: %r', color_mapping)
+
+                    # from now we will search the black and white board
+                    self.board = single_colored
+                    best_candidates = self._fix_candidates_colors(best_candidates, color_mapping)
+
             self.search(best_candidates)
             board.restore_reduced()
 

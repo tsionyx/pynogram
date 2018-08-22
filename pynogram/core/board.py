@@ -27,6 +27,7 @@ from pynogram.core.common import (
     invert,
     normalize_description,
     is_color_cell,
+    NonogramError,
 )
 from pynogram.core.color import (
     normalize_description_colored,
@@ -1050,6 +1051,151 @@ class ColoredBoard(Board):
                 col_desc[0] = new_block
             else:
                 col_desc[-1] = new_block
+
+    def _create_single_colored_board(self, box_color):
+        columns_descriptions = []
+        for col_desc in self.columns_descriptions:
+            # filter out any other colors
+            new_desc = [block.size for block in col_desc if block.color == box_color]
+            columns_descriptions.append(new_desc)
+
+        rows_descriptions = []
+        for row_desc in self.rows_descriptions:
+            # filter out any other colors
+            new_desc = [block.size for block in row_desc if block.color == box_color]
+            rows_descriptions.append(new_desc)
+
+        color_mapping = {
+            box_color: BOX,
+            SPACE_COLORED: SPACE,
+
+            # both BOX and SPACE
+            from_two_powers((box_color, SPACE_COLORED)): UNKNOWN,
+        }
+
+        cells = []
+        for row in self.cells:
+            # for colors other than box_color, just replace to SPACE
+            new_row = [
+                color_mapping.get(cell, SPACE)
+                for cell in row
+            ]
+            cells.append(new_row)
+
+        new_board = Board(columns_descriptions, rows_descriptions)
+        new_board.restore(cells)
+
+        self._assign_callbacks_to_single_colored_board(new_board, color_mapping)
+        return new_board
+
+    def _assign_callbacks_to_single_colored_board(self, new_board, color_to_single_mapping):
+        from pynogram.core import propagation
+
+        updatable_colors = tuple(color_to_single_mapping.keys())
+        single_to_color = dict((v, k) for k, v in color_to_single_mapping.items())
+
+        def on_column_update(column_index, board):
+            column = board.get_column(column_index)
+
+            updated = []
+            for index, updated_cell in enumerate(column):
+                current_color = self.cells[index][column_index]
+                if current_color not in updatable_colors:
+                    continue
+
+                new_color = single_to_color[updated_cell]
+
+                if new_color != current_color:
+                    updated.append(index)
+                    self.cells[index][column_index] = new_color
+
+            if updated:
+                # can be false positives if the solved line
+                # has bad translations from SPACE to specific colors
+                propagation.solve(self, column_indexes=(column_index,),
+                                  row_indexes=updated,
+                                  contradiction_mode=True)
+                self.column_updated(column_index)
+
+        def on_row_update(row_index, board):
+            row = board.get_row(row_index)
+
+            updated = []
+            for index, updated_cell in enumerate(row):
+                current_color = self.cells[row_index][index]
+                if current_color not in updatable_colors:
+                    continue
+
+                new_color = single_to_color[updated_cell]
+
+                if new_color != current_color:
+                    updated.append(index)
+                    self.cells[row_index][index] = new_color
+
+            if updated:
+                # can be false positives if the solved line
+                # has bad translations from SPACE to specific colors
+                propagation.solve(self, row_indexes=(row_index,),
+                                  column_indexes=updated,
+                                  contradiction_mode=True)
+                self.row_updated(row_index)
+
+        # noinspection PyUnusedLocal
+        def on_solution_found(solution):
+            try:
+                LOG.info('Checking the solution (found on single-colored)...')
+                propagation.solve(self, contradiction_mode=True)
+            except NonogramError as ex:
+                # self.draw()
+                LOG.error('Single colored solution is bad: %r', ex)
+                raise
+
+            self.add_solution()
+
+        def on_restored(snapshot):
+            for row_index, (row, colored_row) in enumerate(zip(snapshot, self.cells)):
+                for column_index, (cell, current_color) in enumerate(zip(row, colored_row)):
+                    if current_color not in updatable_colors:
+                        continue
+
+                    new_color = single_to_color[cell]
+
+                    if new_color != current_color:
+                        self.cells[row_index][column_index] = new_color
+
+        new_board.on_column_update = on_column_update
+        new_board.on_row_update = on_row_update
+        new_board.on_solution_found = on_solution_found
+        new_board.on_restored = on_restored
+
+    def reduce_to_single_color(self):
+        """
+        Try to represent the unsolved cells
+        as another black-and-white board.
+
+        :return pair (black and white board, mapping from old to new colors)
+        """
+
+        all_colors = set()
+        for row in self.cells:
+            all_colors |= set(row)
+
+        all_colors = [self.cell_as_color_set(color) for color in all_colors]
+        unsolved_colors = [color for color in all_colors if len(color) > 1]
+
+        if not unsolved_colors or len(unsolved_colors) > 1:
+            return None, None
+
+        box_color = unsolved_colors[0]
+        assert len(box_color) == 2
+        assert SPACE_COLORED in box_color
+
+        box_color.discard(SPACE_COLORED)
+        box_color, = box_color
+
+        mapping = {box_color: BOX, SPACE_COLORED: SPACE}
+
+        return self._create_single_colored_board(box_color), mapping
 
 
 def _color_cell_solution_rate(cell, all_colors):
