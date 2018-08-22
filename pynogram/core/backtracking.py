@@ -524,12 +524,12 @@ class Solver(object):
 
             __, best_candidates = self._solve_jobs(probe_jobs)
         except NonogramError as ex:
-            LOG.warning('Dead end found (%s): %s', full_path, str(ex))
+            LOG.warning('Dead end found (%s): %s', full_path[-1], str(ex))
             self._add_search_result(full_path, False)
             return False
 
         rate = board.solution_rate
-        LOG.warning('Reached rate %.4f on %s path', rate, full_path)
+        LOG.info('Reached rate %.4f on %s path', rate, full_path)
         self._add_search_result(full_path, rate)
 
         if rate == 1 or self._limits_reached(depth):
@@ -668,7 +668,7 @@ class Solver(object):
                         LOG.warning(
                             "The last possible color '%s' for the cell '%s' "
                             "lead to the contradiction. "
-                            "The path %s is invalid", assumption, pos, path)
+                            "The whole branch (depth=%d) is invalid. ", assumption, pos, depth)
                         # self._add_search_result(path, False)
                         return False
 
