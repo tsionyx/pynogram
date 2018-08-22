@@ -183,6 +183,7 @@ class TestNonogramsOrg(object):
         with pytest.raises(PbnNotFoundError, match='444444'):
             NonogramsOrg(444444).read()
 
+    @pytest.mark.skip('Now it is found on .org too')
     def test_not_found_on_org_but_found_on_ru(self):
         x = 19836
         with pytest.raises(PbnNotFoundError):
