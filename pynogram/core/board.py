@@ -81,11 +81,14 @@ class Board(object):
 
         self.renderer = None
         self.set_renderer(**renderer_params)
-        # you can provide custom callbacks here
+
+        # custom callbacks
         self.on_row_update = None
         self.on_column_update = None
         self.on_solution_round_complete = None
         self.on_solution_found = None
+        self.on_restored = None
+
         self._finished = False
 
         self.solutions = []
@@ -249,6 +252,13 @@ class Board(object):
         """
         if self.on_solution_found and callable(self.on_solution_found):
             self.on_solution_found(solution)
+
+    def restored(self, snapshot):
+        """
+        Run each time a board cells restored
+        """
+        if self.on_restored and callable(self.on_restored):
+            self.on_restored(snapshot)
 
     @classmethod
     def normalize(cls, rows):
@@ -433,6 +443,7 @@ class Board(object):
     def restore(self, snapshot):
         """Restore the previously saved state of a board"""
         self.cells = snapshot
+        self.restored(snapshot)
 
     def _current_state_in_solutions(self):
         for i, sol in enumerate(self.solutions):
