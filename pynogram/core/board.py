@@ -644,7 +644,9 @@ class Board(object):
 
         reduced_size = self.height, self.width
 
-        if original_size != reduced_size:
+        if original_size == reduced_size:
+            LOG.warning('The board size: %r', original_size)
+        else:
             LOG.warning('Reduced the board: %r --> %r', original_size, reduced_size)
 
         return self.solved_columns, self.solved_rows
