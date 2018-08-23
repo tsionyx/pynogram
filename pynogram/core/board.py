@@ -840,6 +840,9 @@ class ColoredBoard(Board):
     def is_colored(self):
         return True
 
+    # ATTENTION: be aware not to change the result of memoized function
+    # as it can affect all the future invocations
+
     @staticmethod  # much more efficient memoization
     @memoized
     def cell_as_color_set(cell_value):
@@ -1180,7 +1183,7 @@ class ColoredBoard(Board):
         for row in self.cells:
             all_colors |= set(row)
 
-        all_colors = [self.cell_as_color_set(color) for color in all_colors]
+        all_colors = [set(self.cell_as_color_set(color)) for color in all_colors]
         unsolved_colors = [color for color in all_colors if len(color) > 1]
 
         if not unsolved_colors or len(unsolved_colors) > 1:
