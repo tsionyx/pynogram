@@ -1,13 +1,3 @@
-- refactor board (extract matrix operations)
-
-- find valid range for every color
-
-- bgu: speed up set_line_block, can_place_block
-
-- refactoring:
-  - use https://codebeat.co
-  - check docstrings (+grammarly)
-
 - rewrite backtracking:
   - https://ieeexplore.ieee.org/document/6476646/
   - extract probing to another module
@@ -21,6 +11,19 @@
   - if for path P the pair (cell X, color C) leads to contradiction and all the other colors for X are explored fully
     (not stopped because of some limits but really fully explored!), then the P can be considered fully explored too (see 8098).
   - take into account the color to search for (see 3620, 2498, 3883, 5380)
+
+- solve blotted:
+  19407, 19440, 19629, 19686, 19887, 20742, 20758, 20796, 21151, 21339, 22035, 22385, 22591
+
+- refactor board (extract matrix operations)
+
+- find valid range for every color
+
+- bgu: speed up set_line_block, can_place_block
+
+- refactoring:
+  - use https://codebeat.co
+  - check docstrings (+grammarly)
 
 - 2-SAT
 
@@ -41,8 +44,5 @@
 
 - export to PBM, SVG, GIF (cli-options)
 - import from different formats
-
-- solve blotted:
-  19440, 19629, 19686, 19887, 20742, 20758, 20796, 21151, 21339, 22035, 22385, 22591
 
 - crypto? (easy in one direction, hard in the other)
