@@ -333,6 +333,8 @@ class TestSvg(object):
                     <text x="10.5" y="26.25">2</text>
                 </g>
 
+                <use x="0" xlink:href="#check" y="0" />
+
                 <rect class="nonogram-grid" height="15" width="30" x="15" y="15" />
                 <g class="grid-lines">
                     <line class="bold" x1="0" x2="45" y1="15" y2="15" />
@@ -346,7 +348,6 @@ class TestSvg(object):
                     <use x="15" xlink:href="#box" y="15" />
                     <use x="30" xlink:href="#box" y="15" />
                 </g>
-                <use x="0" xlink:href="#check" y="0" />
             </svg>'''
 
         assert table[0] == '<?xml version="1.0" encoding="utf-8" ?>'
@@ -427,6 +428,8 @@ class TestSvg(object):
                     <text x="10.5" y="71.25">3</text>
                 </g>
 
+                <use x="0" xlink:href="#check" y="0" />
+
                 <rect class="nonogram-grid" height="45" width="45" x="15" y="30" />
                 <g class="grid-lines">
                     <line class="bold" x1="0" x2="60" y1="30" y2="30" />
@@ -454,8 +457,6 @@ class TestSvg(object):
                     <use x="30" xlink:href="#color-b" y="60" />
                     <use x="45" xlink:href="#color-b" y="60" />
                 </g>
-
-                <use x="0" xlink:href="#check" y="0" />
             </svg>'''
 
         assert table[0] == '<?xml version="1.0" encoding="utf-8" ?>'

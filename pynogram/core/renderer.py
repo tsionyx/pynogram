@@ -7,6 +7,7 @@ from __future__ import unicode_literals, print_function, division
 
 import codecs
 import logging
+from abc import ABC
 from sys import stdout
 
 from six import (
@@ -209,8 +210,7 @@ class Renderer(object):
         return self.board.is_colored
 
 
-# noinspection PyAbstractClass
-class StreamRenderer(Renderer):
+class StreamRenderer(Renderer, ABC):
     """
     Simplify textual rendering of a board to a stream (stdout by default)
     """
@@ -403,6 +403,7 @@ class AsciiRenderer(BaseAsciiRenderer):
             end,
         ])
 
+    # not a class method to enable live reloading of CELL_WIDTH
     def cell_icon(self, cell):
         ico = super(AsciiRenderer, self).cell_icon(cell)
         max_width = self.CELL_WIDTH
@@ -658,17 +659,13 @@ class SvgRenderer(StreamRenderer):
     def draw_header(self):
         drawing = self.drawing
 
-        thumbnail_rect = drawing.rect(
+        drawing.add(drawing.rect(
             size=(self.pixel_side_width, self.pixel_header_height),
-            class_='nonogram-thumbnail')
-
-        header_rect = drawing.rect(
+            class_='nonogram-thumbnail'))
+        drawing.add(drawing.rect(
             insert=(self.pixel_side_width, 0),
             size=(self.pixel_board_width, self.pixel_header_height),
-            class_='nonogram-header')
-
-        drawing.add(thumbnail_rect)
-        drawing.add(header_rect)
+            class_='nonogram-header'))
 
         header_group = drawing.g(class_='header-clues')
         for i, col_desc in enumerate(self.board.columns_descriptions):
@@ -700,12 +697,10 @@ class SvgRenderer(StreamRenderer):
     def draw_side(self):
         drawing = self.drawing
 
-        side_rect = drawing.rect(
+        drawing.add(drawing.rect(
             insert=(0, self.pixel_header_height),
             size=(self.pixel_side_width, self.pixel_board_height),
-            class_='nonogram-side')
-
-        drawing.add(side_rect)
+            class_='nonogram-side'))
 
         side_group = drawing.g(class_='side-clues')
         for j, row_desc in enumerate(self.board.rows_descriptions):
@@ -734,6 +729,22 @@ class SvgRenderer(StreamRenderer):
 
         drawing.add(side_group)
 
+        if self.board.is_solved_full:
+            self._insert_solved_symbol()
+
+    def _insert_solved_symbol(self):
+        drawing = self.drawing
+
+        check_icon_size = self.check_icon_size
+        left_padding = (self.pixel_side_width - check_icon_size) / 2
+        top_padding = (self.pixel_header_height - check_icon_size) / 2
+        left_padding = max(left_padding, 0)
+        top_padding = max(top_padding, 0)
+
+        drawing.add(drawing.use('#check', insert=(
+            left_padding, top_padding
+        )))
+
     @classmethod
     def _color_code(cls, cell):
         if is_color_cell(cell):
@@ -752,44 +763,12 @@ class SvgRenderer(StreamRenderer):
 
         drawing = self.drawing
 
-        grid_rect = drawing.rect(
+        drawing.add(drawing.rect(
             insert=(self.pixel_side_width, self.pixel_header_height),
             size=(self.pixel_board_width, self.pixel_board_height),
-            class_='nonogram-grid')
+            class_='nonogram-grid'))
 
-        drawing.add(grid_rect)
-
-        grid_lines = drawing.g(class_='grid-lines')
-
-        # draw horizontal lines
-        for i in range(self.board.height + 1):
-            extra = dict()
-
-            if i % self.BOLD_EVERY == 0 or i == self.board.height:
-                extra['class'] = 'bold'
-
-            y_pos = self.pixel_header_height + (i * self.cell_size)
-            grid_lines.add(drawing.line(
-                start=(0, y_pos),
-                end=(self.full_width, y_pos),
-                **extra
-            ))
-
-        # draw vertical lines
-        for i in range(self.board.width + 1):
-            extra = dict()
-
-            if i % self.BOLD_EVERY == 0 or i == self.board.width:
-                extra['class'] = 'bold'
-
-            x_pos = self.pixel_side_width + (i * self.cell_size)
-            grid_lines.add(drawing.line(
-                start=(x_pos, 0),
-                end=(x_pos, self.full_height),
-                **extra
-            ))
-
-        drawing.add(grid_lines)
+        self._insert_grid_lines()
 
         cell_groups = dict()
         for cell_value, id_ in iteritems(self.color_symbols):
@@ -825,16 +804,43 @@ class SvgRenderer(StreamRenderer):
                                         key=lambda x: str(x[0])):
             drawing.add(group)
 
-        if self.board.is_solved_full:
-            check_icon_size = self.check_icon_size
-            left_padding = (self.pixel_side_width - check_icon_size) / 2
-            top_padding = (self.pixel_header_height - check_icon_size) / 2
-            left_padding = max(left_padding, 0)
-            top_padding = max(top_padding, 0)
+    def _insert_grid_lines(self):
+        drawing = self.drawing
 
-            drawing.add(drawing.use('#check', insert=(
-                left_padding, top_padding
-            )))
+        grid_lines = drawing.g(class_='grid-lines')
+        for line in self._get_grid_lines():
+            grid_lines.add(line)
+
+        drawing.add(grid_lines)
+
+    def _get_grid_lines(self):
+        drawing = self.drawing
+
+        # draw horizontal lines
+        for i in range(self.board.height + 1):
+            extra = dict()
+
+            if i % self.BOLD_EVERY == 0 or i == self.board.height:
+                extra['class'] = 'bold'
+
+            y_pos = self.pixel_header_height + (i * self.cell_size)
+            yield drawing.line(
+                start=(0, y_pos),
+                end=(self.full_width, y_pos),
+                **extra)
+
+        # draw vertical lines
+        for i in range(self.board.width + 1):
+            extra = dict()
+
+            if i % self.BOLD_EVERY == 0 or i == self.board.width:
+                extra['class'] = 'bold'
+
+            x_pos = self.pixel_side_width + (i * self.cell_size)
+            yield drawing.line(
+                start=(x_pos, 0),
+                end=(x_pos, self.full_height),
+                **extra)
 
     def render(self):
         self.drawing.write(self.stream)
