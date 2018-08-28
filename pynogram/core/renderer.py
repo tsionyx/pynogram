@@ -5,9 +5,16 @@ Defines various renderers for the game of nonogram
 
 from __future__ import unicode_literals, print_function, division
 
+try:
+    from abc import ABC
+except ImportError:
+    from abc import ABCMeta
+
+    # https://stackoverflow.com/a/38668373
+    ABC = ABCMeta(str('ABC'), (object,), {'__slots__': ()})
+
 import codecs
 import logging
-from abc import ABC
 from sys import stdout
 
 from six import (

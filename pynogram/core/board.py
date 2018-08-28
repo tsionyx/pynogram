@@ -5,7 +5,14 @@ Define a board of nonogram game
 
 from __future__ import unicode_literals, print_function, division
 
-from abc import ABC
+try:
+    from abc import ABC
+except ImportError:
+    from abc import ABCMeta
+
+    # https://stackoverflow.com/a/38668373
+    ABC = ABCMeta(str('ABC'), (object,), {'__slots__': ()})
+
 from collections import (
     defaultdict,
     namedtuple,
