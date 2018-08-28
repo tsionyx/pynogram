@@ -261,8 +261,8 @@ class Solver(object):
 
         board = self.board
 
-        processed_after_refill = set()
-        processed_before_contradiction = set()
+        processed_in_round = set()
+        expired_assumptions = set()
 
         while jobs:
             state, priority = jobs.pop_smallest()
@@ -294,28 +294,32 @@ class Solver(object):
                             state, info, is_contradiction):
                         jobs[new_job] = priority
 
-                    # save all the jobs that already processed
-                    processed_before_contradiction = set(processed_after_refill)
+                    # All the jobs that was processed before the given
+                    # contradiction considered expired. They will refill
+                    # the active jobs queue when it gets empty.
+                    expired_assumptions = set(processed_in_round)
                 else:
                     rates[state] = (info, priority)
 
             if not refill:
+                # only do one round of probes
                 continue
 
             # we have work to do!
             if jobs:
-                processed_after_refill.add(pos)
-            elif processed_before_contradiction:
+                processed_in_round.add(pos)
+            elif expired_assumptions:
                 LOG.warning('No more jobs. Refill all the jobs processed before '
                             'the last found contradiction (%s)',
-                            len(processed_before_contradiction))
+                            len(expired_assumptions))
                 refill_processed = self._get_all_unsolved_jobs(
-                    choose_from_cells=processed_before_contradiction)
+                    choose_from_cells=expired_assumptions)
                 for new_job, priority in iteritems(refill_processed):
                     jobs[new_job] = priority
 
-                processed_after_refill -= processed_before_contradiction
-                processed_before_contradiction = set()
+                # they are no longer expired, as they active now!
+                processed_in_round -= expired_assumptions
+                expired_assumptions = set()
                 counter = 0
 
         return counter_found, self._probes_from_rates(rates)

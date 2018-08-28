@@ -478,11 +478,11 @@ class ReducibleGrid(SolvableGrid, MultipleSolutionGrid, ABC):
 
     @classmethod
     def _reduce_edge(cls, cells, straight_desc, orthogonal_desc,
-                     line_solution_rate_func, first_rows=True):
+                     line_solution_rate_func, first=True):
         # top, bottom
         solved_rows = []
 
-        if first_rows:
+        if first:
             rows_enum = list(enumerate(zip(cells, straight_desc)))
         else:
             rows_enum = reversed(list(enumerate(zip(cells, straight_desc))))
@@ -493,7 +493,7 @@ class ReducibleGrid(SolvableGrid, MultipleSolutionGrid, ABC):
 
             LOG.info('Reducing solved row (column) %i: %r', row_index, row_desc)
 
-            if first_rows:
+            if first:
                 # remove from the board description
                 removed_desc = straight_desc.pop(0)
 
@@ -518,7 +518,7 @@ class ReducibleGrid(SolvableGrid, MultipleSolutionGrid, ABC):
                     continue
 
                 LOG.info('Reducing orthogonal description %i: %r', col_index, col_desc)
-                cls._reduce_orthogonal_description(col_desc, cell, first_rows=first_rows)
+                cls._reduce_orthogonal_description(col_desc, cell, first_rows=first)
 
         return solved_rows, cells
 
@@ -542,12 +542,12 @@ class ReducibleGrid(SolvableGrid, MultipleSolutionGrid, ABC):
         cells = self.make_snapshot()
         first_solved_rows, cells = self._reduce_edge(
             cells, rows_descriptions, columns_descriptions,
-            self.row_solution_rate, first_rows=True)
+            self.row_solution_rate, first=True)
         self.restore(cells)  # to correctly check line_solution_rate further
 
         last_solved_rows, cells = self._reduce_edge(
             cells, rows_descriptions, columns_descriptions,
-            self.row_solution_rate, first_rows=False)
+            self.row_solution_rate, first=False)
         self.restore(cells)  # to correctly check line_solution_rate further
 
         self.columns_descriptions = self.normalize(columns_descriptions)
@@ -559,7 +559,7 @@ class ReducibleGrid(SolvableGrid, MultipleSolutionGrid, ABC):
         cells = [list(self.get_column(col_index)) for col_index in range(width)]
         first_solved_columns, cells = self._reduce_edge(
             cells, columns_descriptions, rows_descriptions,
-            self.column_solution_rate, first_rows=True)
+            self.column_solution_rate, first=True)
 
         # transpose it back
         height = len(cells[0])
@@ -568,7 +568,7 @@ class ReducibleGrid(SolvableGrid, MultipleSolutionGrid, ABC):
 
         last_solved_columns, cells = self._reduce_edge(
             cells, columns_descriptions, rows_descriptions,
-            self.column_solution_rate, first_rows=False)
+            self.column_solution_rate, first=False)
 
         # transpose it back
         height = len(cells[0])
@@ -578,22 +578,16 @@ class ReducibleGrid(SolvableGrid, MultipleSolutionGrid, ABC):
         self.columns_descriptions = self.normalize(columns_descriptions)
         self.rows_descriptions = self.normalize(rows_descriptions)
 
-        # ================== #
-        self.solved_columns = (first_solved_columns, last_solved_columns)
-        self.solved_rows = (first_solved_rows, last_solved_rows)
-
         for sol_index, solution in enumerate(self.solutions):
-            first, last = self.solved_rows
-            if first:
-                solution = solution[len(first):]
-            if last:
-                solution = solution[:-len(last)]
+            if first_solved_columns:
+                solution = [row[len(first_solved_columns):] for row in solution]
+            if last_solved_columns:
+                solution = [row[:-len(last_solved_columns)] for row in solution]
 
-            first, last = self.solved_columns
-            if first:
-                solution = [row[len(first):] for row in solution]
-            if last:
-                solution = [row[:-len(last)] for row in solution]
+            if first_solved_rows:
+                solution = solution[len(first_solved_rows):]
+            if last_solved_rows:
+                solution = solution[:-len(last_solved_rows)]
 
             assert len(solution) == self.height
             assert len(solution[0]) == self.width
@@ -607,6 +601,8 @@ class ReducibleGrid(SolvableGrid, MultipleSolutionGrid, ABC):
         else:
             LOG.warning('Reduced the board: %r --> %r', original_size, reduced_size)
 
+        self.solved_columns = (first_solved_columns, last_solved_columns)
+        self.solved_rows = (first_solved_rows, last_solved_rows)
         return self.solved_columns, self.solved_rows
 
     @classmethod

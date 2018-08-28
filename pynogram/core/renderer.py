@@ -130,7 +130,8 @@ class GridCell(Cell):
 
 class _DummyBoard(object):
     """
-    Stub for renderer init in case of it created before the board.
+    Stub for renderer initialization
+    when it created before the corresponding board
     """
     rows_descriptions = columns_descriptions = ()
     width = height = 0
@@ -248,7 +249,7 @@ class BaseAsciiRenderer(StreamRenderer):
 
     def cell_icon(self, cell):
         """
-        Gets a symbolic representation of a cell given its state
+        Get a symbolic representation of a cell given its state
         and predefined table `icons`
         """
         return cell.ascii_icon()
@@ -641,9 +642,9 @@ class SvgRenderer(StreamRenderer):
 
             block_color = (id_, insert_point)
 
-        kwargs = dict()
+        extra = dict()
         if color_id == Color.black().id_:
-            kwargs['fill'] = 'white'
+            extra['fill'] = 'white'
 
         block_text = self.drawing.text(
             str(value),
@@ -651,7 +652,7 @@ class SvgRenderer(StreamRenderer):
                 self.pixel_side_width + (i + shift[0]) * self.cell_size,
                 self.pixel_header_height + (j + shift[1]) * self.cell_size,
             ),
-            **kwargs
+            **extra
         )
 
         return block_color, block_text

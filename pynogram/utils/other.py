@@ -15,12 +15,11 @@ from datetime import datetime
 from functools import wraps
 from threading import Lock
 
+from memoized import memoized
 from six import (
     text_type,
     iteritems,
 )
-
-from memoized import memoized
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 START_TIME = datetime.now()

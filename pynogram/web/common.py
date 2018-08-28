@@ -191,7 +191,8 @@ class LongPollNotifier(object):
             self.callback_helper(callback, *args, **kwargs)
         self.callbacks = []
 
-    def callback_helper(self, callback, *args, **kwargs):
+    @classmethod
+    def callback_helper(cls, callback, *args, **kwargs):
         """
         Simply call the callback with the parameters provided.
 

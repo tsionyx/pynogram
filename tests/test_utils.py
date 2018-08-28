@@ -347,7 +347,7 @@ class TestPowers(object):
                 b = bin(f)
                 assert b == '0b1' + '0' * (len(b) - 3)
 
-    def test_roundtrip(self):
+    def test_round_trip(self):
         for i in range(100):
             n = random.randint(1, 10 ** 9)
 

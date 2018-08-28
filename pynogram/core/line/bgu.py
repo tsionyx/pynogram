@@ -324,7 +324,7 @@ class BguColoredSolver(BguSolver):
         check if we can place a colored block of a specific length in this position
         we check that our partial solution does not negate the line's partial solution
         :param position:  position to place block at
-        :param end_pos:   postion to stop placing the block
+        :param end_pos:   position to stop placing the block
         :param color:     color number
         :param trailing_space: whether to check for trailing space
         """
@@ -341,8 +341,8 @@ class BguColoredSolver(BguSolver):
         return all(cell & color
                    for cell in self.line[position: end_pos])
 
-    def add_cell_color(self, position, color):
-        self.solved_line[position] |= color
+    def add_cell_color(self, position, value):
+        self.solved_line[position] |= value
 
     def set_color_block(self, start_pos, end_pos, color, trailing_space=True):
         """

@@ -178,11 +178,11 @@ class ColorMap(OrderedDict):
             raise ValueError('Only colors can be set as values in {!r}'.format(self.__class__))
 
 
-_COLOR_DESCRIPTION_RE = re.compile('([0-9]+)(.+)')
-
-
 class ColorBlock(namedtuple('ColorBlock', 'size color')):
     """Represent one block of colored description"""
+
+
+_COLOR_DESCRIPTION_RE = re.compile('([0-9]+)(.+)')
 
 
 def normalize_description_colored(row, color_map):
