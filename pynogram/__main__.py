@@ -36,7 +36,7 @@ from pynogram.core.renderer import BaseAsciiRenderer
 from pynogram.reader import (
     read_example, example_file,
     Pbn, PbnLocal,
-    Nonograms,
+    NonogramsOrg,
 )
 
 
@@ -226,7 +226,7 @@ def main():
     elif args.local_pbn:
         board_def = PbnLocal.read(args.local_pbn)
     elif args.nonograms_org:
-        board_def = Nonograms.read(args.nonograms_org)
+        board_def = NonogramsOrg.read(args.nonograms_org)
     else:
         board_def = read_example(args.board)
 

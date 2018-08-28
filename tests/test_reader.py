@@ -17,7 +17,7 @@ from pynogram.core.renderer import BaseAsciiRenderer
 from pynogram.reader import (
     example_file, read_ini, read_example,
     Pbn, PbnNotFoundError,
-    NonogramsOrg, Nonograms,
+    NonogramsOrg,
 )
 from .test_board import tested_board
 
@@ -136,7 +136,7 @@ class TestNonogramsOrg(object):
             [1, 1, 1, 0],
             [1, 0, 1, 0],
         ]
-        columns, rows = n.read()
+        columns, rows = n.parse()
         assert columns == [[1, 1, 2], [1, 2], [6], [1]]
         assert rows == [[3], [2], [1, 1], [2], [3], [1, 1]]
 
@@ -146,11 +146,7 @@ class TestNonogramsOrg(object):
 
         colors, solution = n.definition()
 
-        assert colors == [
-            ('fbf204', 0),
-            ('000000', 1),
-            ('f4951c', 0),
-        ]
+        assert colors == ['fbf204', '000000', 'f4951c']
 
         assert solution == [
             [0, 0, 0, 1, 0],
@@ -160,7 +156,7 @@ class TestNonogramsOrg(object):
             [3, 3, 0, 0, 0],
         ]
 
-        columns, rows, colors = n.read()
+        columns, rows, colors = n.parse()
         assert columns == [
             [(2, 'color-1'), (1, 'black'), (1, 'color-3')],
             [(3, 'color-3')],
@@ -181,15 +177,15 @@ class TestNonogramsOrg(object):
 
     def test_not_found(self):
         with pytest.raises(PbnNotFoundError, match='444444'):
-            NonogramsOrg(444444).read()
+            NonogramsOrg(444444).parse()
 
     @pytest.mark.skip('Now it is found on .org too')
     def test_not_found_on_org_but_found_on_ru(self):
         x = 19836
         with pytest.raises(PbnNotFoundError):
-            NonogramsOrg(x).read()
+            NonogramsOrg(x).parse()
 
-        columns, rows, colors = Nonograms.read(x)
+        columns, rows, colors = NonogramsOrg.read(x)
         assert set(colors) == {
             'black', 'white',
             'color-1', 'color-2',

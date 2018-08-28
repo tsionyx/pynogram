@@ -25,7 +25,7 @@ from pynogram.core.renderer import (
 from pynogram.reader import (
     read_example, list_examples, read_example_source,
     Pbn, PbnNotFoundError,
-    Nonograms,
+    NonogramsOrg,
 )
 from .common import (
     BaseHandler,
@@ -248,7 +248,7 @@ class Application(tornado.web.Application):
         elif create_mode == 'pbn':
             board_def = Pbn.read(_id)
         elif create_mode == 'nonograms.org':
-            board_def = Nonograms.read(_id)
+            board_def = NonogramsOrg.read(_id)
         else:
             raise tornado.web.HTTPError(400, 'Bad mode: %s', create_mode)
 
