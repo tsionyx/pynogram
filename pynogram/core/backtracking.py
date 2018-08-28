@@ -125,7 +125,7 @@ class Solver(object):
         board = self.board
         LOG.debug('Assume that (%i, %i) is %s', *tuple(cell_state))
 
-        board.set_state(cell_state)
+        board.set_color(cell_state)
 
         return propagation.solve(
             board,
@@ -161,7 +161,7 @@ class Solver(object):
         pos = cell_state.position
         assumption = cell_state.color
         # already solved
-        if board.cell_solved(pos):
+        if board.is_cell_solved(pos):
             if not force:
                 return False, None
 
@@ -196,7 +196,7 @@ class Solver(object):
         pos = cell_state.position
         LOG.info('Found contradiction at (%i, %i)', *pos)
         try:
-            board.unset_state(cell_state)
+            board.unset_color(cell_state)
         except ValueError as ex:
             raise NonogramError(str(ex))
 
@@ -331,7 +331,7 @@ class Solver(object):
         for cell_state, (rate, priority) in iteritems(rates):
             pos = cell_state.position
             color = cell_state.color
-            if self.board.cell_solved(pos):
+            if self.board.is_cell_solved(pos):
                 continue
 
             # the more priority the less desired that job
@@ -367,7 +367,7 @@ class Solver(object):
 
         for pos in choose_from_cells:
             pos = CellPosition(*pos)
-            if board.cell_solved(pos):
+            if board.is_cell_solved(pos):
                 continue
 
             no_unsolved = len(list(board.unsolved_neighbours(pos)))
@@ -684,7 +684,7 @@ class Solver(object):
                         LOG.warning(
                             "Unset the color %s for cell '%s'. Solve it unconditionally",
                             assumption, pos)
-                        board.unset_state(state)
+                        board.unset_color(state)
                         self._solve_without_search()
                         unconditional = True
                     except ValueError:

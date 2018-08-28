@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-Defines a board of nonogram game
+Define a board of nonogram game
 """
 
 from __future__ import unicode_literals, print_function, division
 
 import logging
 import os
+from abc import ABC
 from collections import (
     defaultdict,
     namedtuple,
@@ -48,11 +49,11 @@ LOG = logging.getLogger(_LOG_NAME)
 
 
 class CellPosition(namedtuple('Cell', 'row_index column_index')):
-    """2-D coordinates of a board cell"""
+    """2-D coordinates of a grid cell"""
 
 
 class CellState(namedtuple('CellState', 'row_index column_index color')):
-    """2-D coordinates of a board cell with fixed color"""
+    """2-D coordinates of a grid cell with fixed color"""
 
     @property
     def position(self):
@@ -65,78 +66,25 @@ class CellState(namedtuple('CellState', 'row_index column_index color')):
         return cls(position[0], position[1], color)
 
 
-class Board(object):
+def call_if_callable(func, *args, **kwargs):
+    """Call the function with given parameters if it is callable"""
+
+    if func and callable(func):
+        return func(*args, **kwargs)
+
+    return None
+
+
+class RenderedMixin(object):
     """
-    Nonogram board with columns and rows defined
+    This mixin adds an ability to render the grid, i.e. a rectangular table of cells
     """
 
-    def __init__(self, columns, rows, **renderer_params):
-        self.columns_descriptions = self.normalize(columns)
-        self.rows_descriptions = self.normalize(rows)
-        # save original descriptions to support reducing
-        self.descriptions = (self.columns_descriptions, self.rows_descriptions)
-
-        init_state = self.init_cell_state
-        self.cells = [[init_state] * self.width for _ in range(self.height)]
-        self.validate()
-
+    def __init__(self, **kwargs):
         self.renderer = None
-        self.set_renderer(**renderer_params)
+        self.set_renderer(**kwargs)
 
-        # custom callbacks
-        self.on_row_update = None
-        self.on_column_update = None
-        self.on_solution_round_complete = None
-        self.on_solution_found = None
-        self.on_restored = None
-
-        self._finished = False
-
-        self.solutions = []
-
-        # True =_column; False = row
-        self.densities = {
-            True: [self.line_density(True, index) for index in range(self.width)],
-            False: [self.line_density(False, index) for index in range(self.height)],
-        }
-
-        self.solved_columns = None
-        self.solved_rows = None
-
-    def line_density(self, is_column, index):
-        """
-        The value in range [0..1] that shows how dense will be the solved line.
-        The minimum density (0) is for the empty description.
-        The maximum density is for the description that does not allow extra spaces between blocks.
-
-        In general, the more this value the easier this line has to be solved.
-        """
-        if is_column:
-            desc = self.columns_descriptions[index]
-            full = self.height
-        else:
-            desc = self.rows_descriptions[index]
-            full = self.width
-
-        density = self.desc_sum(desc) / full
-
-        assert 0 <= density <= 1
-        return density
-
-    @classmethod
-    def desc_sum(cls, desc):
-        """Minimal length that will be sufficient to store the given description"""
-        if not desc:
-            return 0
-
-        return sum(desc) + (len(desc) - 1)
-
-    @property
-    def init_cell_state(self):
-        """Initial value of a board cell"""
-        return UNKNOWN
-
-    def set_renderer(self, renderer=Renderer, **renderer_params):
+    def set_renderer(self, renderer=Renderer, **kwargs):
         """
         Allow to specify renderer even in the middle of the solving
 
@@ -144,129 +92,45 @@ class Board(object):
         """
 
         if isinstance(renderer, type):
-            self.renderer = renderer(self, **renderer_params)
+            self.renderer = renderer(self, **kwargs)
         elif isinstance(renderer, Renderer):
             self.renderer = renderer
             self.renderer.board_init(self)
         else:
-            raise TypeError('Bad renderer: %s' % renderer)
+            raise TypeError('Bad renderer: {!r}'.format(renderer))
 
-    def cell_solved(self, position):
+    def draw(self, cells=None):
+        """Draw a grid with the renderer"""
+        self.renderer.draw(cells=cells)
+
+
+class NonogramGrid(RenderedMixin):
+    """
+    Abstract nonogram grid with descriptions and cells
+    """
+
+    def __init__(self, columns, rows, cells=None, **renderer_params):
         """
-        Return whether the cell is completely solved
-        :type position: CellPosition
+        :param columns: iterable of vertical clues
+        :param rows: iterable of horizontal clues
         """
 
-        i, j = position
-        cell = self.cells[i][j]
-        return cell != UNKNOWN
+        self.columns_descriptions = self.normalize(columns)
+        self.rows_descriptions = self.normalize(rows)
+        self.cells = cells or self.make_cells()
+        self.validate()
 
-    @classmethod
-    def colors(cls):
-        """All the possible states that a cell can be in"""
-        return {BOX, SPACE}
+        # setup the renderer after all the validations
+        super(NonogramGrid, self).__init__(**renderer_params)
+
+        # callbacks
+        self.on_row_update = None
+        self.on_column_update = None
 
     @property
-    def is_colored(self):
-        """
-        Whether the board has an ability
-        to store more than black-and-white puzzles.
-
-        That is simpler than do `isinstance(board, ColoredBoard)` every time.
-        """
-        return False
-
-    def cell_colors(self, position):
-        """
-        All the possible states that the cell can be in.
-
-        :type position: CellPosition
-        :returns set
-        """
-        if not self.cell_solved(position):
-            return self.colors()
-
-        i, j = position
-        return {self.cells[i][j]}
-
-    def unset_state(self, cell_state):
-        """
-        Drop the state from the list of possible states
-        for a given cell
-        :type cell_state: CellState
-        """
-        row_index, column_index, bad_state = cell_state
-        if self.cells[row_index][column_index] != UNKNOWN:
-            raise ValueError('Cannot unset already set cell %s' % ([row_index, column_index]))
-        self.cells[row_index][column_index] = invert(bad_state)
-
-    def set_state(self, cell_state):
-        """
-        Set the color of a cell with given coordinates
-        :type cell_state: CellState
-        """
-        row_index, column_index, color = cell_state
-        self.cells[row_index][column_index] = color
-
-    def get_row(self, index):
-        """Get the board's row at given index"""
-        return self.cells[index]
-
-    def get_column(self, index):
-        """Get the board's column at given index"""
-        return (row[index] for row in self.cells)
-
-    def set_row(self, index, value):
-        """Set the board's row at given index with given value"""
-        self.cells[index] = list(value)
-
-        self.row_updated(index)
-
-    def set_column(self, index, value):
-        """Set the board's column at given index with given value"""
-        for row_index, item in enumerate(value):
-            self.cells[row_index][index] = item
-
-        self.column_updated(index)
-
-    def row_updated(self, row_index):
-        """Runs each time the row of the board gets partially solved"""
-        if self.on_row_update and callable(self.on_row_update):
-            self.on_row_update(row_index=row_index, board=self)
-
-    def column_updated(self, column_index):
-        """Runs each time the column of the board gets partially solved"""
-        if self.on_column_update and callable(self.on_column_update):
-            self.on_column_update(column_index=column_index, board=self)
-
-    def solution_round_completed(self):
-        """
-        Runs each time all the rows and the columns
-        of the board gets partially solved (one solution round is complete)
-        """
-        if self.on_solution_round_complete and callable(self.on_solution_round_complete):
-            self.on_solution_round_complete(board=self)
-
-    def solution_found(self, solution):
-        """
-        Runs each time a new unique solution gets found
-        """
-        if self.on_solution_found and callable(self.on_solution_found):
-            self.on_solution_found(solution)
-
-    def restored(self, snapshot):
-        """
-        Run each time a board cells restored
-        """
-        if self.on_restored and callable(self.on_restored):
-            self.on_restored(snapshot)
-
-    @classmethod
-    def normalize(cls, rows):
-        """
-        Presents given rows in standard format
-        """
-        return tuple(map(normalize_description, rows))
+    def init_cell_state(self):
+        """Initial value of a single cell"""
+        raise NotImplementedError()
 
     @property
     def height(self):
@@ -278,53 +142,123 @@ class Board(object):
         """The width of the playing area"""
         return len(self.columns_descriptions)
 
+    def make_cells(self):
+        """Construct default cells set"""
+        init_state = self.init_cell_state
+        return [[init_state] * self.width for _ in range(self.height)]
+
+    def normalize(self, clues):
+        """
+        Present clues in standard format
+        """
+        raise NotImplementedError()
+
     def validate(self):
         """
-        Validate that the board is valid:
-        - all the descriptions of a row (column) can fit into width (height) of the board
-        - the vertical and horizontal descriptions define the same number of boxes
+        Validate that the grid is valid:
+        - all the descriptions of a row (column) can fit into width (height) of the grid
+        - the vertical and horizontal descriptions define the same colors
         """
-        self.validate_headers(self.columns_descriptions, self.height)
-        self.validate_headers(self.rows_descriptions, self.width)
-
-        boxes_in_rows = sum(sum(block) for block in self.rows_descriptions)
-        boxes_in_columns = sum(sum(block) for block in self.columns_descriptions)
-        if boxes_in_rows != boxes_in_columns:
-            raise ValueError('Number of boxes differs: {} (rows) and {} (columns)'.format(
-                boxes_in_rows, boxes_in_columns))
+        self.validate_descriptions_size(self.columns_descriptions, self.height)
+        self.validate_descriptions_size(self.rows_descriptions, self.width)
+        self.validate_colors(self.columns_descriptions, self.rows_descriptions)
 
     @classmethod
-    def validate_headers(cls, rows, max_size):
+    def validate_descriptions_size(cls, descriptions, max_size):
         """
-        Validate that the all the rows can fit into the given size
+        Validate that all the clues can fit into the grid
         """
-        for row in rows:
-            need_cells = sum(row)
-            if row:
-                # also need at least one space between every two blocks
-                need_cells += len(row) - 1
+        raise NotImplementedError()
 
-            LOG.debug('Row: %s; Need: %s; Available: %s.',
-                      row, need_cells, max_size)
-            if need_cells > max_size:
-                raise ValueError('Cannot allocate row {} in just {} cells'.format(
-                    list(row), max_size))
+    def validate_colors(self, vertical, horizontal):
+        """
+        Validate that the colors defined in vertical
+        and horizontal descriptions are the same.
+        """
+        raise NotImplementedError()
 
-    def draw(self, cells=None):
-        """Draws a current state of a board with the renderer"""
-        self.renderer.draw(cells=cells)
+    @classmethod
+    def colors(cls):
+        """
+        All the colors that can appear on a grid
+
+        :rtype: set
+        """
+        raise NotImplementedError()
+
+    def unset_color(self, cell_state):
+        """
+        Drop the state from the list of possible states
+        for a given cell
+        :type cell_state: CellState
+        """
+        raise NotImplementedError()
+
+    def set_color(self, cell_state):
+        """
+        Set the color of a cell with given coordinates
+        :type cell_state: CellState
+        """
+        row_index, column_index, color = cell_state
+        self.cells[row_index][column_index] = color
+
+    @property
+    def is_colored(self):
+        """
+        Whether the grid has an ability
+        to store more than 2 colors (black and white only?)
+
+        That is simpler than do `isinstance(board, ColoredBoard)` every time.
+        """
+        raise NotImplementedError()
+
+    def get_row(self, index):
+        """Get the grid's row at given index"""
+        return self.cells[index]
+
+    def get_column(self, index):
+        """Get the grid's column at given index"""
+        return (row[index] for row in self.cells)
+
+    # noinspection PyUnusedLocal
+    def set_row(self, index, value):
+        """Set the grid's row at given index"""
+        self.cells[index] = list(value)
+
+        self.row_updated(index)
+
+    # noinspection PyUnusedLocal
+    def set_column(self, index, value):
+        """Set the grid's column at given index"""
+        for row_index, item in enumerate(value):
+            self.cells[row_index][index] = item
+
+        self.column_updated(index)
 
     def __str__(self):
         return '{}({}x{})'.format(self.__class__.__name__, self.height, self.width)
 
-    @property
-    def is_solved_full(self):
-        """Whether no unsolved cells in a board left"""
-        for row in self.cells:
-            for cell in row:
-                if cell == UNKNOWN:
-                    return False
-        return True
+    def row_updated(self, row_index):
+        """Run each time the row gets partially solved"""
+        call_if_callable(self.on_row_update, row_index, board=self)
+
+    def column_updated(self, column_index):
+        """Run each time the column gets partially solved"""
+        call_if_callable(self.on_column_update, column_index, board=self)
+
+
+class SolvableGrid(NonogramGrid, ABC):
+    """
+    Nonogram grid with various solution metrics defined
+    """
+
+    def __init__(self, columns, rows, cells=None, **kwargs):
+        super(SolvableGrid, self).__init__(columns, rows, cells=cells, **kwargs)
+
+        self._finished = False
+
+        # custom callbacks
+        self.on_solution_round_complete = None
 
     @property
     def solution_rate(self):
@@ -335,13 +269,15 @@ class Board(object):
         size = self.width
         return avg(self.line_solution_rate(row, size=size) for row in self.cells)
 
+    @property
+    def is_solved_full(self):
+        """Whether no unsolved cells left"""
+        raise NotImplementedError()
+
     @classmethod
     def line_solution_rate(cls, row, size=None):
-        """How many cells in a given line are known to be box or space"""
-        if size is None:
-            size = len(row)
-
-        return sum(1 for cell in row if cell != UNKNOWN) / size
+        """How many cells in a given line are known to be solved"""
+        raise NotImplementedError()
 
     def row_solution_rate(self, index):
         """How many cells in a horizontal row are known to be box or space"""
@@ -353,11 +289,36 @@ class Board(object):
 
     @classmethod
     def cell_solution_rate(cls, cell):
-        """Whether the cell solved or not"""
+        """How much the cell's value is close to solved"""
+        raise NotImplementedError()
 
-        if cell == UNKNOWN:
-            return 0
-        return 1
+    def is_cell_solved(self, position):
+        """
+        Decide whether the cell is completely solved
+        :type position: CellPosition
+        :rtype: bool
+        """
+        raise NotImplementedError()
+
+    def cell_colors(self, position):
+        """
+        All the possible states that the cell at given position can be in.
+
+        :type position: CellPosition
+        :rtype: set
+        """
+        if not self.is_cell_solved(position):
+            return self.colors()
+
+        i, j = position
+        return {self.cells[i][j]}
+
+    def solution_round_completed(self):
+        """
+        Runs each time all the rows and the columns
+        of the board gets partially solved (one solution round is complete)
+        """
+        call_if_callable(self.on_solution_round_complete, board=self)
 
     @property
     def is_finished(self):
@@ -368,37 +329,21 @@ class Board(object):
         """Set the solving status (used by renderers)"""
         self._finished = finished
 
-    def neighbours(self, position):
-        """
-        For the given cell yield
-        the four possible neighbour cells.
-        When the given cell is on a border,
-        that number can reduce to three or two.
-        :type position: CellPosition
-        """
-        row_index, column_index = position
-        if row_index > 0:
-            yield row_index - 1, column_index
 
-        if row_index < self.height - 1:
-            yield row_index + 1, column_index
+class MultipleSolutionGrid(NonogramGrid, ABC):
+    """
+    Nonogram grid with additional support to store multiple states of a grid.
+    Also substituting for the current cells is supported.
+    """
 
-        if column_index > 0:
-            yield row_index, column_index - 1
+    def __init__(self, columns, rows, cells=None, **renderer_params):
+        super(MultipleSolutionGrid, self).__init__(columns, rows, cells=cells, **renderer_params)
 
-        if column_index < self.width - 1:
-            yield row_index, column_index + 1
+        self.solutions = []
 
-    def unsolved_neighbours(self, position):
-        """
-        For the given cell yield the neighbour cells
-        that are not completely solved yet.
-        :type position: CellPosition
-        """
-        for pos in self.neighbours(position):
-            pos = CellPosition(*pos)
-            if not self.cell_solved(pos):
-                yield pos
+        # custom callbacks
+        self.on_solution_found = None
+        self.on_restored = None
 
     @classmethod
     def diff(cls, old_cells, new_cells, have_deletions=False):
@@ -446,6 +391,12 @@ class Board(object):
         self.cells = snapshot
         self.restored(snapshot)
 
+    def restored(self, snapshot):
+        """
+        Run each time a grid's cells restored
+        """
+        call_if_callable(self.on_restored, snapshot)
+
     def _current_state_in_solutions(self):
         for i, sol in enumerate(self.solutions):
             diff = next(self.diff(sol, self.cells, have_deletions=True), None)
@@ -462,7 +413,7 @@ class Board(object):
         return False
 
     def add_solution(self, copy_=True):
-        """Save full solution found with contradictions"""
+        """Save one of the full solutions"""
 
         LOG.info('Found one of the solutions!')
 
@@ -477,6 +428,12 @@ class Board(object):
 
         self.solution_found(cells)
         self.solutions.append(cells)
+
+    def solution_found(self, solution):
+        """
+        Run each time a new unique solution found
+        """
+        call_if_callable(self.on_solution_found, solution)
 
     def draw_solutions(self, only_logs=False):
         """Render the solutions"""
@@ -499,25 +456,30 @@ class Board(object):
                 diff = list(self.diff(sol1, sol2, have_deletions=True))
                 LOG.info('%d vs %d: %d', i, j, len(diff))
 
+
+class ReducibleGrid(SolvableGrid, MultipleSolutionGrid, ABC):
+    """
+    A nonogram grid which supports reducing,
+    i.e. temporary trimming the solved rows and columns
+    with appropriate descriptions changes.
+    """
+
+    def __init__(self, columns, rows, cells=None, **renderer_params):
+        super(ReducibleGrid, self).__init__(columns, rows, cells=cells, **renderer_params)
+
+        # save original descriptions to support reducing
+        self.descriptions = (self.columns_descriptions, self.rows_descriptions)
+
+        self.solved_columns = None
+        self.solved_rows = None
+
     @classmethod
     def _space_value(cls):
-        return SPACE
+        raise NotImplementedError()
 
     @classmethod
     def _reduce_orthogonal_description(cls, col_desc, cell_value, first_rows=False):
-        assert cell_value == BOX
-        if first_rows:
-            first_block = col_desc[0]
-            if first_block == 1:
-                col_desc.pop(0)
-            else:
-                col_desc[0] = first_block - 1
-        else:
-            last_block = col_desc[-1]
-            if last_block == 1:
-                col_desc.pop()
-            else:
-                col_desc[-1] = last_block - 1
+        raise NotImplementedError()
 
     @classmethod
     def _reduce_edge(cls, cells, straight_desc, orthogonal_desc,
@@ -727,13 +689,88 @@ class Board(object):
             LOG.warning('Restored the board: %r --> %r', reduced_size, original_size)
 
 
-class NumpyBoard(Board):
+class BaseBoard(ReducibleGrid, ABC):
+    """
+    Base nonogram board with support of the following:
+    - solving metrics
+    - storing multiple solutions
+    - reducing the solved lines
+    """
+
+    def __init__(self, columns, rows, cells=None, **renderer_params):
+        super(BaseBoard, self).__init__(columns, rows, cells=cells, **renderer_params)
+
+        # True =_column; False = row
+        self.densities = {
+            True: [self.line_density(True, index) for index in range(self.width)],
+            False: [self.line_density(False, index) for index in range(self.height)],
+        }
+
+    @classmethod
+    def desc_sum(cls, desc):
+        """Minimal length that will be sufficient to store the given description"""
+        raise NotImplementedError()
+
+    def line_density(self, is_column, index):
+        """
+        The value in range [0..1] that shows how dense will be the solved line.
+        The minimum density (0) is for the empty description.
+        The maximum density is for the description that does not allow extra spaces between blocks.
+
+        In general, the more this value the easier this line has to be solved.
+        """
+        if is_column:
+            desc = self.columns_descriptions[index]
+            full = self.height
+        else:
+            desc = self.rows_descriptions[index]
+            full = self.width
+
+        density = self.desc_sum(desc) / full
+
+        assert 0 <= density <= 1
+        return density
+
+    def neighbours(self, position):
+        """
+        For the given cell yield
+        the four possible neighbour cells.
+        When the given cell is on a border,
+        that number can reduce to three or two.
+        :type position: CellPosition
+        """
+        row_index, column_index = position
+        if row_index > 0:
+            yield row_index - 1, column_index
+
+        if row_index < self.height - 1:
+            yield row_index + 1, column_index
+
+        if column_index > 0:
+            yield row_index, column_index - 1
+
+        if column_index < self.width - 1:
+            yield row_index, column_index + 1
+
+    def unsolved_neighbours(self, position):
+        """
+        For the given cell yield the neighbour cells
+        that are not completely solved yet.
+        :type position: CellPosition
+        """
+        for pos in self.neighbours(position):
+            pos = CellPosition(*pos)
+            if not self.is_cell_solved(pos):
+                yield pos
+
+
+class NumpyBoard(BaseBoard, ABC):
     """
     The board that stores its state in a numpy array
     """
 
-    def __init__(self, columns, rows, **renderer_params):
-        super(NumpyBoard, self).__init__(columns, rows, **renderer_params)
+    def __init__(self, columns, rows, cells=None, **renderer_params):
+        super(NumpyBoard, self).__init__(columns, rows, cells=cells, **renderer_params)
         self.restore(self.cells)
 
     def get_column(self, index):
@@ -741,8 +778,6 @@ class NumpyBoard(Board):
         return self.cells.T[index]
 
     def set_column(self, index, value):
-        """Set the board's column at given index with given value"""
-
         self.cells[:, index] = value
         self.column_updated(index)
 
@@ -760,302 +795,121 @@ class NumpyBoard(Board):
         return False
 
 
-class ColoredBoard(Board):
+class BlackBoard(BaseBoard):
     """
-    The board with three or more colors (not simple black and white)
+    Black-and-white nonogram board
     """
-
-    def __init__(self, columns, rows, color_map, **renderer_params):
-        """
-        :param columns: iterable of vertical clues
-        :param rows: iterable of horizontal clues
-        :type color_map: ColorMap
-        """
-        self.color_map = color_map
-        super(ColoredBoard, self).__init__(columns, rows, **renderer_params)
-
-        self._cell_rate_memo = {}
-        self._reduce_colors()
-
-    @classmethod
-    def _desc_colors(cls, description):
-        return from_two_powers(block.color for block in description)
-
-    def _reduce_colors(self):
-        """
-        For every cell reduce the possible colors to only those
-        appeared on the corresponding row and column.
-        """
-        for row_index, (row, row_desc) in enumerate(zip(self.cells, self.rows_descriptions)):
-            for column_index, (cell, column_desc) in enumerate(zip(row, self.columns_descriptions)):
-                new_color = self._desc_colors(row_desc) & self._desc_colors(column_desc)
-                new_color |= SPACE_COLORED
-                if new_color != cell:
-                    LOG.info('Update cell (%i, %i): %i --> %i',
-                             row_index, column_index, cell, new_color)
-                    row[column_index] = new_color
-
-    @property
-    def _color_map_ids(self):
-        return tuple(self.color_map.by_id)
-
-    @classmethod
-    def desc_sum(cls, desc):
-        res = 0
-        prev_color = None
-        for size, color in desc:
-            res += size
-            if color == prev_color:
-                res += 1
-
-            prev_color = color
-
-        return res
 
     @property
     def init_cell_state(self):
-        return from_two_powers(self._color_map_ids)
+        return UNKNOWN
 
-    def cell_solved(self, position):
+    def normalize(self, clues):
+        return tuple(map(normalize_description, clues))
+
+    @classmethod
+    def validate_descriptions_size(cls, descriptions, max_size):
+        for clue in descriptions:
+            need_cells = sum(clue)
+            if clue:
+                # also need at least one space between every two blocks
+                need_cells += len(clue) - 1
+
+            LOG.debug('Clue: %s; Need: %s; Available: %s.',
+                      clue, need_cells, max_size)
+            if need_cells > max_size:
+                raise ValueError('Cannot allocate clue {} in just {} cells'.format(
+                    list(clue), max_size))
+
+    def validate_colors(self, vertical, horizontal):
+        boxes_in_columns = sum(sum(block) for block in vertical)
+        boxes_in_rows = sum(sum(block) for block in horizontal)
+        if boxes_in_rows != boxes_in_columns:
+            raise ValueError('Number of boxes differs: {} (rows) and {} (columns)'.format(
+                boxes_in_rows, boxes_in_columns))
+
+    def is_cell_solved(self, position):
         i, j = position
         cell = self.cells[i][j]
-        return cell in self.colors()
+        return cell != UNKNOWN
 
-    @init_once
-    def colors(self):
-        """
-        Clue colors described the board more precisely than the color_map
-        (ast it can contains excess colors like 'white').
-        """
-        return self._clue_colors(True) | {SPACE_COLORED}
-
-    @init_once
-    def _all_colors_as_single_number(self):
-        """
-        To use in the memoized functions
-        """
-        return from_two_powers(self.colors())
+    @classmethod
+    def colors(cls):
+        return {BOX, SPACE}
 
     @property
     def is_colored(self):
-        return True
+        return False
 
-    # ATTENTION: be aware not to change the result of memoized function
-    # as it can affect all the future invocations
-
-    @staticmethod  # much more efficient memoization
-    @memoized
-    def cell_as_color_set(cell_value):
-        """Represent a numbered color as a set of individual colors"""
-        return set(two_powers(cell_value))
-
-    def cell_colors(self, position):
-        i, j = position
-        cell = self.cells[i][j]
-        return self.cell_as_color_set(cell)
-
-    def unset_state(self, cell_state):
+    def unset_color(self, cell_state):
         row_index, column_index, bad_state = cell_state
-        colors = set(self.cell_colors(cell_state.position))
-
-        bad_state = self.cell_as_color_set(bad_state)
-
-        LOG.debug('(%d, %d) previous state: %s',
-                  row_index, column_index, colors)
-        LOG.debug('Bad states: %s', bad_state)
-
-        new_value = colors - bad_state
-
-        if set() < new_value < colors:
-            LOG.debug('(%d, %d) new state: %s',
-                      row_index, column_index, new_value)
-            new_value = from_two_powers(new_value)
-            self.cells[row_index][column_index] = new_value
-        else:
-            raise ValueError("Cannot unset the colors '%s' from cell %s (%s)" %
-                             (bad_state, (row_index, column_index), colors))
-
-    def set_state(self, cell_state):
-        """
-        Set the color of a cell with given coordinates
-        :type cell_state: CellState
-        """
-
-        row_index, column_index, color = cell_state
-        self.cells[row_index][column_index] = color
-
-    def cell_solution_rate(self, cell):
-        """
-        How the cell's color set is close
-        to the full solution (one color).
-        """
-
-        try:
-            return self._cell_rate_memo[cell]
-        except KeyError:
-            full_colors = self._all_colors_as_single_number()
-            self._cell_rate_memo[cell] = value = _color_cell_solution_rate(cell, full_colors)
-            return value
+        if self.cells[row_index][column_index] != UNKNOWN:
+            raise ValueError('Cannot unset already set cell %s' % ([row_index, column_index]))
+        self.cells[row_index][column_index] = invert(bad_state)
 
     @property
     def is_solved_full(self):
-        """Whether no unsolved cells in a board left"""
-
-        cell_solution_rate_func = self.cell_solution_rate
-
         for row in self.cells:
             for cell in row:
-                if cell_solution_rate_func(cell) != 1:
+                if cell == UNKNOWN:
                     return False
         return True
 
-    def line_solution_rate(self, row, size=None):
-        """
-        How many cells in a row are known to be of particular color
-        """
+    @classmethod
+    def line_solution_rate(cls, row, size=None):
+        """How many cells in a given line are known to be box or space"""
 
         if size is None:
             size = len(row)
 
-        cell_solution_rate_func = self.cell_solution_rate
-
-        solved = sum(cell_solution_rate_func(cell) for cell in row)
-        return solved / size
-
-    def _clue_colors(self, horizontal):
-        """
-        All the different colors appeared
-        in the descriptions (rows or columns)
-        """
-        if horizontal:
-            descriptions = self.rows_descriptions
-        else:
-            descriptions = self.columns_descriptions
-
-        colors = set()
-        for desc in descriptions:
-            colors.update(color for size, color in desc)
-        return colors
-
-    def normalize(self, rows):
-        """
-        Presents given rows in standard format
-        """
-        return tuple(normalize_description_colored(row, self.color_map)
-                     for row in rows)
-
-    def validate(self):
-        self.validate_headers(self.columns_descriptions, self.height)
-        self.validate_headers(self.rows_descriptions, self.width)
-
-        horizontal_colors = self._clue_colors(True)
-        vertical_colors = self._clue_colors(False)
-
-        if horizontal_colors != vertical_colors:
-            raise ValueError('Colors differ: {} (rows) and {} (columns)'.format(
-                horizontal_colors, vertical_colors))
-
-        not_defined_colors = horizontal_colors - set(self._color_map_ids)
-        if not_defined_colors:
-            raise ValueError('Some colors not defined: {}'.format(
-                tuple(not_defined_colors)))
-
-        horizontal_colors = defaultdict(int)
-        for block in self.rows_descriptions:
-            for block_len, block_color in block:
-                horizontal_colors[block_color] += block_len
-
-        vertical_colors = defaultdict(int)
-        for block in self.columns_descriptions:
-            for block_len, block_color in block:
-                vertical_colors[block_color] += block_len
-
-        if horizontal_colors != vertical_colors:
-            horizontal_colors = set(horizontal_colors.items())
-            vertical_colors = set(vertical_colors.items())
-
-            raise ValueError('Color boxes differ: {} (rows) and {} (columns)'.format(
-                horizontal_colors, vertical_colors))
+        return sum(1 for cell in row if cell != UNKNOWN) / size
 
     @classmethod
-    def validate_headers(cls, rows, max_size):
-        for row in rows:
-            need_cells = 0
+    def cell_solution_rate(cls, cell):
+        """Whether the cell solved or not"""
 
-            prev_color = None
-            for number, color in row:
-                if prev_color == color:
-                    need_cells += 1
-                need_cells += number
-                prev_color = color
+        if cell == UNKNOWN:
+            return 0
+        return 1
 
-            LOG.debug('Row: %s; Need: %s; Available: %s.',
-                      row, need_cells, max_size)
-            if need_cells > max_size:
-                raise ValueError('Cannot allocate row {} in just {} cells'.format(
-                    list(row), max_size))
+    @classmethod
+    def desc_sum(cls, desc):
+        if not desc:
+            return 0
 
-    def symbol_for_color_id(self, color_id):
-        """
-        Get the ASCII character to draw
-        for given color based on color map
-        """
-        color = self.color_map.find_by_id(color_id)
-        if not color:
-            color = self.color_map.find_by_name(color_id)
-
-        if color:
-            return color.symbol
-
-        return None
-
-    def rgb_for_color_name(self, color_name):
-        """
-        Get the RGB triplet for given color based on color map
-        """
-        color = self.color_map.find_by_name(color_name)
-        if not color:
-            color = self.color_map.find_by_id(color_name)
-
-        if color:
-            return color.svg_name
-
-        return None
-
-    def color_id_by_name(self, color_name):
-        """Return the color ID for given string name"""
-
-        if color_name in self.color_map:
-            return self.color_map[color_name].id_
-
-        return None
+        return sum(desc) + (len(desc) - 1)
 
     @classmethod
     def _space_value(cls):
-        return SPACE_COLORED
+        return SPACE
 
     @classmethod
     def _reduce_orthogonal_description(cls, col_desc, cell_value, first_rows=False):
+        assert cell_value == BOX
         if first_rows:
-            block = col_desc[0]  # type: ColorBlock
-        else:
-            block = col_desc[-1]  # type: ColorBlock
-
-        assert block.color == cell_value
-
-        if block.size == 1:
-            if first_rows:
+            first_block = col_desc[0]
+            if first_block == 1:
                 col_desc.pop(0)
             else:
-                col_desc.pop()
+                col_desc[0] = first_block - 1
         else:
-            new_block = ColorBlock(block.size - 1, cell_value)
-            if first_rows:
-                col_desc[0] = new_block
+            last_block = col_desc[-1]
+            if last_block == 1:
+                col_desc.pop()
             else:
-                col_desc[-1] = new_block
+                col_desc[-1] = last_block - 1
 
-    def _create_single_colored_board(self, box_color):
+
+class ReduceColorToBlackMixin(MultipleSolutionGrid, ABC):
+    """
+    Allow to represent color board as a black-and white board
+    by creating additional underlying board with the colors replaced to BOX and SPACE.
+    """
+
+    def create_single_colored_board(self, box_color):
+        """
+        Create an equivalent BlackBoard from the current board
+        """
         columns_descriptions = []
         for col_desc in self.columns_descriptions:
             # filter out any other colors
@@ -1085,7 +939,7 @@ class ColoredBoard(Board):
             ]
             cells.append(new_row)
 
-        new_board = Board(columns_descriptions, rows_descriptions)
+        new_board = BlackBoard(columns_descriptions, rows_descriptions)
         new_board.restore(cells)
 
         self._assign_callbacks_to_single_colored_board(new_board, color_mapping)
@@ -1171,6 +1025,286 @@ class ColoredBoard(Board):
         new_board.on_solution_found = on_solution_found
         new_board.on_restored = on_restored
 
+
+class ColorBoard(BaseBoard, ReduceColorToBlackMixin):
+    """
+    The board with three or more colors (not simple black and white)
+    """
+
+    def __init__(self, columns, rows, color_map, cells=None, **renderer_params):
+        """
+        :type color_map: ColorMap
+        """
+        self.color_map = color_map
+        super(ColorBoard, self).__init__(columns, rows, cells=cells, **renderer_params)
+
+        self._cell_rate_memo = {}
+        self._reduce_colors()
+
+    @property
+    def init_cell_state(self):
+        return from_two_powers(self._color_map_ids)
+
+    def normalize(self, clues):
+        return tuple(normalize_description_colored(row, self.color_map)
+                     for row in clues)
+
+    @classmethod
+    def validate_descriptions_size(cls, descriptions, max_size):
+        """
+        Validate that all the clues can fit into the grid
+        """
+
+        for clue in descriptions:
+            need_cells = 0
+
+            prev_color = None
+            for number, color in clue:
+                if prev_color == color:
+                    need_cells += 1
+                need_cells += number
+                prev_color = color
+
+            LOG.debug('Clue: %s; Need: %s; Available: %s.',
+                      clue, need_cells, max_size)
+            if need_cells > max_size:
+                raise ValueError('Cannot allocate clue {} in just {} cells'.format(
+                    list(clue), max_size))
+
+    def validate_colors(self, vertical, horizontal):
+        horizontal_colors = self._clue_colors(True)
+        vertical_colors = self._clue_colors(False)
+
+        if horizontal_colors != vertical_colors:
+            raise ValueError('Colors differ: {} (rows) and {} (columns)'.format(
+                horizontal_colors, vertical_colors))
+
+        not_defined_colors = horizontal_colors - set(self._color_map_ids)
+        if not_defined_colors:
+            raise ValueError('Some colors not defined: {}'.format(
+                tuple(not_defined_colors)))
+
+        vertical_colors = defaultdict(int)
+        for block in vertical:
+            for block_len, block_color in block:
+                vertical_colors[block_color] += block_len
+
+        horizontal_colors = defaultdict(int)
+        for block in horizontal:
+            for block_len, block_color in block:
+                horizontal_colors[block_color] += block_len
+
+        if horizontal_colors != vertical_colors:
+            horizontal_colors = set(horizontal_colors.items())
+            vertical_colors = set(vertical_colors.items())
+
+            raise ValueError('Color boxes differ: {} (rows) and {} (columns)'.format(
+                horizontal_colors, vertical_colors))
+
+    @init_once
+    def colors(self):
+        """
+        Clue colors described the board more precisely than the color_map
+        (as it can contain excess colors like 'white').
+        """
+        return self._clue_colors(True) | {SPACE_COLORED}
+
+    def unset_color(self, cell_state):
+        row_index, column_index, bad_state = cell_state
+        colors = set(self.cell_colors(cell_state.position))
+
+        bad_state = self.cell_as_color_set(bad_state)
+
+        LOG.debug('(%d, %d) previous state: %s',
+                  row_index, column_index, colors)
+        LOG.debug('Bad states: %s', bad_state)
+
+        new_value = colors - bad_state
+
+        if set() < new_value < colors:
+            LOG.debug('(%d, %d) new state: %s',
+                      row_index, column_index, new_value)
+            new_value = from_two_powers(new_value)
+            self.cells[row_index][column_index] = new_value
+        else:
+            raise ValueError("Cannot unset the colors {!r} from cell {} ({})".format(
+                bad_state, (row_index, column_index), colors))
+
+    @property
+    def is_colored(self):
+        return True
+
+    @property
+    def is_solved_full(self):
+        cell_solution_rate_func = self.cell_solution_rate
+
+        for row in self.cells:
+            for cell in row:
+                if cell_solution_rate_func(cell) != 1:
+                    return False
+        return True
+
+    def line_solution_rate(self, row, size=None):
+        """
+        How many cells in a row are known to be of particular color
+        """
+
+        if size is None:
+            size = len(row)
+
+        cell_solution_rate_func = self.cell_solution_rate
+
+        solved = sum(cell_solution_rate_func(cell) for cell in row)
+        return solved / size
+
+    def cell_solution_rate(self, cell):
+        """
+        How the cell's color set is close
+        to the full solution (one color).
+        """
+
+        try:
+            return self._cell_rate_memo[cell]
+        except KeyError:
+            full_colors = self._all_colors_as_single_number()
+            self._cell_rate_memo[cell] = value = _color_cell_solution_rate(cell, full_colors)
+            return value
+
+    def is_cell_solved(self, position):
+        i, j = position
+        cell = self.cells[i][j]
+        return cell in self.colors()
+
+    def cell_colors(self, position):
+        i, j = position
+        cell = self.cells[i][j]
+        return self.cell_as_color_set(cell)
+
+    @classmethod
+    def _space_value(cls):
+        return SPACE_COLORED
+
+    @classmethod
+    def _reduce_orthogonal_description(cls, col_desc, cell_value, first_rows=False):
+        if first_rows:
+            block = col_desc[0]  # type: ColorBlock
+        else:
+            block = col_desc[-1]  # type: ColorBlock
+
+        assert block.color == cell_value
+
+        if block.size == 1:
+            if first_rows:
+                col_desc.pop(0)
+            else:
+                col_desc.pop()
+        else:
+            new_block = ColorBlock(block.size - 1, cell_value)
+            if first_rows:
+                col_desc[0] = new_block
+            else:
+                col_desc[-1] = new_block
+
+    @classmethod
+    def desc_sum(cls, desc):
+        res = 0
+        prev_color = None
+        for size, color in desc:
+            res += size
+            if color == prev_color:
+                res += 1
+
+            prev_color = color
+
+        return res
+
+    def _reduce_colors(self):
+        """
+        For every cell reduce the possible colors to only those
+        appeared on the corresponding row and column.
+        """
+        for row_index, (row, row_desc) in enumerate(zip(self.cells, self.rows_descriptions)):
+            for column_index, (cell, column_desc) in enumerate(zip(row, self.columns_descriptions)):
+                new_color = self._desc_colors(row_desc) & self._desc_colors(column_desc)
+                new_color |= SPACE_COLORED
+                if new_color != cell:
+                    LOG.info('Update cell (%i, %i): %i --> %i',
+                             row_index, column_index, cell, new_color)
+                    row[column_index] = new_color
+
+    @property
+    def _color_map_ids(self):
+        return tuple(self.color_map.by_id)
+
+    def _clue_colors(self, horizontal):
+        """
+        All the different colors appeared
+        in the descriptions (rows or columns)
+        """
+        if horizontal:
+            descriptions = self.rows_descriptions
+        else:
+            descriptions = self.columns_descriptions
+
+        colors = set()
+        for desc in descriptions:
+            colors.update(color for size, color in desc)
+        return colors
+
+    # ATTENTION: be aware not to change the result of memoized function
+    # as it can affect all the future invocations
+    @staticmethod  # much more efficient memoization (compared to @classmethod)
+    @memoized
+    def cell_as_color_set(cell_value):
+        """Represent a numbered color as a set of individual colors"""
+        return set(two_powers(cell_value))
+
+    @init_once
+    def _all_colors_as_single_number(self):
+        """
+        To use in the memoized functions
+        """
+        return from_two_powers(self.colors())
+
+    @classmethod
+    def _desc_colors(cls, description):
+        return from_two_powers(block.color for block in description)
+
+    def symbol_for_color_id(self, color_id):
+        """
+        Get the ASCII character to draw
+        for given color based on color map
+        """
+        color = self.color_map.find_by_id(color_id)
+        if not color:
+            color = self.color_map.find_by_name(color_id)
+
+        if color:
+            return color.symbol
+
+        return None
+
+    def rgb_for_color_name(self, color_name):
+        """
+        Get the RGB triplet for given color based on color map
+        """
+        color = self.color_map.find_by_name(color_name)
+        if not color:
+            color = self.color_map.find_by_id(color_name)
+
+        if color:
+            return color.svg_name
+
+        return None
+
+    def color_id_by_name(self, color_name):
+        """Return the color ID for given string name"""
+
+        if color_name in self.color_map:
+            return self.color_map[color_name].id_
+
+        return None
+
     def reduce_to_single_color(self):
         """
         Try to represent the unsolved cells
@@ -1198,7 +1332,7 @@ class ColoredBoard(Board):
 
         mapping = {box_color: BOX, SPACE_COLORED: SPACE}
 
-        return self._create_single_colored_board(box_color), mapping
+        return self.create_single_colored_board(box_color), mapping
 
 
 def _color_cell_solution_rate(cell, all_colors):
@@ -1216,8 +1350,8 @@ def _color_cell_solution_rate(cell, all_colors):
         b) when the cell is solved
            rate = (N - 1) / (N - 1) = 1
     """
-    all_colors = ColoredBoard.cell_as_color_set(all_colors)
-    cell_colors = ColoredBoard.cell_as_color_set(cell) & all_colors
+    all_colors = ColorBoard.cell_as_color_set(all_colors)
+    cell_colors = ColorBoard.cell_as_color_set(cell) & all_colors
     current_size = len(cell_colors)
 
     if current_size == 1:
@@ -1236,7 +1370,11 @@ def _color_cell_solution_rate(cell, all_colors):
     return normalized_rate
 
 
-class ColoredNumpyBoard(ColoredBoard, NumpyBoard):
+class NumpyBlackBoard(BlackBoard, NumpyBoard):
+    """Black-and-white board that uses numpy matrix to store the cells"""
+
+
+class NumpyColorBoard(ColorBoard, NumpyBoard):
     """Colored board that uses numpy matrix to store the cells"""
 
 
@@ -1262,15 +1400,15 @@ def make_board(*args, **kwargs):
 
     if len(args) == 2:
         try:
-            return NumpyBoard(*args, **kwargs)
+            return NumpyBlackBoard(*args, **kwargs)
         except AttributeError:
-            return Board(*args, **kwargs)
+            return BlackBoard(*args, **kwargs)
 
     elif len(args) == 3:
 
         try:
-            return ColoredNumpyBoard(*args, **kwargs)
+            return NumpyColorBoard(*args, **kwargs)
         except AttributeError:
-            return ColoredBoard(*args, **kwargs)
+            return ColorBoard(*args, **kwargs)
 
     raise ValueError('Bad number of *args')

@@ -8,7 +8,7 @@ import pytest
 
 from pynogram.core import propagation
 from pynogram.core.board import (
-    Board,
+    BlackBoard,
     make_board,
 )
 from pynogram.core.common import (
@@ -44,7 +44,7 @@ class TestRenderer(object):
 
     def test_board_changed(self, renderer):
         prev_board = id(renderer.board)
-        renderer.board_init(Board([], []))
+        renderer.board_init(BlackBoard([], []))
         assert prev_board != id(renderer.board)
 
 
@@ -106,7 +106,7 @@ class TestConsoleBoard(object):
         cols = [1] * width + [0, 1]
         rows = [[width, 1]]
 
-        b = Board(cols, rows, renderer=BaseAsciiRenderer, stream=stream)
+        b = BlackBoard(cols, rows, renderer=BaseAsciiRenderer, stream=stream)
         b.draw()
 
         assert stream.getvalue().rstrip() == '\n'.join([
@@ -203,7 +203,7 @@ class TestAsciiBoard(object):
     def one_row_table(cls, width, stream):
         cols = [1] * width
         rows = [width]
-        return Board(cols, rows, renderer=AsciiRenderer, stream=stream)
+        return BlackBoard(cols, rows, renderer=AsciiRenderer, stream=stream)
 
     def test_draw_two_digits(self, stream):
         b = self.one_row_table(13, stream)
@@ -288,7 +288,7 @@ class TestSvg(object):
     def one_row_table(cls, width, stream):
         cols = [1] * width
         rows = [width]
-        return Board(cols, rows, renderer=SvgRenderer, stream=stream)
+        return BlackBoard(cols, rows, renderer=SvgRenderer, stream=stream)
 
     def test_small_table_solved(self, stream):
         b = self.one_row_table(2, stream)

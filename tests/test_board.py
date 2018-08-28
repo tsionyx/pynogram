@@ -10,7 +10,7 @@ import pytest
 from pynogram.core import propagation
 from pynogram.core.backtracking import Solver
 from pynogram.core.board import (
-    Board, make_board,
+    BlackBoard, make_board,
 )
 from pynogram.core.color import (
     ColorMap, Color,
@@ -92,20 +92,20 @@ class TestBoard(object):
 
     def test_bad_row_value(self):
         with pytest.raises(ValueError) as ei:
-            Board(columns=[2.0, 1], rows=[1, 2])
+            BlackBoard(columns=[2.0, 1], rows=[1, 2])
 
         assert str(ei.value), 'Bad row: 2.0'
 
     def test_columns_and_rows_does_not_match(self):
         with pytest.raises(ValueError) as ei:
-            Board(columns=[1, 1], rows=[1, 2])
+            BlackBoard(columns=[1, 1], rows=[1, 2])
 
         assert str(ei.value), \
             'Number of boxes differs: 3 (rows) and 2 (columns)'
 
     def test_row_does_not_fit(self):
         with pytest.raises(ValueError) as ei:
-            Board(columns=[1, 1], rows=[1, [1, 1]])
+            BlackBoard(columns=[1, 1], rows=[1, [1, 1]])
 
         assert str(ei.value), \
             'Cannot allocate row [1, 1] in just 2 cells'
@@ -170,7 +170,7 @@ class TestSolution(object):
             '1 1',
         ]
 
-        board = Board(columns, rows, renderer=AsciiRenderer, stream=stream)
+        board = BlackBoard(columns, rows, renderer=AsciiRenderer, stream=stream)
         propagation.solve(board)
         board.draw()
 
@@ -199,7 +199,7 @@ class TestSolution(object):
 
         renderer = AsciiRendererWithBold(stream=stream)
         renderer.BOLD_LINE_EVERY = 2
-        board = Board(columns, rows, renderer=renderer)
+        board = BlackBoard(columns, rows, renderer=renderer)
         propagation.solve(board)
         board.draw()
 
@@ -224,13 +224,13 @@ class TestSolution(object):
         columns = [3, 1]
         rows = [1, 1, 2]
 
-        board = Board(columns, rows)
+        board = BlackBoard(columns, rows)
         rows_updated = []
         cols_updated = []
         rounds = []
 
-        board.on_row_update = lambda **kwargs: rows_updated.append(kwargs['row_index'])
-        board.on_column_update = lambda **kwargs: cols_updated.append(kwargs['column_index'])
+        board.on_row_update = lambda index, **kwargs: rows_updated.append(index)
+        board.on_column_update = lambda index, **kwargs: cols_updated.append(index)
         board.on_solution_round_complete = lambda **kwargs: rounds.append(1)
         propagation.solve(board)
 
@@ -280,7 +280,7 @@ class TestContradictions(object):
 
     def test_smile(self):
         columns, rows = read_example('smile.txt')
-        board = Board(columns, rows)
+        board = BlackBoard(columns, rows)
 
         propagation.solve(board)
         assert is_close(board.solution_rate, 0.6)
@@ -300,7 +300,7 @@ class TestContradictions(object):
         columns = [3, 1, 2, 2, '1 1', '1 1']
         rows = ['1 2', 1, 1, 3, 2, 2]
 
-        board = Board(columns, rows)
+        board = BlackBoard(columns, rows)
 
         propagation.solve(board)
         assert board.solution_rate == 0
@@ -320,7 +320,7 @@ class TestContradictions(object):
         # with the same effect on test coverage
 
         columns = rows = [[1, 1, 1, 1]] * 8
-        board = Board(columns, rows)
+        board = BlackBoard(columns, rows)
 
         propagation.solve(board)
         assert board.solution_rate == 0
@@ -424,7 +424,7 @@ class TestMakeBoard(object):
         ]
 
         b = make_board(columns, rows)
-        assert isinstance(b, Board)
+        assert isinstance(b, BlackBoard)
 
     # noinspection PyShadowingNames
     def test_colored(self, color_board):
@@ -495,7 +495,7 @@ class TestColorBoard(object):
         for color in [('r', 'red', 'X'), ('b', 'blue', '*')]:
             colors.make_color(*color)
 
-        with pytest.raises(ValueError, match='Cannot allocate row .+ in just 3 cells'):
+        with pytest.raises(ValueError, match='Cannot allocate clue .+ in just 3 cells'):
             make_board(columns, rows, colors)
 
     def test_normalize(self):

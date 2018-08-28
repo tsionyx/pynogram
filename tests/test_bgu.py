@@ -5,7 +5,7 @@ from __future__ import unicode_literals, print_function
 import pytest
 
 from pynogram.core import propagation
-from pynogram.core.board import Board
+from pynogram.core.board import BlackBoard
 from pynogram.core.common import NonogramError
 from pynogram.core.line import solve_line
 from pynogram.core.line.bgu import BguColoredSolver
@@ -28,7 +28,7 @@ class TestBguSolver(object):
     def test_solve_board(self):
         columns, rows = read_example('w')
 
-        board = Board(columns, rows)
+        board = BlackBoard(columns, rows)
 
         propagation.solve(board, methods='bgu')
         assert board.is_solved_full

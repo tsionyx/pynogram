@@ -4,7 +4,7 @@ from __future__ import unicode_literals, print_function
 
 # noinspection PyProtectedMember
 from pynogram.core.board import (
-    Board,
+    BlackBoard,
     _solve_on_space_hints,
 )
 from pynogram.core.common import (
@@ -20,7 +20,7 @@ def test_space_hints_solving():
         '1 1',
         '1 1',
     ]
-    board = Board(columns, rows)
+    board = BlackBoard(columns, rows)
     _solve_on_space_hints(board, [[0], [0, 1], [0, 1]])
     assert board.cells == [
         [BOX, BOX, BOX],

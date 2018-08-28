@@ -6,7 +6,7 @@ import pytest
 
 from pynogram.core import propagation
 from pynogram.core.board import (
-    Board, make_board,
+    BlackBoard, make_board,
 )
 from pynogram.core.color import ColorBlock
 from pynogram.core.common import (
@@ -39,7 +39,7 @@ class TestFastSolver(object):
     def test_solve_board(self):
         columns, rows = read_example('p')
 
-        board = Board(columns, rows)
+        board = BlackBoard(columns, rows)
 
         propagation.solve(board, methods='efficient')
         assert board.is_solved_full

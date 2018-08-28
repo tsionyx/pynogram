@@ -10,7 +10,7 @@ from six.moves import StringIO
 from six.moves.configparser import NoSectionError
 
 from pynogram.core import propagation
-from pynogram.core.board import Board
+from pynogram.core.board import BlackBoard
 from pynogram.core.common import clues
 from pynogram.core.propagation import solve
 from pynogram.core.renderer import BaseAsciiRenderer
@@ -27,7 +27,7 @@ class TestReader(object):
         columns, rows = read_example('hello.txt')
 
         stream = StringIO()
-        board = Board(columns, rows, renderer=BaseAsciiRenderer, stream=stream)
+        board = BlackBoard(columns, rows, renderer=BaseAsciiRenderer, stream=stream)
         propagation.solve(board)
         board.draw()
 

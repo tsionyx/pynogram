@@ -5,7 +5,7 @@ from __future__ import unicode_literals, print_function
 import pytest
 
 from pynogram.core import propagation
-from pynogram.core.board import Board
+from pynogram.core.board import BlackBoard
 from pynogram.core.common import (
     BOX, SPACE,
     NonogramError,
@@ -73,7 +73,7 @@ class TestFastSolver(object):
     def test_solve_board(self):
         columns, rows = read_example('w')
 
-        board = Board(columns, rows)
+        board = BlackBoard(columns, rows)
 
         propagation.solve(board, methods='simpson')
         assert board.is_solved_full
