@@ -145,3 +145,33 @@ def memoized_two_args(func, cache=None):  # pragma: no cover
             return value
 
     return wrapper
+
+
+def init_once(func):
+    """
+    Implements common behaviour
+
+    def some_param(self):
+        if self._some_param is None:
+            self._some_param = ... # init code
+
+        return self._some_param
+    """
+
+    func_name = func.__name__
+    result_member = '__result_' + func_name
+
+    @wraps(func)
+    def wrapper(arg):
+        self = arg
+        try:
+            return getattr(self, result_member)
+        except AttributeError:
+            res = func(self)
+
+            # only save the result if `func` is an instance or class method
+            if hasattr(arg, func_name):
+                setattr(self, result_member, res)
+            return res
+
+    return wrapper

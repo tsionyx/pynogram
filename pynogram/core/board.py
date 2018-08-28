@@ -33,12 +33,12 @@ from pynogram.core.color import (
     ColorBlock,
 )
 from pynogram.core.renderer import Renderer
+from pynogram.utils.cache import init_once
 from pynogram.utils.iter import avg
 from pynogram.utils.other import (
     two_powers, from_two_powers,
     get_named_logger,
 )
-from pynogram.utils.uniq import init_once
 
 LOG = get_named_logger(__name__, __file__)
 
