@@ -252,18 +252,17 @@ class TestSolution(object):
     def test_various_modes(self):
         solutions = dict()
 
-        for parallel in (False, True):
-            for contradiction_mode in (False, True):
-                stream = StringIO()
-                board = self.board(stream=stream)
-                start = time.time()
+        for contradiction_mode in (False, True):
+            stream = StringIO()
+            board = self.board(stream=stream)
+            start = time.time()
 
-                propagation.solve(board, parallel=parallel,
-                                  contradiction_mode=contradiction_mode)
-                solutions[(parallel, contradiction_mode)] = (
-                    stream.getvalue().rstrip(), time.time() - start)
+            propagation.solve(board,
+                              contradiction_mode=contradiction_mode)
+            solutions[contradiction_mode] = (
+                stream.getvalue().rstrip(), time.time() - start)
 
-        assert len(solutions) == 4
+        assert len(solutions) == 2
         assert len(set(v[0] for v in solutions.values())) == 1
 
         # multiprocessing should be faster in general

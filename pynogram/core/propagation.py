@@ -89,7 +89,7 @@ def solve_row(board, index, is_column, method):
     return new_jobs
 
 
-def solve(board, parallel=False,
+def solve(board,
           row_indexes=None, column_indexes=None,
           contradiction_mode=False, methods=None):
     """
@@ -117,7 +117,6 @@ def solve(board, parallel=False,
     for method in methods:
         cells_solved, jobs = _solve_with_method(
             board, method,
-            parallel=parallel,
             row_indexes=row_indexes,
             column_indexes=column_indexes,
             contradiction_mode=contradiction_mode)
@@ -130,7 +129,7 @@ def solve(board, parallel=False,
 
 
 def _solve_with_method(
-        board, method, parallel=False,
+        board, method,
         row_indexes=None, column_indexes=None,
         contradiction_mode=False):
     """Solve the nonogram to the most using given method"""
@@ -144,13 +143,8 @@ def _solve_with_method(
         if not contradiction_mode and board.is_solved_full:
             return 0, ()
 
-    lines_solved = 0
-
-    if parallel:
-        # TODO: add parallel logic here
-        LOG.info('Using several processes to solve')
-
     start = time.time()
+    lines_solved = 0
 
     # every job is a tuple (is_column, index)
     #
