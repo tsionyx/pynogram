@@ -6,8 +6,6 @@ Defines a board of nonogram game
 from __future__ import unicode_literals, print_function
 
 import json
-import logging
-import os
 import traceback
 # noinspection PyCompatibility
 from concurrent.futures import ThreadPoolExecutor
@@ -15,16 +13,13 @@ from concurrent.futures import ThreadPoolExecutor
 # import raven
 import tornado.web
 
+from pynogram.utils.other import get_named_logger
 from pynogram.utils.other import (
     get_uptime,
     get_version,
 )
 
-_LOG_NAME = __name__
-if _LOG_NAME == '__main__':  # pragma: no cover
-    _LOG_NAME = os.path.basename(__file__)
-
-LOG = logging.getLogger(_LOG_NAME)
+LOG = get_named_logger(__name__, __file__)
 SENTRY_DSN = 'https://user:password@sentry.io/project-id'
 
 

@@ -5,9 +5,6 @@ Defines the basic terms and functions for nonogram game
 
 from __future__ import unicode_literals, print_function
 
-import logging
-import os
-
 try:
     # available since 3.4
     from enum import Enum
@@ -24,12 +21,9 @@ from pynogram.core.color import (
     Color, ColorBlock,
 )
 from pynogram.utils.iter import list_replace
+from pynogram.utils.other import get_named_logger
 
-_LOG_NAME = __name__
-if _LOG_NAME == '__main__':  # pragma: no cover
-    _LOG_NAME = os.path.basename(__file__)
-
-LOG = logging.getLogger(_LOG_NAME)
+LOG = get_named_logger(__name__, __file__)
 
 
 class NonogramError(ValueError):

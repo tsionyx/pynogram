@@ -9,7 +9,6 @@ http://window.edu.ru/resource/781/57781
 from __future__ import unicode_literals, print_function
 
 import logging
-import os
 
 from six import (
     iteritems, itervalues,
@@ -28,13 +27,10 @@ from pynogram.utils import fsm
 from pynogram.utils.cache import Cache
 from pynogram.utils.other import (
     two_powers, from_two_powers,
+    get_named_logger,
 )
 
-_LOG_NAME = __name__
-if _LOG_NAME == '__main__':  # pragma: no cover
-    _LOG_NAME = os.path.basename(__file__)
-
-LOG = logging.getLogger(_LOG_NAME)
+LOG = get_named_logger(__name__, __file__)
 
 fsm.LOG.setLevel(logging.WARNING)
 

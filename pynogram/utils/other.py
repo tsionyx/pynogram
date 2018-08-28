@@ -179,3 +179,21 @@ def from_two_powers(numbers):
         result |= num
 
     return result
+
+
+def get_named_logger(name__, file__, auto_config_when_main=True):
+    """
+    Choose the best name for logger based on how the file is called.
+    When the file is run with interpreter like `python foo.py`,
+    the logger will be named 'foo.py'.
+    When the file imported by another module,
+    the logger will be named 'parent_module.foo'.
+
+    You should always call it with the __name__ and __file__ arguments.
+    """
+    if name__ == '__main__':  # pragma: no cover
+        name__ = os.path.basename(file__)
+        if auto_config_when_main:
+            logging.basicConfig()
+
+    return logging.getLogger(name__)

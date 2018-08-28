@@ -6,7 +6,6 @@ to visualize nonogram solutions
 
 from __future__ import unicode_literals, print_function
 
-import logging
 import os
 import socket
 from io import StringIO
@@ -27,6 +26,7 @@ from pynogram.reader import (
     Pbn, PbnNotFoundError,
     NonogramsOrg,
 )
+from pynogram.utils.other import get_named_logger
 from .common import (
     BaseHandler,
     HelloHandler,
@@ -34,8 +34,8 @@ from .common import (
     LongPollNotifier,
 )
 
-_LOG_NAME = __name__
-LOG = logging.getLogger(_LOG_NAME)
+LOG = get_named_logger(__name__, __file__)
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 

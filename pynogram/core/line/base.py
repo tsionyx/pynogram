@@ -3,8 +3,6 @@
 
 from __future__ import unicode_literals, print_function
 
-import logging
-
 from six import (
     iteritems, itervalues,
     add_metaclass,
@@ -15,14 +13,6 @@ from pynogram.core.common import (
     SPACE_COLORED,
 )
 from pynogram.utils.cache import Cache
-
-
-# TODO: automatically set the log level for each registered solver
-def _set_solvers_log_level(level=logging.WARNING):
-    from pynogram.core.line import machine, simpson
-
-    machine.LOG.setLevel(level)
-    simpson.LOG.setLevel(level)
 
 
 class TwoLayerCache(Cache):
@@ -190,6 +180,3 @@ class ColoredSolver(BaseLineSolver):  # pragma: no cover
             solved = space_t * first_non_space + solved + space_t * last_non_space
 
         return solved
-
-
-_set_solvers_log_level()

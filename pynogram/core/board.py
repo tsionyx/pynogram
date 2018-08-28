@@ -5,8 +5,6 @@ Define a board of nonogram game
 
 from __future__ import unicode_literals, print_function, division
 
-import logging
-import os
 from abc import ABC
 from collections import (
     defaultdict,
@@ -38,14 +36,11 @@ from pynogram.core.renderer import Renderer
 from pynogram.utils.iter import avg
 from pynogram.utils.other import (
     two_powers, from_two_powers,
+    get_named_logger,
 )
 from pynogram.utils.uniq import init_once
 
-_LOG_NAME = __name__
-if _LOG_NAME == '__main__':  # pragma: no cover
-    _LOG_NAME = os.path.basename(__file__)
-
-LOG = logging.getLogger(_LOG_NAME)
+LOG = get_named_logger(__name__, __file__)
 
 
 class CellPosition(namedtuple('Cell', 'row_index column_index')):

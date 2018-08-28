@@ -3,6 +3,8 @@
 
 from __future__ import unicode_literals, print_function
 
+import logging
+
 from pynogram.core.common import (
     normalize_row, normalize_description,
 )
@@ -53,3 +55,12 @@ def solve_line(desc, line, method='reverse_tracking', normalized=False):
         raise KeyError("Cannot find solver '%s'" % method)
 
     return solver.solve(desc, line)
+
+
+# TODO: automatically set the log level for each registered solver
+def _set_solvers_log_level(level=logging.WARNING):
+    machine.LOG.setLevel(level)
+    simpson.LOG.setLevel(level)
+
+
+_set_solvers_log_level()
