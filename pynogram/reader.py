@@ -27,7 +27,10 @@ from pynogram.core.color import (
     ColorMap,
     ColorBlock,
 )
-from pynogram.core.common import clues
+from pynogram.core.common import (
+    clues,
+    BLOTTED_BLOCK,
+)
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -189,15 +192,15 @@ class Pbn(object):
 
     @classmethod
     def _parse_clue(cls, clue, default_color=None):
-        if default_color:
-            return tuple(
-                (
-                    int(block.text),
-                    block.attrib.get('color', default_color)
-                )
-                for block in clue.findall('count'))
+        for block in clue.findall('count'):
+            size = int(block.text)
+            if size == 0:
+                size = BLOTTED_BLOCK
 
-        return tuple(int(block.text) for block in clue.findall('count'))
+            if default_color:
+                yield size, block.attrib.get('color', default_color)
+            else:
+                yield size
 
     @classmethod
     def read(cls, _id):
@@ -223,9 +226,9 @@ class Pbn(object):
             puzzle = tree.findall('.//puzzle[@type="grid"]')[0]
             default_color = puzzle.attrib['defaultcolor']
 
-        columns = [cls._parse_clue(clue, default_color)
+        columns = [tuple(cls._parse_clue(clue, default_color))
                    for clue in tree.findall('.//clues[@type="columns"]/line')]
-        rows = [cls._parse_clue(clue, default_color)
+        rows = [tuple(cls._parse_clue(clue, default_color))
                 for clue in tree.findall('.//clues[@type="rows"]/line')]
 
         if new_colors < 3:

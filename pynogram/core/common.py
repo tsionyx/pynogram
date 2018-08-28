@@ -41,6 +41,11 @@ class NonogramError(ValueError):
 
 UNKNOWN = None  # this cell has to be solved
 
+# The size of the block is unknown
+# (try to solve by hand https://webpbn.com/19407 to grasp the concept)
+# Intentionally made not an integer to prevent treating it like a number.
+BLOTTED_BLOCK = object()
+
 
 class BlackAndWhite(Enum):
     """
