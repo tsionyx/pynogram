@@ -20,7 +20,7 @@ function requestBoard() {
     $.ajax({
         url: "/board/status/" + board_mode + '/' + board_id,
         success: function(result){
-            board = result["board"];
+            var board = result["board"];
             delete result["board"];
             $("#board").html(board);
 

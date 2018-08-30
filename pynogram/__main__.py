@@ -7,6 +7,7 @@ The program's entry point
 from __future__ import unicode_literals, print_function
 
 import json
+import locale
 import logging
 import platform
 from argparse import ArgumentParser
@@ -142,6 +143,12 @@ class PagerWithUptime(StringsPager):
 def draw_solution(board_def, draw_final=False, box_symbol=None,
                   curses_animation=False, **solver_args):
     """Solve the given board in terminal with animation"""
+
+    try:
+        # to correctly print non-ASCII box symbols
+        locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+    except locale.Error:
+        pass
 
     if curses_animation:
         if draw_final:
