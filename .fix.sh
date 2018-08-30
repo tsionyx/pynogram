@@ -138,10 +138,10 @@ case "$1" in
         ;;
 
     --unicode)
-        # disable the glob (noglob)
-        set -f
+        # disable the glob
+        set -o noglob
         check_unicode
-        set +f
+        set +o noglob
         ;;
 
     *)

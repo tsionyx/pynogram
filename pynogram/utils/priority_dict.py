@@ -95,20 +95,3 @@ class PriorityDict(dict):
 
         while self:
             yield self.pop_smallest()
-
-# class PriorityDict2(pqdict):
-#     """
-#     Wrapper for https://github.com/nvictus/priority-queue-dictionary
-#     """
-#
-#     def smallest(self):
-#         """Return the item with the lowest priority"""
-#         return self.topitem()
-#
-#     def pop_smallest(self):
-#         """Return the item with the lowest priority and remove it"""
-#         return self.popitem()
-#
-#     def sorted_iter(self):
-#         """Sorted iterator of the priority dictionary items"""
-#         return self.popitems()

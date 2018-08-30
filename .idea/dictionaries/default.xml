@@ -9,6 +9,7 @@
       <w>coreutils</w>
       <w>crlf</w>
       <w>defs</w>
+      <w>distro</w>
       <w>expectedly</w>
       <w>gitignore</w>
       <w>inlinevar</w>
@@ -17,6 +18,7 @@
       <w>licensable</w>
       <w>licensor</w>
       <w>lineno</w>
+      <w>memoized</w>
       <w>msvs</w>
       <w>mymodule</w>
       <w>mypackage</w>
@@ -29,6 +31,7 @@
       <w>pylint</w>
       <w>pylintrc</w>
       <w>pytest</w>
+      <w>pythonioencoding</w>
       <w>rcfile</w>
       <w>rdiv</w>
       <w>realpath</w>
@@ -36,8 +39,10 @@
       <w>regexes</w>
       <w>relpath</w>
       <w>sentry</w>
+      <w>tata</w>
       <w>typecheck</w>
       <w>versioning</w>
+      <w>virtualenvs</w>
       <w>xargs</w>
       <w>xlink</w>
       <w>xmlns</w>
