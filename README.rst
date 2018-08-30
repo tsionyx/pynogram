@@ -1,16 +1,24 @@
 |PyPI| |PyPI - Python Version| |PyPI - Implementation|
 
-|Build Status| |Coverage Status|
-
+|Build Status| |Coverage Status| |codebeat badge|
 
 Nonogram solver
 ===============
 
 Solve the `nonogram puzzles <https://en.wikipedia.org/wiki/Nonogram>`_
-and see the solution process.
-Supports both black-and-white and color puzzles with the unlimited
-(at least in theory) size. Also, you can solve puzzles
-from http://webpbn.com that have thousands of them.
+and watch the solution process.
+Both black-and-white and color puzzles with the unlimited
+(at least in theory) size are supported. Also, you can easily solve puzzles
+from http://webpbn.com or http://www.nonograms.org/ that have thousands of them.
+
+
+Different sources are supported:
+
+- local puzzles, embedded inside the package
+- local puzzles, created by yourself
+- puzzles from http://webpbn.com (without downloading)
+- locally saved webpbn puzzles (mainly for development/debug purpose)
+- http://www.nonograms.org/ (http://www.nonograms.ru/) puzzles
 
 
 Install
@@ -20,17 +28,9 @@ Install
 
     pip install pynogram
 
-You can also install *numpy* for slightly better performance
-when running on CPython interpreter
-(it's not listed in requirements to keep the package lightweight).
-Numpy does not work with PyPy interpreter.
-
 
 Console
 -------
-
-Console-based solver works on a wide variety of pythons: CPython2.7 and 3.5+, PyPy 2.7 and 3.5.
-The best performance, however, achieved on PyPy (version 3 is always preferable), so try it out.
 
 Firstly, make sure it works (if not, see the `Errors`_ section):
 
@@ -40,22 +40,14 @@ Firstly, make sure it works (if not, see the `Errors`_ section):
     # # # # # # # # #               1 1
     # # # # # # # # #               1 1               1   1     5
     # # # # # # # # # 7 1 1 1 7 0 3 1 1 2 0 6 0 6 0 3 1 5 1 3 0 1
-                1 1 1 ⬛ . . . ⬛ . . . . . . . . . . . . . . . . ⬛
-            1 1 1 1 1 ⬛ . . . ⬛ . . . . . . ⬛ . ⬛ . . . . . . . ⬛
-        1 1 2 1 1 3 1 ⬛ . . . ⬛ . . ⬛ ⬛ . . ⬛ . ⬛ . . ⬛ ⬛ ⬛ . . ⬛
-    5 1 1 1 1 1 1 1 1 ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ . . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛
-    1 1 4 1 1 1 1 1 1 ⬛ . . . ⬛ . ⬛ ⬛ ⬛ ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛
-      1 1 1 1 1 1 1 1 ⬛ . . . ⬛ . ⬛ . . . . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . .
-        1 1 2 1 1 3 1 ⬛ . . . ⬛ . . ⬛ ⬛ . . ⬛ . ⬛ . . ⬛ ⬛ ⬛ . . ⬛
+                1 1 1 # . . . # . . . . . . . . . . . . . . . . #
+            1 1 1 1 1 # . . . # . . . . . . # . # . . . . . . . #
+        1 1 2 1 1 3 1 # . . . # . . # # . . # . # . . # # # . . #
+    5 1 1 1 1 1 1 1 1 # # # # # . # . . # . # . # . # . # . # . #
+    1 1 4 1 1 1 1 1 1 # . . . # . # # # # . # . # . # . # . # . #
+      1 1 1 1 1 1 1 1 # . . . # . # . . . . # . # . # . # . # . .
+        1 1 2 1 1 3 1 # . . . # . . # # . . # . # . . # # # . . #
 
-
-You can solve puzzles from different sources:
-
-- local puzzles, embedded inside the package
-- local puzzles, created by yourself
-- puzzles from http://webpbn.com (without downloading)
-- locally saved webpbn puzzles (mainly for development/debug purpose)
-- nonograms.org (nonograms.ru) puzzles
 
 `Local <pynogram/examples/>`_
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -72,31 +64,31 @@ See the list of all embedded puzzles in the *pynogram/examples/* of your install
     # # # # # 5 7 2 1 3 3 7   4 6 7 6 3 4 4 4 3 6 2 5 1 125 1
     # # # # # 6 3 7 6 6 6 4 111 1 4 5 1 1 7 1 1 5 4 1 1 1 6 103
     # # # # # 4 5 5 6 6 7 7 6 4 3 3 2 2 1 2 2 1 1 1 1 1 1 3 1 8
-      1 5 114 ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . ⬛ ⬛ ⬛ ⬛
-    3 3 9 2 1 ⬛ ⬛ ⬛ . . . ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . ⬛ ⬛ . ⬛
-      2 8 5 5 ⬛ ⬛ . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ . . ⬛ ⬛ ⬛ ⬛ ⬛
-        2 145 ⬛ ⬛ . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ .
-    2 4 4 2 6 ⬛ ⬛ . . ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ . . . ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-      2 6 5 2 . ⬛ ⬛ . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛
-          117 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-      6 3 3 6 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ . . . ⬛ ⬛ ⬛ . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-      1 7 5 5 ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . ⬛ ⬛ ⬛ ⬛ ⬛ . . . ⬛ ⬛ ⬛ ⬛ ⬛
-        8 7 4 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . ⬛ ⬛ ⬛ ⬛
-        8 9 4 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . ⬛ ⬛ ⬛ ⬛
-        121 8 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . ⬛ . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-        2 1 2 . . . . . . . . . . ⬛ ⬛ . . ⬛ . . ⬛ ⬛ . . . . . .
-          9 3 . . . . . . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ . .
-            2 . . . . . . . . . . . . . . . . . . . . . . ⬛ ⬛ .
-            9 . . . . . . . . . . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . .
-            6 . . . . . . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . .
-            6 . . . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . .
-            6 . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . . . .
-            7 . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . . . . .
-            8 . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . . . . . .
-            8 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . . . . . . .
-            8 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . . . . . . .
-            7 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . . . . . . . .
-            7 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . . . . . . . . . . . .
+      1 5 114 # . # # # # # . # # # # # # # # # # # . . # # # #
+    3 3 9 2 1 # # # . . . # # # . # # # # # # # # # . . # # . #
+      2 8 5 5 # # . . # # # # # # # # . # # # # # . . # # # # #
+        2 145 # # . . # # # # # # # # # # # # # # . # # # # # .
+    2 4 4 2 6 # # . . # # # # . # # # # . . . # # . # # # # # #
+      2 6 5 2 . # # . . . # # # # # # . . . . . # # # # # . # #
+          117 # # # # # # # # # # # . . . . . . . # # # # # # #
+      6 3 3 6 # # # # # # . # # # . . . # # # . . . # # # # # #
+      1 7 5 5 # . # # # # # # # . . . # # # # # . . . # # # # #
+        8 7 4 # # # # # # # # . . . # # # # # # # . . . # # # #
+        8 9 4 # # # # # # # # . . # # # # # # # # # . . # # # #
+        121 8 # # # # # # # # # # # # . . # . . # # # # # # # #
+        2 1 2 . . . . . . . . . . # # . . # . . # # . . . . . .
+          9 3 . . . . . . . . . . # # # # # # # # # . # # # . .
+            2 . . . . . . . . . . . . . . . . . . . . . . # # .
+            9 . . . . . . . . . . . . . . # # # # # # # # # . .
+            6 . . . . . . . . . . # # # # # # . . . . . . . . .
+            6 . . . . . . . # # # # # # . . . . . . . . . . . .
+            6 . . . . . # # # # # # . . . . . . . . . . . . . .
+            7 . . . # # # # # # # . . . . . . . . . . . . . . .
+            8 . # # # # # # # # . . . . . . . . . . . . . . . .
+            8 # # # # # # # # . . . . . . . . . . . . . . . . .
+            8 # # # # # # # # . . . . . . . . . . . . . . . . .
+            7 # # # # # # # . . . . . . . . . . . . . . . . . .
+            7 # # # # # # # . . . . . . . . . . . . . . . . . .
 
 solve simple color puzzle (UK flag)
 
@@ -131,9 +123,9 @@ User-defined
 
 To create the puzzle by yourself, learn the format first. Do not panic, it is very simple!
 Find out the *pynogram/examples/hello.txt* file inside your installation folder [1]_
-and copy it to create a new puzzle. This file is the working puzzle which gets solved when
-you test the app with the simple ``pynogram`` call.
-To run the solver on your crafted file hit the same command but specify the path to your file:
+and copy it to create a new puzzle.
+Then follow the comments in the file to add clues to your new puzzle.
+To run the solver on your puzzle hit the ``pynogram`` and specify the path to your file:
 
 .. code-block::
 
@@ -142,13 +134,13 @@ To run the solver on your crafted file hit the same command but specify the path
     # # # # # # # # #               1 1
     # # # # # # # # #               1 1               1   1     5
     # # # # # # # # # 7 1 1 1 7 0 3 1 1 2 0 6 0 6 0 3 1 5 1 3 0 1
-                1 1 1 ⬛ . . . ⬛ . . . . . . . . . . . . . . . . ⬛
-            1 1 1 1 1 ⬛ . . . ⬛ . . . . . . ⬛ . ⬛ . . . . . . . ⬛
-        1 1 2 1 1 3 1 ⬛ . . . ⬛ . . ⬛ ⬛ . . ⬛ . ⬛ . . ⬛ ⬛ ⬛ . . ⬛
-    5 1 1 1 1 1 1 1 1 ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ . . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛
-    1 1 4 1 1 1 1 1 1 ⬛ . . . ⬛ . ⬛ ⬛ ⬛ ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . ⬛
-      1 1 1 1 1 1 1 1 ⬛ . . . ⬛ . ⬛ . . . . ⬛ . ⬛ . ⬛ . ⬛ . ⬛ . .
-        1 1 2 1 1 3 1 ⬛ . . . ⬛ . . ⬛ ⬛ . . ⬛ . ⬛ . . ⬛ ⬛ ⬛ . . ⬛
+                1 1 1 # . . . # . . . . . . . . . . . . . . . . #
+            1 1 1 1 1 # . . . # . . . . . . # . # . . . . . . . #
+        1 1 2 1 1 3 1 # . . . # . . # # . . # . # . . # # # . . #
+    5 1 1 1 1 1 1 1 1 # # # # # . # . . # . # . # . # . # . # . #
+    1 1 4 1 1 1 1 1 1 # . . . # . # # # # . # . # . # . # . # . #
+      1 1 1 1 1 1 1 1 # . . . # . # . . . . # . # . # . # . # . .
+        1 1 2 1 1 3 1 # . . . # . . # # . . # . # . . # # # . . #
 
 Webpbn
 ~~~~~~
@@ -156,7 +148,7 @@ Webpbn
 Visit the http://webpbn.com/ to see thousands of puzzles waiting for you to solve.
 To run the solver on any of them just specify the puzzle id with the *--pbn* flag:
 
-simple black-and-white puzzle http://webpbn.com/3
+`Simple black-and-white puzzle <http://webpbn.com/3>`__
 
 .. code-block::
 
@@ -166,23 +158,23 @@ simple black-and-white puzzle http://webpbn.com/3
     # # # #       3 1 2 1 3 5 1 1 3
     # # # #       5 5 1 1 1 1 5 5 5
     # # # # 5 9 113 2 3 3 3 3 3 2 3 119 5
-          5 . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ . . . . .
-          9 . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . .
-          11. . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . .
-      3 1 3 . ⬛ ⬛ ⬛ . . . ⬛ . . . ⬛ ⬛ ⬛ .
-    2 3 3 2 . ⬛ ⬛ . ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ . ⬛ ⬛ .
-    4 1 1 4 ⬛ ⬛ ⬛ ⬛ . . ⬛ . ⬛ . . ⬛ ⬛ ⬛ ⬛
-        6 8 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-        6 8 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-        5 9 ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-        5 6 ⬛ ⬛ ⬛ ⬛ ⬛ . . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-      2 7 2 . ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ ⬛ .
-        3 3 . ⬛ ⬛ ⬛ . . . . . . . ⬛ ⬛ ⬛ .
-          11. . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . .
-          9 . . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . .
-          5 . . . . . ⬛ ⬛ ⬛ ⬛ ⬛ . . . . .
+          5 . . . . . # # # # # . . . . .
+          9 . . . # # # # # # # # # . . .
+          11. . # # # # # # # # # # # . .
+      3 1 3 . # # # . . . # . . . # # # .
+    2 3 3 2 . # # . # # # . # # # . # # .
+    4 1 1 4 # # # # . . # . # . . # # # #
+        6 8 # # # # # # . # # # # # # # #
+        6 8 # # # # # # . # # # # # # # #
+        5 9 # # # # # . # # # # # # # # #
+        5 6 # # # # # . . . . # # # # # #
+      2 7 2 . # # . # # # # # # # . # # .
+        3 3 . # # # . . . . . . . # # # .
+          11. . # # # # # # # # # # # . .
+          9 . . . # # # # # # # # # . . .
+          5 . . . . . # # # # # . . . . .
 
-simple color puzzle http://webpbn.com/898
+`Simple color puzzle <http://webpbn.com/898>`__
 
 .. code-block::
 
@@ -219,7 +211,12 @@ Then run the solver ``pynogram --local-pbn=path/to/pbn/puzzle.xml``.
 nonograms.org
 ~~~~~~~~~~~~~
 
-simple black-and-white puzzle http://www.nonograms.org/nonograms/i/19833
+The http://www.nonograms.org also contains thousands of great puzzles.
+This site offers only single-solution puzzles that do not require guessing,
+therefore they usually solved quite fast.
+
+
+`Simple black-and-white puzzle <http://www.nonograms.org/nonograms/i/19833>`__
 
 .. code-block::
 
@@ -229,25 +226,25 @@ simple black-and-white puzzle http://www.nonograms.org/nonograms/i/19833
     # # # # # #   3   10    6 1 6 2 2 2 5 3
     # # # # # # 9 1 101 1 103 3 2 2 3 1 1 2 4
     # # # # # # 4 2 1 1 5 1 2 2 1 3 1 1 2 2 5
-          1 1 8 . ⬛ . . ⬛ . . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-        1 2 2 7 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛
-      1 2 2 2 2 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ ⬛ . . . ⬛ ⬛
-      1 2 2 1 1 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ . . . . . ⬛
-      1 2 2 1 2 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ . . ⬛ ⬛ . .
-      1 2 2 2 3 ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛ ⬛ ⬛ .
-      1 2 2 2 2 ⬛ . ⬛ ⬛ . ⬛ ⬛ . . ⬛ ⬛ . ⬛ ⬛ .
-          6 1 3 ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . ⬛ . . ⬛ ⬛ ⬛ . .
-              13⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . .
-              10⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ ⬛ . . . . .
-            5 1 . . ⬛ ⬛ ⬛ ⬛ ⬛ . . . . . . . ⬛
-          2 1 3 ⬛ ⬛ . . ⬛ . . . . . . . ⬛ ⬛ ⬛
-    1 1 1 1 3 2 ⬛ . . ⬛ . ⬛ . ⬛ . ⬛ ⬛ ⬛ . ⬛ ⬛
-      3 2 1 1 1 ⬛ ⬛ ⬛ . . . ⬛ ⬛ . ⬛ . . ⬛ . ⬛
-    2 1 1 2 2 1 ⬛ ⬛ . ⬛ . . ⬛ . ⬛ ⬛ . ⬛ ⬛ . ⬛
+          1 1 8 . # . . # . . # # # # # # # #
+        1 2 2 7 # . # # . # # . # # # # # # #
+      1 2 2 2 2 # . # # . # # . # # . . . # #
+      1 2 2 1 1 # . # # . # # . # . . . . . #
+      1 2 2 1 2 # . # # . # # . # . . # # . .
+      1 2 2 2 3 # . # # . # # . # # . # # # .
+      1 2 2 2 2 # . # # . # # . . # # . # # .
+          6 1 3 # # # # # # . # . . # # # . .
+              13# # # # # # # # # # # # # . .
+              10# # # # # # # # # # . . . . .
+            5 1 . . # # # # # . . . . . . . #
+          2 1 3 # # . . # . . . . . . . # # #
+    1 1 1 1 3 2 # . . # . # . # . # # # . # #
+      3 2 1 1 1 # # # . . . # # . # . . # . #
+    2 1 1 2 2 1 # # . # . . # . # # . # # . #
 
 
 
-simple color puzzle http://www.nonograms.org/nonograms2/i/19784
+`Simple color puzzle <http://www.nonograms.org/nonograms2/i/19784>`__
 
 .. code-block::
 
@@ -300,12 +297,12 @@ $ pynogram --pbn `30216 <http://webpbn.com/30216>`_ --curses
 
 $ pynogram --pbn `29723 <http://webpbn.com/29723>`_ --curses
 
-.. image:: docs/images/curses-mozaic.gif
+.. image:: docs/images/curses-mosaic.gif
 
 Errors
 ~~~~~~
 
-If you see something like this (e.g. I found it when run within docker image)
+If you see something like this (I stumbled with this while trying to run inside a docker container)
 
 .. code-block::
 
@@ -377,6 +374,21 @@ http://localhost:3145/board/pbn/2196 (zoom=75%)
 .. image:: docs/images/precious-pbn-svg.gif
 
 
+Notes
+-----
+
+Both console and web solvers work on a wide variety of pythons:
+CPython2.7 and 3.5+, PyPy 2.7 and 3.5.
+The best performance, however, achieved on PyPy (version 3 is always preferable), so try it out.
+
+
+You can install *numpy* for slightly better performance
+when running on CPython interpreter
+(it's not listed in requirements to keep the package lightweight).
+However numpy does not work correctly with PyPy interpreter.
+
+
+
 References
 ----------
 
@@ -433,6 +445,8 @@ If you have any issues, drop a line to the
     :target: https://travis-ci.org/tsionyx/pynogram
 .. |Coverage Status| image:: https://img.shields.io/coveralls/github/tsionyx/pynogram.svg
     :target: https://coveralls.io/github/tsionyx/pynogram
+.. |codebeat badge| image:: https://codebeat.co/badges/21e69843-0e13-4046-bc88-b3f108ccff69
+    :target: https://codebeat.co/projects/github-com-tsionyx-pynogram-dev
 .. |PyPI| image:: https://img.shields.io/pypi/v/pynogram.svg
     :target: https://pypi.org/project/pynogram/
 .. |PyPI - Python Version| image:: https://img.shields.io/pypi/pyversions/pynogram.svg
