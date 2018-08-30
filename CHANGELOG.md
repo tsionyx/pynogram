@@ -77,3 +77,40 @@ instead of pairs and triples
 - more clear rendering in text-grid mode
 - add PyPy in setup.py
 - gif image examples (to mirror recent algorithm accelerations)
+
+
+## [0.3.0] - 2018-08-30
+### Added
+- colors are single-numbers now (not sets): HUGE performance gains
+- http://nonograms.org puzzles parse and solve
+- another 'efficient' solver.
+Based on the work ['An Efficient Approach to Solving Nonograms'](
+https://ir.nctu.edu.tw/bitstream/11536/22772/1/000324586300005.pdf)
+- trim off already solved lines before backtracking
+- reduce color board to equivalent black-and-white before backtracking (if possible)
+- SVG renderer draws color clues
+- pylint in CI
+- new hard puzzle in local collection:
+[LalaFrogKK](https://github.com/CGI-LAB/Nonogram/blob/master/PuzzleCannotSolve.txt)
+- minor support for blotted puzzles parsing
+
+### Fixed
+- set US locale to correctly show non-ASCII boxes in --curses mode
+- reduce refresh pause in --curses mode
+- unsuppressed pylint warnings
+- correctly install dependencies with `python setup.py test`
+
+### Updated
+- massive refactoring: move things around
+- solvers have common ancestor now
+- board refactoring: made an hierarchy to separate methods
+- reduce backtracking logs
+- optimize benchmarks slightly
+- more verbose requirements.txt
+- multiple imports now made on separate lines
+- replace " with ' whenever possible
+- replace '%s' with %r
+- remove unrelevant benchmarks results
+- more readable README
+- more references in README
+- [codebeat](https://codebeat.co) badge
