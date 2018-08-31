@@ -509,6 +509,9 @@ class SvgRenderer(StreamRenderer):
             self.full_height + self.cell_size))
         self._add_definitions()
 
+    def _color_id_by_name(self, color):
+        return self.board.color_id_by_name(color)
+
     def _add_symbol(self, id_, color, *parts, **kwargs):
         drawing = self.drawing
         symbol = drawing.symbol(id_=id_, **kwargs)
@@ -519,7 +522,7 @@ class SvgRenderer(StreamRenderer):
             # SPACE is already an ID
             if color not in (SPACE, SPACE_COLORED):
                 if self.is_colored:
-                    color = self.board.color_id_by_name(color)
+                    color = self._color_id_by_name(color)
             self.color_symbols[color] = id_
 
         drawing.defs.add(symbol)
@@ -538,36 +541,7 @@ class SvgRenderer(StreamRenderer):
             )
         ))
 
-        if self.is_colored:
-            for color_name in sorted(self.board.color_map):
-                if color_name == Color.white().name:
-                    continue
-
-                self._add_symbol(
-                    'color-%s' % color_name, color_name,
-                    drawing.rect(
-                        size=(self.cell_size, self.cell_size),
-                        fill=self._color_from_name(color_name),
-                    ))
-
-            self._add_symbol(
-                'space', SPACE_COLORED,
-                drawing.circle(
-                    r=self.cell_size / 10
-                ))
-
-        else:
-            self._add_symbol(
-                'box', BOX,
-                drawing.rect(
-                    size=(self.cell_size, self.cell_size),
-                ))
-
-            self._add_symbol(
-                'space', SPACE,
-                drawing.circle(
-                    r=self.cell_size / 10
-                ))
+        self._add_colors_def()
 
         self._add_symbol(
             'check', None,
@@ -583,6 +557,42 @@ class SvgRenderer(StreamRenderer):
         )
 
         self.check_icon_size = 100
+
+    def _add_colors_def(self):
+        drawing = self.drawing
+        white_color = Color.white().name
+
+        cell_size = self.cell_size
+        rect_size = (cell_size, cell_size)
+
+        # rendering should be predictable
+        colors = []
+        if self.is_colored:
+            for color_name in sorted(self.board.color_map):
+                colors.append((color_name, self._color_from_name(color_name)))
+
+            space_color = SPACE_COLORED
+        else:
+            colors.append((BOX, 'black'))
+            space_color = SPACE
+
+        for color_name, fill_color in colors:
+            if color_name == white_color:
+                continue
+
+            self._add_symbol(
+                'color-%s' % color_name, color_name,
+                drawing.rect(
+                    size=rect_size,
+                    fill=fill_color,
+                ))
+
+        # it's a little circle
+        self._add_symbol(
+            'space', space_color,
+            drawing.circle(
+                r=cell_size / 10
+            ))
 
     @property
     def pixel_side_width(self):

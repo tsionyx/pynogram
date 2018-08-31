@@ -308,7 +308,8 @@ class TestSvg(object):
                             stroke-width: 2} g.header-clues text, g.side-clues text {
                             font-size: 9.000000} ]]>
                     </style>
-                    <symbol id="box"><rect height="15" width="15" x="0" y="0" /></symbol>
+                    <symbol id="color-True">
+                        <rect fill="black" height="15" width="15" x="0" y="0" /></symbol>
                     <symbol id="space"><circle cx="0" cy="0" r="1.5" /></symbol>
                     <symbol fill="none" id="check" stroke="green">
                         <circle cx="50" cy="50" r="40" stroke-width="10" />
@@ -344,9 +345,9 @@ class TestSvg(object):
                     <line class="bold" x1="45" x2="45" y1="0" y2="30" />
                 </g>
                 <g class="space" />
-                <g class="box">
-                    <use x="15" xlink:href="#box" y="15" />
-                    <use x="30" xlink:href="#box" y="15" />
+                <g class="color-True">
+                    <use x="15" xlink:href="#color-True" y="15" />
+                    <use x="30" xlink:href="#color-True" y="15" />
                 </g>
             </svg>'''
 
