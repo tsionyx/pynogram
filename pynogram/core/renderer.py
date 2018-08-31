@@ -510,7 +510,13 @@ class SvgRenderer(StreamRenderer):
         self._add_definitions()
 
     def _color_id_by_name(self, color):
-        return self.board.color_id_by_name(color)
+        color_id = self.board.color_id_by_name(color)
+        if color_id:
+            return color_id
+
+        if is_list_like(color):
+            return tuple(self.board.color_id_by_name(single_color)
+                         for single_color in color)
 
     def _add_symbol(self, id_, color, *parts, **kwargs):
         drawing = self.drawing
@@ -524,6 +530,11 @@ class SvgRenderer(StreamRenderer):
                 if self.is_colored:
                     color = self._color_id_by_name(color)
             self.color_symbols[color] = id_
+
+            if is_list_like(color):
+                # allow red-blue and blue-red to refer to the same symbol
+                color = tuple(reversed(color))
+                self.color_symbols[color] = id_
 
         drawing.defs.add(symbol)
 
@@ -564,6 +575,8 @@ class SvgRenderer(StreamRenderer):
 
         cell_size = self.cell_size
         rect_size = (cell_size, cell_size)
+        upper_triangle_points = ((0, 0), (0, cell_size), (cell_size, 0))
+        lower_triangle_points = ((0, cell_size), (cell_size, 0), (cell_size, cell_size))
 
         # rendering should be predictable
         colors = []
@@ -576,16 +589,33 @@ class SvgRenderer(StreamRenderer):
             colors.append((BOX, 'black'))
             space_color = SPACE
 
-        for color_name, fill_color in colors:
-            if color_name == white_color:
+        for color_index, (color_name, fill_color) in enumerate(colors):
+            if color_name != white_color:
+                self._add_symbol(
+                    'color-%s' % color_name, color_name,
+                    drawing.rect(
+                        size=rect_size,
+                        fill=fill_color,
+                    ))
+
+            if not self.is_colored:
                 continue
 
-            self._add_symbol(
-                'color-%s' % color_name, color_name,
-                drawing.rect(
-                    size=rect_size,
-                    fill=fill_color,
-                ))
+            # transient colors
+            for color_name2, fill_color2 in colors[color_index + 1:]:
+                LOG.info('Transient symbol: %s, %s + %s, %s',
+                         color_name, fill_color, color_name2, fill_color2)
+                self._add_symbol(
+                    'color-%s-%s' % (color_name, color_name2), (color_name, color_name2),
+                    drawing.polygon(
+                        points=upper_triangle_points,
+                        fill=fill_color,
+                    ),
+                    drawing.polygon(
+                        points=lower_triangle_points,
+                        fill=fill_color2,
+                    ),
+                )
 
         # it's a little circle
         self._add_symbol(
@@ -769,7 +799,7 @@ class SvgRenderer(StreamRenderer):
             cell = tuple(two_powers(cell))
             if len(cell) == 1:
                 cell = cell[0]
-            else:
+            elif len(cell) > 2:  # allow two colors
                 # multiple colors
                 cell = UNKNOWN
 

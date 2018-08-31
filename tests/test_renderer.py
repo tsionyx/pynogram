@@ -378,11 +378,37 @@ class TestSvg(object):
                     <symbol id="color-b">
                         <rect fill="blue" height="15" width="15" x="0" y="0" />
                     </symbol>
+                    <symbol id="color-b-black">
+                        <polygon fill="blue" points="0,0 0,15 15,0" />
+                        <polygon fill="#000" points="0,15 15,0 15,15" />
+                    </symbol>
+                    <symbol id="color-b-r">
+                        <polygon fill="blue" points="0,0 0,15 15,0" />
+                        <polygon fill="red" points="0,15 15,0 15,15" />
+                    </symbol>
+                    <symbol id="color-b-white">
+                        <polygon fill="blue" points="0,0 0,15 15,0" />
+                        <polygon fill="#fff" points="0,15 15,0 15,15" />
+                    </symbol>
+
                     <symbol id="color-black">
                         <rect fill="#000" height="15" width="15" x="0" y="0" />
                     </symbol>
+                    <symbol id="color-black-r">
+                        <polygon fill="#000" points="0,0 0,15 15,0" />
+                        <polygon fill="red" points="0,15 15,0 15,15" />
+                    </symbol>
+                    <symbol id="color-black-white">
+                        <polygon fill="#000" points="0,0 0,15 15,0" />
+                        <polygon fill="#fff" points="0,15 15,0 15,15" />
+                    </symbol>
+
                     <symbol id="color-r">
                         <rect fill="red" height="15" width="15" x="0" y="0" />
+                    </symbol>
+                    <symbol id="color-r-white">
+                        <polygon fill="red" points="0,0 0,15 15,0" />
+                        <polygon fill="#fff" points="0,15 15,0 15,15" />
                     </symbol>
                     <symbol id="space"><circle cx="0" cy="0" r="1.5" /></symbol>
 
@@ -442,6 +468,18 @@ class TestSvg(object):
                     <line x1="45" x2="45" y1="0" y2="75" />
                     <line class="bold" x1="60" x2="60" y1="0" y2="75" />
                 </g>
+                <g class="color-black-white" />
+                <g class="color-r-white" />
+                <g class="color-b-white" />
+                <g class="color-black-white" />
+                <g class="color-black-r" />
+                <g class="color-b-black" />
+                <g class="color-r-white" />
+                <g class="color-black-r" />
+                <g class="color-b-r" />
+                <g class="color-b-white" />
+                <g class="color-b-black" />
+                <g class="color-b-r" />
                 <g class="space">
                     <use x="22.5" xlink:href="#space" y="52.5" />
                     <use x="37.5" xlink:href="#space" y="52.5" />
