@@ -945,7 +945,7 @@ class ReduceColorToBlackMixin(MultipleSolutionGrid, ABC):
             ]
             cells.append(new_row)
 
-        new_board = BlackBoard(columns_descriptions, rows_descriptions)
+        new_board = make_board(columns_descriptions, rows_descriptions)
         new_board.restore(cells)
 
         self._assign_callbacks_to_single_colored_board(new_board, color_mapping)
