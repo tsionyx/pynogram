@@ -179,6 +179,28 @@ def is_color_list(value):
     return False
 
 
+def _line_clues(line, white_color_code):
+    size = len(line)
+
+    description = []
+    colors = set()
+
+    index = 0
+    while index < size:
+        block_begin = index
+        color_number = line[index]
+
+        while (index < size) and (line[index] == color_number):
+            index += 1
+
+        block_size = index - block_begin
+        if (block_size > 0) and (color_number != white_color_code):
+            colors.add(color_number)
+            description.append(ColorBlock(block_size, color_number))
+
+    return description, colors
+
+
 def clues(solution_matrix, white_color_code=SPACE):
     """
     Generate nonogram description (columns and rows)
@@ -192,48 +214,24 @@ def clues(solution_matrix, white_color_code=SPACE):
     if width == 0:
         return (), ()
 
-    colors = set()
+    all_colors = set()
 
     columns = []
     for col_index in range(width):
-        column = []
-
-        row_index = 0
-        while row_index < height:
-            block_begin = row_index
-            color_number = solution_matrix[row_index][col_index]
-
-            while (row_index < height) and (solution_matrix[row_index][col_index] == color_number):
-                row_index += 1
-
-            block_size = row_index - block_begin
-            if (block_size > 0) and (color_number != white_color_code):
-                colors.add(color_number)
-                column.append(ColorBlock(block_size, color_number))
-
-        columns.append(column)
+        column = [solution_matrix[row_index][col_index] for row_index in range(height)]
+        description, colors = _line_clues(column, white_color_code)
+        all_colors |= colors
+        columns.append(description)
 
     rows = []
     for row_index in range(height):
-        row = []
-
-        col_index = 0
-        while col_index < width:
-            block_begin = col_index
-            color_number = solution_matrix[row_index][col_index]
-
-            while (col_index < width) and (solution_matrix[row_index][col_index] == color_number):
-                col_index += 1
-
-            block_size = col_index - block_begin
-            if (block_size > 0) and (color_number != white_color_code):
-                colors.add(color_number)
-                row.append(ColorBlock(block_size, color_number))
-
-        rows.append(row)
+        row = solution_matrix[row_index]
+        description, colors = _line_clues(row, white_color_code)
+        all_colors |= colors
+        rows.append(description)
 
     # black and white, ignore colors
-    if len(colors) == 1:
+    if len(all_colors) == 1:
         columns = [[block.size for block in col] for col in columns]
         rows = [[block.size for block in r] for r in rows]
 
