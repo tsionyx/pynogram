@@ -263,8 +263,18 @@ class BlottedBlock(object):
         """
         Every blotted block spans a minimum of 1 cell
         """
-        return [block if block != cls else 1
-                for block in description]
+        minimized_description = []
+        for block in description:
+            if is_list_like(block):  # type: ColorBlock
+                if block[0] == cls:
+                    block = ColorBlock(1, block.color)
+
+            elif block == cls:
+                block = 1
+
+            minimized_description.append(block)
+
+        return minimized_description
 
     @classmethod
     def matches(cls, description, line):

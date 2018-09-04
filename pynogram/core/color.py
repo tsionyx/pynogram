@@ -187,7 +187,7 @@ _COLOR_DESCRIPTION_RE = re.compile('([0-9]+)(.+)')
 
 def normalize_description_colored(row, color_map):
     """Normalize a colored nonogram description"""
-    from pynogram.core.common import normalize_description
+    from pynogram.core.common import normalize_description, BlottedBlock
 
     row = normalize_description(row, color=True)
 
@@ -205,7 +205,11 @@ def normalize_description_colored(row, color_map):
             else:
                 item = (int(block), black_color)
         elif isinstance(block, (tuple, list)) and len(block) == 2:
-            item = (int(block[0]), block[1])
+            size = block[0]
+            if size != BlottedBlock:
+                size = int(size)
+
+            item = (size, block[1])
 
         if item is None:
             raise ValueError('Bad description block: {}'.format(block))

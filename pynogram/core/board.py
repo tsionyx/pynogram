@@ -1384,45 +1384,64 @@ class NumpyColorBoard(ColorBoard, NumpyBoard):
     """Colored board that uses numpy matrix to store the cells"""
 
 
-class BlottedBlackBoard(BlackBoard):
-    """Special kind of board that has blotted clues"""
+class BlottedBoardMixin(BaseBoard, ABC):
+    """Common operations for boards with blotted clues"""
 
     @property
     def has_blots(self):
         return True
 
+    def reduce(self):
+        """Reducing can work incorrectly on blotted descriptions"""
+        return None, None
+
+
+class BlottedBlackBoard(BlackBoard, BlottedBoardMixin):
+    """Special kind of board that has blotted clues"""
+
     @classmethod
     def validate_descriptions_size(cls, descriptions, max_size):
-        for clue in descriptions:
-            min_need_cells = sum(BlottedBlock.replace_with_1(clue))
-            if clue:
-                # also need at least one space between every two blocks
-                min_need_cells += len(clue) - 1
-
-            LOG.debug('Clue: %s; Need: %s; Available: %s.',
-                      clue, min_need_cells, max_size)
-            if min_need_cells > max_size:
-                raise ValueError('Cannot allocate clue {} in just {} cells'.format(
-                    list(clue), max_size))
+        descriptions = [BlottedBlock.replace_with_1(clue)
+                        for clue in descriptions]
+        return super(BlottedBlackBoard, cls).validate_descriptions_size(
+            descriptions, max_size)
 
     def validate_colors(self, vertical, horizontal):
         """Cannot validate boxes number in blotted puzzles"""
 
     @classmethod
     def desc_sum(cls, desc):
-        if not desc:
-            return 0
-
-        min_sum_without_spaces = sum(BlottedBlock.replace_with_1(desc))
-        return min_sum_without_spaces + (len(desc) - 1)
+        desc = BlottedBlock.replace_with_1(desc)
+        return super(BlottedBlackBoard, cls).desc_sum(desc)
 
 
-class BlottedColorBoard(ColorBoard):
+class BlottedColorBoard(ColorBoard, BlottedBoardMixin):
     """Special kind of color board that has blotted clues"""
 
-    @property
-    def has_blots(self):
-        return True
+    @classmethod
+    def validate_descriptions_size(cls, descriptions, max_size):
+        descriptions = [BlottedBlock.replace_with_1(clue)
+                        for clue in descriptions]
+        return super(BlottedColorBoard, cls).validate_descriptions_size(
+            descriptions, max_size)
+
+    def validate_colors(self, vertical, horizontal):
+        horizontal_colors = self._clue_colors(True)
+        vertical_colors = self._clue_colors(False)
+
+        if horizontal_colors != vertical_colors:
+            raise ValueError('Colors differ: {} (rows) and {} (columns)'.format(
+                horizontal_colors, vertical_colors))
+
+        not_defined_colors = horizontal_colors - set(self._color_map_ids)
+        if not_defined_colors:
+            raise ValueError('Some colors not defined: {}'.format(
+                tuple(not_defined_colors)))
+
+    @classmethod
+    def desc_sum(cls, desc):
+        desc = BlottedBlock.replace_with_1(desc)
+        return super(BlottedColorBoard, cls).desc_sum(desc)
 
 
 def _solve_on_space_hints(board, hints):
