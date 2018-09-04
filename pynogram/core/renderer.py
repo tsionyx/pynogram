@@ -28,6 +28,7 @@ from pynogram.core.common import (
     is_list_like,
     Color,
     is_color_cell,
+    BlottedBlock,
 )
 from pynogram.utils.iter import (
     pad,
@@ -75,6 +76,8 @@ class ClueCell(Cell):
     They are usually drawn on the top and on the left.
     """
 
+    BLOTTED_SYMBOL = '?'
+
     def __init__(self, value):
         super(ClueCell, self).__init__()
         if is_list_like(value):
@@ -89,6 +92,9 @@ class ClueCell(Cell):
         """
         if isinstance(self.value, integer_types):
             return text_type(self.value)
+
+        elif self.value == BlottedBlock:
+            return self.BLOTTED_SYMBOL
 
         return self.DEFAULT_ICON
 
@@ -693,8 +699,13 @@ class SvgRenderer(StreamRenderer):
         if color_id == Color.black().id_:
             extra['fill'] = 'white'
 
+        if value == BlottedBlock:
+            text_value = ClueCell.BLOTTED_SYMBOL
+        else:
+            text_value = str(value)
+
         block_text = self.drawing.text(
-            str(value),
+            text_value,
             insert=(
                 self.pixel_side_width + (i + shift[0]) * self.cell_size,
                 self.pixel_header_height + (j + shift[1]) * self.cell_size,

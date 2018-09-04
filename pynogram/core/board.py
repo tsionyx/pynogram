@@ -34,6 +34,7 @@ from pynogram.core.common import (
     normalize_description,
     is_color_cell,
     NonogramError,
+    BlottedBlock,
 )
 from pynogram.core.color import (
     normalize_description_colored,
@@ -213,6 +214,13 @@ class NonogramGrid(RenderedMixin):
         That is simpler than do `isinstance(board, ColoredBoard)` every time.
         """
         raise NotImplementedError()
+
+    @property
+    def has_blots(self):
+        """
+        Whether there are unknown (blotted) clues
+        """
+        return False
 
     def get_row(self, index):
         """Get the grid's row at given index"""
@@ -1376,6 +1384,47 @@ class NumpyColorBoard(ColorBoard, NumpyBoard):
     """Colored board that uses numpy matrix to store the cells"""
 
 
+class BlottedBlackBoard(BlackBoard):
+    """Special kind of board that has blotted clues"""
+
+    @property
+    def has_blots(self):
+        return True
+
+    @classmethod
+    def validate_descriptions_size(cls, descriptions, max_size):
+        for clue in descriptions:
+            min_need_cells = sum(BlottedBlock.replace_with_1(clue))
+            if clue:
+                # also need at least one space between every two blocks
+                min_need_cells += len(clue) - 1
+
+            LOG.debug('Clue: %s; Need: %s; Available: %s.',
+                      clue, min_need_cells, max_size)
+            if min_need_cells > max_size:
+                raise ValueError('Cannot allocate clue {} in just {} cells'.format(
+                    list(clue), max_size))
+
+    def validate_colors(self, vertical, horizontal):
+        """Cannot validate boxes number in blotted puzzles"""
+
+    @classmethod
+    def desc_sum(cls, desc):
+        if not desc:
+            return 0
+
+        min_sum_without_spaces = sum(BlottedBlock.replace_with_1(desc))
+        return min_sum_without_spaces + (len(desc) - 1)
+
+
+class BlottedColorBoard(ColorBoard):
+    """Special kind of color board that has blotted clues"""
+
+    @property
+    def has_blots(self):
+        return True
+
+
 def _solve_on_space_hints(board, hints):
     """
     Pseudo solving with spaces given
@@ -1396,17 +1445,27 @@ def _solve_on_space_hints(board, hints):
 def make_board(*args, **kwargs):
     """Produce the black-and-white or colored nonogram"""
 
+    if len(args) not in (2, 3):
+        raise ValueError('Bad number of *args')
+
+    blotted = False
+    if any(map(BlottedBlock.how_much, args[0])) or any(map(BlottedBlock.how_much, args[1])):
+        blotted = True
+
     if len(args) == 2:
+        if blotted:
+            return BlottedBlackBoard(*args, **kwargs)
+
         try:
             return NumpyBlackBoard(*args, **kwargs)
         except AttributeError:
             return BlackBoard(*args, **kwargs)
 
-    elif len(args) == 3:
+    if len(args) == 3:
+        if blotted:
+            return BlottedColorBoard(*args, **kwargs)
 
         try:
             return NumpyColorBoard(*args, **kwargs)
         except AttributeError:
             return ColorBoard(*args, **kwargs)
-
-    raise ValueError('Bad number of *args')

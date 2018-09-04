@@ -29,6 +29,8 @@ SOLVERS = {
     'efficient': efficient.EfficientSolver,
     'efficient_color': efficient.EfficientColorSolver,
 
+    'blot': bgu.BguBlottedSolver,
+    'blot_color': bgu.BguColoredBlottedSolver,
 }
 
 

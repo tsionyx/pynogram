@@ -35,11 +35,6 @@ class NonogramError(ValueError):
 
 UNKNOWN = None  # this cell has to be solved
 
-# The size of the block is unknown
-# (try to solve by hand https://webpbn.com/19407 to grasp the concept)
-# Intentionally made not an integer to prevent treating it like a number.
-BLOTTED_BLOCK = object()
-
 
 class BlackAndWhite(Enum):
     """
@@ -236,3 +231,62 @@ def clues(solution_matrix, white_color_code=SPACE):
         rows = [[block.size for block in r] for r in rows]
 
     return columns, rows
+
+
+class BlottedBlock(object):
+    """
+    The size of the block is unknown
+    (try to solve by hand https://webpbn.com/19407 to grasp the concept)
+    Intentionally made not an integer to prevent treating it like a number.
+    """
+
+    @classmethod
+    def how_much(cls, description):
+        """The number of blotted blocks in the description row"""
+        counter = 0
+
+        if not is_list_like(description):
+            return 0
+
+        for block in description:
+            if block == cls:
+                counter += 1
+
+            if is_list_like(block):  # type: ColorBlock
+                if block[0] == cls:
+                    counter += 1
+
+        return counter
+
+    @classmethod
+    def replace_with_1(cls, description):
+        """
+        Every blotted block spans a minimum of 1 cell
+        """
+        return [block if block != cls else 1
+                for block in description]
+
+    @classmethod
+    def matches(cls, description, line):
+        colored = is_color_list(line)
+
+        white_color = SPACE_COLORED if colored else SPACE
+        line_clues, colors = _line_clues(line, white_color_code=white_color)
+
+        if len(description) != len(line_clues):
+            return False
+
+        for actual, from_line in zip(description, line_clues):
+            if not colored:
+                from_line = from_line[0]
+
+            if actual == from_line:
+                continue
+
+            if actual == cls:
+                if from_line > 0:
+                    continue
+
+            return False
+
+        return True

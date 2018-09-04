@@ -13,6 +13,7 @@ from six.moves import (
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_color_cell,
+    BlottedBlock,
 )
 from pynogram.core.line import solve_line
 # from pynogram.core.line.machine import assert_match
@@ -104,11 +105,16 @@ def solve(board,
 
     if methods is None:
         if board.is_colored:
-            # methods = ('reverse_tracking_color',)
-            methods = ('bgu_color',)
+            if board.has_blots:
+                methods = ('blot_color',)
+            else:
+                methods = ('bgu_color',)
         else:
-            # methods = ('simpson', 'reverse_tracking')
-            methods = ('bgu',)
+            if board.has_blots:
+                methods = ('blot',)
+            else:
+                # methods = ('simpson', 'reverse_tracking')
+                methods = ('bgu',)
 
     if not isinstance(methods, (tuple, list)):
         methods = [methods]
@@ -142,6 +148,8 @@ def _solve_with_method(
         # do not shortcut in contradiction_mode
         if not contradiction_mode and board.is_solved_full:
             return 0, ()
+
+    has_blots = board.has_blots
 
     start = time.time()
     lines_solved = 0
@@ -177,6 +185,12 @@ def _solve_with_method(
         # priority = 1 - board.densities[False][row_index]
 
         priority = 0
+
+        if has_blots:
+            description = board.rows_descriptions[row_index]
+            # the more blots the less priority
+            priority = BlottedBlock.how_much(description)
+
         _add_job((False, row_index), priority)
 
     if column_indexes is None:
@@ -192,6 +206,12 @@ def _solve_with_method(
         # priority = 1 - board.densities[True][column_index]
 
         priority = 0
+
+        if has_blots:
+            description = board.columns_descriptions[column_index]
+            # the more blots the less priority
+            priority = BlottedBlock.how_much(description)
+
         _add_job((True, column_index), priority)
 
     total_cells_solved = 0
@@ -202,8 +222,15 @@ def _solve_with_method(
 
         total_cells_solved += len(new_jobs)
         for new_job in new_jobs:
+            new_job_priority = priority - 1
+            if board.has_blots:
+                is_column, index = new_job
+                description = (board.columns_descriptions
+                               if is_column else board.rows_descriptions)[index]
+                new_job_priority = BlottedBlock.how_much(description)
+
             # lower priority = more priority
-            _add_job(new_job, priority - 1)
+            _add_job(new_job, new_job_priority)
 
         lines_solved += 1
 

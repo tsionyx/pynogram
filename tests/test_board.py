@@ -15,6 +15,7 @@ from pynogram.core.board import (
 from pynogram.core.color import (
     ColorMap, Color,
 )
+from pynogram.core.common import BlottedBlock
 from pynogram.core.renderer import (
     BaseAsciiRenderer,
     AsciiRenderer,
@@ -602,3 +603,21 @@ class TestReduction(object):
         assert len(board.solved_rows[1]) == 2
         assert len(board.solved_columns[0]) == 5
         assert len(board.solved_columns[1]) == 9
+
+
+class TestBlotted(object):
+    def test_basic(self):
+        board = make_board(*Pbn.read(19407))
+        assert board.has_blots
+        assert board.rows_descriptions[1] == (BlottedBlock,)
+
+        propagation.solve(board)
+        assert board.is_solved_full
+
+    def test_color(self):
+        board = make_board(*Pbn.read(19427))
+        assert board.has_blots
+        assert board.rows_descriptions[1] == (BlottedBlock,)
+
+        propagation.solve(board)
+        assert board.is_solved_full

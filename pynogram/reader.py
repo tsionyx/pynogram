@@ -29,7 +29,7 @@ from pynogram.core.color import (
 )
 from pynogram.core.common import (
     clues,
-    BLOTTED_BLOCK,
+    BlottedBlock,
 )
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -197,7 +197,7 @@ class Pbn(object):
         for block in clue.findall('count'):
             size = int(block.text)
             if size == 0:
-                size = BLOTTED_BLOCK
+                size = BlottedBlock
 
             if default_color:
                 yield size, block.attrib.get('color', default_color)
