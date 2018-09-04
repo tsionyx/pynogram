@@ -20,6 +20,7 @@ from pynogram.core.common import (
 )
 from pynogram.core.line.base import (
     BaseLineSolver,
+    ColoredSolver,
     NonogramError,
 )
 from pynogram.utils.other import (
@@ -381,10 +382,8 @@ class BguColoredSolver(BguSolver):
             self.add_cell_color(i, color)
 
 
-class BguBlottedSolver(BguSolver):
-    """
-    Slightly modified algorithm to solve with blotted descriptions
-    """
+class BlottedHelper(object):
+    """Some additional routines to help solve blotted puzzles"""
 
     @classmethod
     def _blotted_combinations(cls, blocks_number, max_sum):
@@ -401,6 +400,93 @@ class BguBlottedSolver(BguSolver):
         for combination in product(valid_range, repeat=blocks_number):
             if sum(combination) <= max_sum:
                 yield combination
+
+    @classmethod
+    def _is_blotted(cls, block):
+        raise NotImplementedError()
+
+    @classmethod
+    def _update_block(cls, current, increase):
+        raise NotImplementedError()
+
+    @classmethod
+    def _single_color(cls, values):
+        raise NotImplementedError()
+
+    def _reset_solver(self):
+        raise NotImplementedError()
+
+    def _solve_blotted(self, line, base_solve_method):
+        if not BlottedBlock.how_much(self.description):
+            return base_solve_method()
+
+        if self._is_solved:
+            LOG.info('No need to solve blotted line: %r', line)
+            return line
+
+        blotted_desc = tuple(self.description)
+        LOG.info('Trying to solve with blotted clues: %r', blotted_desc)
+
+        blotted_positions = [index for index, block in enumerate(blotted_desc)
+                             if self._is_blotted(block)]
+
+        line_size = len(line)
+        block_sums = self.block_sums
+        LOG.debug('Partial block sums: %r', block_sums)
+        required_space = block_sums[-1] + 1
+        slack_space = line_size - required_space
+
+        # prevent from incidental changing
+        min_desc = tuple(BlottedBlock.replace_with_1(blotted_desc))
+
+        solutions = set()
+        for index, combination in enumerate(self._blotted_combinations(
+                len(blotted_positions), slack_space)):
+
+            current_description = list(min_desc)
+            for pos, block_size in zip(blotted_positions, combination):
+                block = current_description[pos]
+                current_description[pos] = self._update_block(block, block_size)
+
+            LOG.debug('Trying %i-th combination %r', index, current_description)
+            self.description = current_description
+
+            try:
+                solved = tuple(base_solve_method())
+            except NonogramError:
+                LOG.debug('Combination %r is invalid for line %r', current_description, line)
+            else:
+                LOG.debug('Add solution %r', solved)
+                solutions.add(solved)
+            finally:
+                self._reset_solver()
+
+        self.description = blotted_desc  # restore
+        if not solutions:
+            raise NonogramError('Cannot solve with blotted clues {!r}'.format(blotted_desc))
+
+        LOG.debug('Found solutions: %r', solutions)
+        if len(solutions) == 1:
+            solution = next(iter(solutions))
+            LOG.info('Single solution: %r', solution)
+            return solution
+
+        united = []
+        for index in range(line_size):
+            cell = set(solution[index] for solution in solutions)
+            if len(cell) == 1:
+                united.append(next(iter(cell)))
+            else:
+                united.append(self._single_color(cell))
+
+        LOG.info('United solution from all combinations: %r', united)
+        return united
+
+
+class BguBlottedSolver(BguSolver, BlottedHelper):
+    """
+    Slightly modified algorithm to solve with blotted descriptions
+    """
 
     @property
     def _is_solved(self):
@@ -409,102 +495,39 @@ class BguBlottedSolver(BguSolver):
 
         return BlottedBlock.matches(self.description, self.line)
 
-    def _solve(self):
-        if not BlottedBlock.how_much(self.description):
-            return super(BguBlottedSolver, self)._solve()
-
-        if self._is_solved:
-            LOG.info('No need to solve blotted line: %r', self.line)
-            solved = self.line
-            if self._additional_space:
-                solved = solved[:-1]
-            return solved
-
-        blotted_desc = tuple(self.description)
-        LOG.info('Trying to solve with blotted clues: %r', blotted_desc)
-
-        blotted_positions = [index for index, block in enumerate(blotted_desc)
-                             if block == BlottedBlock]
-
-        full_line_size = len(self.line)
-        if self._additional_space:
-            full_line_size -= 1
-
-        LOG.debug('Partial block sums: %r', self.block_sums)
-        required_space = self.block_sums[-1] + 1
-        slack_space = full_line_size - required_space
-
-        # prevent from incidental changing
-        min_desc = tuple(BlottedBlock.replace_with_1(blotted_desc))
-
-        solutions = set()
-        for index, combination in enumerate(self._blotted_combinations(
-                len(blotted_positions), slack_space)):
-
-            current_description = list(min_desc)
-            for pos, current_size in zip(blotted_positions, combination):
-                current_description[pos] += current_size
-
-            LOG.debug('Trying %i-th combination %r', index, current_description)
-            self.description = current_description
-
-            try:
-                solved = tuple(super(BguBlottedSolver, self)._solve())
-            except NonogramError:
-                LOG.debug('Combination %r is invalid for line %r', current_description, self.line)
-            else:
-                LOG.debug('Add solution %r', solved)
-                solutions.add(solved)
-            finally:
-                self._reset_solutions_table()
-
-        self.description = blotted_desc  # restore
-        if not solutions:
-            raise NonogramError('Cannot solve with blotted clues {!r}'.format(blotted_desc))
-
-        LOG.debug('Found solutions: %r', solutions)
-        if len(solutions) == 1:
-            solution = next(iter(solutions))
-            LOG.info('Single solution: %r', solution)
-            return solution
-
-        united = []
-        for index in range(full_line_size):
-            cell = set(solution[index] for solution in solutions)
-            if len(cell) == 1:
-                united.append(next(iter(cell)))
-            else:
-                united.append(UNKNOWN)
-
-        LOG.info('United solution from all combinations: %r', united)
-        return united
-
     @classmethod
     def calc_block_sum(cls, blocks):
         blocks = BlottedBlock.replace_with_1(blocks)
         return super(BguBlottedSolver, cls).calc_block_sum(blocks)
 
+    @classmethod
+    def _is_blotted(cls, block):
+        return block == BlottedBlock
 
-class BguColoredBlottedSolver(BguColoredSolver):
+    @classmethod
+    def _update_block(cls, current, increase):
+        return current + increase
+
+    @classmethod
+    def _single_color(cls, values):
+        if len(values) > 1:
+            return UNKNOWN
+
+    def _reset_solver(self):
+        self._reset_solutions_table()
+
+    def _solve(self):
+        line = self.line
+        if self._additional_space:
+            line = line[:-1]
+
+        return self._solve_blotted(line, super(BguBlottedSolver, self)._solve)
+
+
+class BguColoredBlottedSolver(ColoredSolver, BguColoredSolver, BlottedHelper):
     """
     Slightly modified algorithm to solve colored lines with blotted descriptions
     """
-
-    @classmethod
-    def _blotted_combinations(cls, blocks_number, max_sum):
-        """
-        Generate all the possible combinations of blotted blocks sizes.
-        The routine suggests that every size can be in range [0..max_sum]
-        """
-        # if blocks_number > max_sum:
-        #     raise NonogramError('Cannot allocate {} blotted blocks in {} cells'.format(
-        #         blocks_number, max_sum))
-
-        valid_range = range(max_sum + 1)
-
-        for combination in product(valid_range, repeat=blocks_number):
-            if sum(combination) <= max_sum:
-                yield combination
 
     @property
     def _is_solved(self):
@@ -513,82 +536,29 @@ class BguColoredBlottedSolver(BguColoredSolver):
 
         return BlottedBlock.matches(self.description, self.line)
 
-    def _solve(self):
-        if not BlottedBlock.how_much(self.description):
-            return super(BguColoredBlottedSolver, self)._solve()
-
-        if self._is_solved:
-            LOG.info('No need to solve blotted line: %r', self.line)
-            solved = self.line
-            if self._additional_space:
-                solved = solved[:-1]
-            return solved
-
-        blotted_desc = tuple(self.description)
-        LOG.info('Trying to solve with blotted clues: %r', blotted_desc)
-
-        blotted_positions = [index for index, block in enumerate(blotted_desc)
-                             if block.size == BlottedBlock]
-
-        full_line_size = len(self.line)
-        if self._additional_space:
-            full_line_size -= 1
-
-        LOG.debug('Partial block sums: %r', self.block_sums)
-        required_space = self.block_sums[-1] + 1
-        slack_space = full_line_size - required_space
-
-        # prevent from incidental changing
-        min_desc = tuple(BlottedBlock.replace_with_1(blotted_desc))
-
-        solutions = set()
-        LOG.warning("%s ---> %s", len(blotted_positions), slack_space)
-        LOG.warning(list(self._blotted_combinations(
-            len(blotted_positions), slack_space)))
-
-        for index, combination in enumerate(self._blotted_combinations(
-                len(blotted_positions), slack_space)):
-
-            current_description = list(min_desc)
-            for pos, current_size in zip(blotted_positions, combination):
-                block = current_description[pos]
-                current_description[pos] = ColorBlock(block.size + current_size, block.color)
-
-            LOG.debug('Trying %i-th combination %r', index, current_description)
-            self.description = current_description
-
-            try:
-                solved = tuple(super(BguColoredBlottedSolver, self)._solve())
-            except NonogramError:
-                LOG.debug('Combination %r is invalid for line %r', current_description, self.line)
-            else:
-                LOG.debug('Add solution %r', solved)
-                solutions.add(solved)
-            finally:
-                self._reset_solutions_table()
-
-        self.description = blotted_desc  # restore
-        if not solutions:
-            raise NonogramError('Cannot solve with blotted clues {!r}'.format(blotted_desc))
-
-        LOG.debug('Found solutions: %r', solutions)
-        if len(solutions) == 1:
-            solution = next(iter(solutions))
-            LOG.info('Single solution: %r', solution)
-            return solution
-
-        united = []
-        for index in range(full_line_size):
-            cell = set(solution[index] for solution in solutions)
-            if len(cell) == 1:
-                united.append(next(iter(cell)))
-            else:
-                united.append(from_two_powers(cell))
-
-        LOG.info('United solution from all combinations: %r', united)
-        return united
-
     @classmethod
     def calc_block_sum(cls, blocks):
         blocks = BlottedBlock.replace_with_1(blocks)
         return super(BguColoredBlottedSolver, cls).calc_block_sum(blocks)
+
+    @classmethod
+    def _is_blotted(cls, block):
+        return block.size == BlottedBlock
+
+    @classmethod
+    def _update_block(cls, current, increase):
+        return ColorBlock(current.size + increase, current.color)
+
+    @classmethod
+    def _single_color(cls, values):
+        return from_two_powers(values)
+
+    def _reset_solver(self):
+        self._reset_solutions_table()
+
+    def _solve(self):
+        line = self.line
+        if self._additional_space:
+            line = line[:-1]
+
+        return self._solve_blotted(line, super(BguColoredBlottedSolver, self)._solve)
