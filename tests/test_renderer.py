@@ -337,17 +337,17 @@ class TestSvg(object):
                 <use x="0" xlink:href="#check" y="0" />
 
                 <rect class="nonogram-grid" height="15" width="30" x="15" y="15" />
+                <g class="space" />
+                <g class="color-True">
+                    <use x="15" xlink:href="#color-True" y="15" />
+                    <use x="30" xlink:href="#color-True" y="15" />
+                </g>
                 <g class="grid-lines">
                     <line class="bold" x1="0" x2="45" y1="15" y2="15" />
                     <line class="bold" x1="0" x2="45" y1="30" y2="30" />
                     <line class="bold" x1="15" x2="15" y1="0" y2="30" />
                     <line x1="30" x2="30" y1="0" y2="30" />
                     <line class="bold" x1="45" x2="45" y1="0" y2="30" />
-                </g>
-                <g class="space" />
-                <g class="color-True">
-                    <use x="15" xlink:href="#color-True" y="15" />
-                    <use x="30" xlink:href="#color-True" y="15" />
                 </g>
             </svg>'''
 
@@ -458,16 +458,6 @@ class TestSvg(object):
                 <use x="0" xlink:href="#check" y="0" />
 
                 <rect class="nonogram-grid" height="45" width="45" x="15" y="30" />
-                <g class="grid-lines">
-                    <line class="bold" x1="0" x2="60" y1="30" y2="30" />
-                    <line x1="0" x2="60" y1="45" y2="45" />
-                    <line x1="0" x2="60" y1="60" y2="60" />
-                    <line class="bold" x1="0" x2="60" y1="75" y2="75" />
-                    <line class="bold" x1="15" x2="15" y1="0" y2="75" />
-                    <line x1="30" x2="30" y1="0" y2="75" />
-                    <line x1="45" x2="45" y1="0" y2="75" />
-                    <line class="bold" x1="60" x2="60" y1="0" y2="75" />
-                </g>
                 <g class="color-black-white" />
                 <g class="color-r-white" />
                 <g class="color-b-white" />
@@ -495,6 +485,16 @@ class TestSvg(object):
                     <use x="15" xlink:href="#color-b" y="60" />
                     <use x="30" xlink:href="#color-b" y="60" />
                     <use x="45" xlink:href="#color-b" y="60" />
+                </g>
+                <g class="grid-lines">
+                    <line class="bold" x1="0" x2="60" y1="30" y2="30" />
+                    <line x1="0" x2="60" y1="45" y2="45" />
+                    <line x1="0" x2="60" y1="60" y2="60" />
+                    <line class="bold" x1="0" x2="60" y1="75" y2="75" />
+                    <line class="bold" x1="15" x2="15" y1="0" y2="75" />
+                    <line x1="30" x2="30" y1="0" y2="75" />
+                    <line x1="45" x2="45" y1="0" y2="75" />
+                    <line class="bold" x1="60" x2="60" y1="0" y2="75" />
                 </g>
             </svg>'''
 

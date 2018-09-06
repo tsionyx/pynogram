@@ -827,8 +827,6 @@ class SvgRenderer(StreamRenderer):
             size=(self.pixel_board_width, self.pixel_board_height),
             class_='nonogram-grid'))
 
-        self._insert_grid_lines()
-
         cell_groups = dict()
         for cell_value, id_ in iteritems(self.color_symbols):
             cell_groups[cell_value] = drawing.g(class_=id_)
@@ -862,6 +860,9 @@ class SvgRenderer(StreamRenderer):
         for cell_value, group in sorted(iteritems(cell_groups),
                                         key=lambda x: str(x[0])):
             drawing.add(group)
+
+        # write grid on top of the colors
+        self._insert_grid_lines()
 
     def _insert_grid_lines(self):
         drawing = self.drawing
