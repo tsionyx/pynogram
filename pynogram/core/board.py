@@ -1540,7 +1540,7 @@ def make_board(*args, **kwargs):
         raise ValueError('Bad number of *args')
 
     blotted = False
-    if any(map(BlottedBlock.how_much, args[0])) or any(map(BlottedBlock.how_much, args[1])):
+    if any(map(BlottedBlock.how_many, args[0])) or any(map(BlottedBlock.how_many, args[1])):
         blotted = True
 
     if len(args) == 2:

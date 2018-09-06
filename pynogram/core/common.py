@@ -244,7 +244,7 @@ class BlottedBlock(object):
     """
 
     @classmethod
-    def how_much(cls, description):
+    def how_many(cls, description):
         """The number of blotted blocks in the description row"""
         counter = 0
 

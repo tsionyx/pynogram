@@ -395,7 +395,7 @@ class BlottedHelper(object):
         raise NotImplementedError()
 
     def _solve_blotted(self, line, base_solve_method):
-        if not BlottedBlock.how_much(self.description):
+        if not BlottedBlock.how_many(self.description):
             return base_solve_method()
 
         if self._is_solved:
