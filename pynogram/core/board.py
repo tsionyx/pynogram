@@ -35,6 +35,7 @@ from pynogram.core.common import (
     is_color_cell,
     NonogramError,
     BlottedBlock,
+    partial_sums,
 )
 from pynogram.core.color import (
     normalize_description_colored,
@@ -1442,6 +1443,77 @@ class BlottedColorBoard(ColorBoard, BlottedBoardMixin):
     def desc_sum(cls, desc):
         desc = BlottedBlock.replace_with_1(desc)
         return super(BlottedColorBoard, cls).desc_sum(desc)
+
+    @classmethod
+    def _line_color_ranges(cls, description, line_size):
+        description = BlottedBlock.replace_with_1(description)
+        line_colors = two_powers(cls._desc_colors(description))
+        sums = partial_sums(description)
+        min_line_size = sums[-1]
+        slack = line_size - min_line_size
+
+        indexes = dict()
+        for color in line_colors:
+            first_index = None
+            last_index = None
+            for block_index, block in enumerate(description):
+                if block.color != color:
+                    continue
+                if first_index is None:
+                    first_index = block_index
+                last_index = block_index
+
+            # color = self.rgb_for_color_name(color)
+
+            # start position of the first block of particular color
+            first_pos = sums[first_index] - description[first_index].size
+            # end position of the last block plus what's left
+            last_pos = (sums[last_index] - 1) + slack
+
+            indexes[color] = (first_pos, last_pos)
+
+        return indexes
+
+    def _reduce_colors(self):
+        width = self.width
+        rows_colors_range = []
+        for row_index, row_desc in enumerate(self.rows_descriptions):
+            colors_range = self._line_color_ranges(row_desc, width)
+            LOG.info("First and last block indexes for every color in %i-th row: %r",
+                     row_index, colors_range)
+
+            rows_colors_range.append(colors_range)
+
+        height = self.height
+        columns_colors_range = []
+        for col_index, col_desc in enumerate(self.columns_descriptions):
+            colors_range = self._line_color_ranges(col_desc, height)
+            LOG.info("First and last block indexes for every color in %i-th column: %r",
+                     col_index, colors_range)
+
+            columns_colors_range.append(colors_range)
+
+        for row_index, (row, row_colors) in enumerate(zip(self.cells, rows_colors_range)):
+            for col_index, (cell, col_colors) in enumerate(zip(row, columns_colors_range)):
+                new_cell_color = {SPACE_COLORED}
+                LOG.debug('Checking cell (%i, %i)...', row_index, col_index)
+                for color in self.colors():
+                    if color not in row_colors or color not in col_colors:
+                        continue
+
+                    row_range = row_colors[color]
+                    col_range = col_colors[color]
+
+                    LOG.debug('Checking color %i in ranges %r and %r', color, row_range, col_range)
+                    if (row_range[0] <= col_index <= row_range[1]) and (
+                            col_range[0] <= row_index <= col_range[1]):
+                        new_cell_color.add(color)
+
+                new_cell_color = from_two_powers(new_cell_color)
+                if new_cell_color != cell:
+                    LOG.info('Update cell (%i, %i): %i --> %i',
+                             row_index, col_index, cell, new_cell_color)
+                    row[col_index] = new_cell_color
 
 
 def _solve_on_space_hints(board, hints):
