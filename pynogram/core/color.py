@@ -14,6 +14,7 @@ from six import (
     itervalues,
 )
 
+from pynogram.utils.iter import expand_generator
 from pynogram.utils.other import get_named_logger
 
 LOG = get_named_logger(__name__, __file__)
@@ -185,6 +186,7 @@ class ColorBlock(namedtuple('ColorBlock', 'size color')):
 _COLOR_DESCRIPTION_RE = re.compile('([0-9]+)(.+)')
 
 
+@expand_generator(type_=tuple)
 def normalize_description_colored(row, color_map):
     """Normalize a colored nonogram description"""
     from pynogram.core.common import normalize_description, BlottedBlock
@@ -216,12 +218,9 @@ def normalize_description_colored(row, color_map):
         else:
             res.append(item)
 
-    desc = []
     for size, color_name in res:
         if color_name in color_map.by_id:
             id_ = color_name
         else:
             id_ = color_map[color_name].id_
-        desc.append(ColorBlock(size, id_))
-
-    return tuple(desc)
+        yield ColorBlock(size, id_)

@@ -31,6 +31,7 @@ from pynogram.core.common import (
     clues,
     BlottedBlock,
 )
+from pynogram.utils.iter import expand_generator
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -193,6 +194,7 @@ class Pbn(object):
         return urlopen(url)
 
     @classmethod
+    @expand_generator(type_=tuple)
     def _parse_clue(cls, clue, default_color=None):
         for block in clue.findall('count'):
             size = int(block.text)
@@ -228,9 +230,9 @@ class Pbn(object):
             puzzle = tree.findall('.//puzzle[@type="grid"]')[0]
             default_color = puzzle.attrib['defaultcolor']
 
-        columns = [tuple(cls._parse_clue(clue, default_color))
+        columns = [cls._parse_clue(clue, default_color)
                    for clue in tree.findall('.//clues[@type="columns"]/line')]
-        rows = [tuple(cls._parse_clue(clue, default_color))
+        rows = [cls._parse_clue(clue, default_color)
                 for clue in tree.findall('.//clues[@type="rows"]/line')]
 
         if new_colors < 3:

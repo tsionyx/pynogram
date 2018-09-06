@@ -25,6 +25,7 @@ from pynogram.core.line.base import BaseLineSolver
 from pynogram.core.line.simpson import FastSolver
 from pynogram.utils import fsm
 from pynogram.utils.cache import Cache
+from pynogram.utils.iter import expand_generator
 from pynogram.utils.other import (
     two_powers, from_two_powers,
     get_named_logger,
@@ -84,6 +85,7 @@ class NonogramFSM(fsm.FiniteStateMachine):
     INITIAL_STATE = 1
 
     @classmethod
+    @expand_generator
     def state_map_from_description(cls, description):
         """
         Construct the machine's state map
@@ -93,7 +95,6 @@ class NonogramFSM(fsm.FiniteStateMachine):
         LOG.debug('Clues: %s', description)
 
         state_counter = cls.INITIAL_STATE
-        state_map = []
 
         prev_color = None
         for block in description:
@@ -107,27 +108,25 @@ class NonogramFSM(fsm.FiniteStateMachine):
             if prev_color == color:
                 trans, state_counter = cls._required_space(state_counter)
                 LOG.debug('Add transition: %s -> %s', trans, state_counter)
-                state_map.append((trans, state_counter))
+                yield trans, state_counter
 
             # it CAN be multiple spaces before every block
             trans, state_counter = cls._optional_space(state_counter)
             LOG.debug('Add transition: %s -> %s', trans, state_counter)
-            state_map.append((trans, state_counter))
+            yield trans, state_counter
 
             # the block of some color
             for _ in range(value):
                 trans, state_counter = cls._required_color(state_counter, color)
                 LOG.debug('Add transition: %s -> %s', trans, state_counter)
-                state_map.append((trans, state_counter))
+                yield trans, state_counter
 
             prev_color = color
 
         # at the end of the line can be optional spaces
         trans, state_counter = cls._optional_space(state_counter)
         LOG.debug('Add transition: %s -> %s', trans, state_counter)
-        state_map.append((trans, state_counter))
-
-        return state_map
+        yield trans, state_counter
 
     def partial_match(self, row):
         """

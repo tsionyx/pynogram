@@ -21,6 +21,7 @@ from pynogram.core.board import (
 )
 from pynogram.core.common import NonogramError
 from pynogram.core.line.base import cache_info
+from pynogram.utils.iter import expand_generator
 from pynogram.utils.priority_dict import PriorityDict
 
 LOG = logging.getLogger(__name__)
@@ -329,6 +330,7 @@ class Solver(object):
         propagation.solve(self.board, contradiction_mode=True)
         self.board.add_solution()
 
+    @expand_generator
     def _probes_from_rates(self, rates):
         jobs_with_rates = defaultdict(dict)
 
@@ -352,13 +354,10 @@ class Solver(object):
             best = sorted(best, key=lambda x: len(jobs_with_rates[x[0]]))
         LOG.debug('\n'.join(map(str, best)))
 
-        jobs = []
         for pos, max_rate in best:
             colors = sorted(iteritems(jobs_with_rates[pos]), key=lambda x: x[1], reverse=True)
             for color, rate in colors:
-                jobs.append(CellState.from_position(pos, color))
-
-        return jobs
+                yield CellState.from_position(pos, color)
 
     def _get_all_unsolved_jobs(self, choose_from_cells=None):
         board = self.board

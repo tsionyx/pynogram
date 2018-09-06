@@ -7,6 +7,7 @@ e.g. manipulations with collections or streams.
 from __future__ import unicode_literals, print_function, division
 
 import sys
+from functools import partial, wraps
 from itertools import islice
 
 
@@ -119,3 +120,33 @@ def avg(iterable):
         return None
 
     return sum(list_copy) / len(list_copy)
+
+
+def expand_generator(func=None, type_=list):
+    """
+    Escape the common list construction idiom by creating generator functions.
+    You can also produce another iterable (e.g. tuple)
+
+    Compare:
+    def foo_list():                                  @expand_generator
+        foo = []                                     def foo():
+        while something:                                 while something:
+            if something_more:                               if something_more:
+                foo.append('X')          vs                      yield 'X'
+            else:                                            else:
+                foo.append('Y')                                  yield 'Y'
+
+        return foo
+
+    TODO: consider replacing with Andrey Petrov's `listify`
+    https://github.com/shazow/unstdlib.py/blob/master/unstdlib/standard/list_.py#L149
+    """
+    if func is None:
+        return partial(expand_generator, type_=type_)
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # noinspection PyArgumentList
+        return type_(func(*args, **kwargs))
+
+    return wrapper

@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 # import raven
 import tornado.web
 
+from pynogram.utils.iter import expand_generator
 from pynogram.utils.other import get_named_logger
 from pynogram.utils.other import (
     get_uptime,
@@ -139,16 +140,15 @@ class HelloHandler(BaseHandler):
     METHODS = ('GET', 'POST', 'PUT', 'DELETE', 'OPTIONS')
 
     @classmethod
+    @expand_generator
     def _process_handlers(cls, handlers):
-        routes = []
         for handler_pair in handlers:
             route, handler = handler_pair[:2]
             methods = [m for m in cls.METHODS if m.lower() in handler.__dict__]
             route_desc = '{}: {}'.format(route, ', '.join(methods))
             if issubclass(handler, ThreadedHandler):
                 route_desc += '(threaded)'
-            routes.append(route_desc)
-        return routes
+            yield route_desc
 
     def get(self):
         res = dict(

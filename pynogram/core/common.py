@@ -20,7 +20,10 @@ from six.moves import range
 from pynogram.core.color import (
     Color, ColorBlock,
 )
-from pynogram.utils.iter import list_replace
+from pynogram.utils.iter import (
+    list_replace,
+    expand_generator,
+)
 from pynogram.utils.other import get_named_logger
 
 LOG = get_named_logger(__name__, __file__)
@@ -259,11 +262,11 @@ class BlottedBlock(object):
         return counter
 
     @classmethod
+    @expand_generator
     def replace_with_1(cls, description):
         """
         Every blotted block spans a minimum of 1 cell
         """
-        minimized_description = []
         for block in description:
             if is_list_like(block):  # type: ColorBlock
                 if block[0] == cls:
@@ -272,9 +275,7 @@ class BlottedBlock(object):
             elif block == cls:
                 block = 1
 
-            minimized_description.append(block)
-
-        return minimized_description
+            yield block
 
     @classmethod
     def matches(cls, description, line):
