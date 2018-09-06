@@ -15,6 +15,7 @@ from six.moves import zip
 from pynogram.core.common import (
     UNKNOWN, BOX,
     SPACE, SPACE_COLORED,
+    partial_sums,
 )
 from pynogram.core.line.base import (
     BaseLineSolver,
@@ -61,16 +62,8 @@ class EfficientSolver(BaseLineSolver):
         The minimum line sizes in which can squeeze from 0 to i-th block
         """
 
-        if not description:
-            return []
-
-        minimum_lengths = [description[0] - 1]
-        for block in description[1:]:
-            prev = minimum_lengths[-1]
-            # at least one space + block size
-            minimum_lengths.append(prev + 1 + block)
-
-        return minimum_lengths
+        min_indexes = [s - 1 for s in partial_sums(description, colored=False)]
+        return min_indexes
 
     def fix(self, i, j):
         """
@@ -249,24 +242,8 @@ class EfficientColorSolver(EfficientSolver):
 
     @classmethod
     def min_lengths(cls, description):
-        if not description:
-            return []
-
-        minimum_lengths = [description[0].size - 1]
-        for i, block in enumerate(description[1:], 1):
-            size, color = block
-
-            prev = minimum_lengths[-1]
-            if description[i - 1].color == color:
-                # at least one space + block size
-                current = prev + 1 + size
-            else:
-                # only block size, can be no delimited space
-                current = prev + size
-
-            minimum_lengths.append(current)
-
-        return minimum_lengths
+        min_indexes = [s - 1 for s in partial_sums(description, colored=True)]
+        return min_indexes
 
     @classmethod
     def empty_cell(cls):

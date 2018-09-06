@@ -301,3 +301,37 @@ class BlottedBlock(object):
             return False
 
         return True
+
+
+@expand_generator
+def partial_sums(blocks, colored=None):
+    """
+    Calculate the partial sum of the blocks
+    """
+
+    if colored is None:
+        colored = is_color_list(blocks)
+
+    if not blocks:
+        return
+
+    if colored:
+        sum_so_far = blocks[0].size
+        yield sum_so_far
+
+        for i, block in enumerate(blocks[1:], 1):
+            size, color = block
+            sum_so_far += size
+
+            if blocks[i - 1].color == color:
+                # plus at least one space
+                sum_so_far += 1
+
+            yield sum_so_far
+    else:
+        sum_so_far = blocks[0]
+        yield sum_so_far
+
+        for block in blocks[1:]:
+            sum_so_far += block + 1
+            yield sum_so_far

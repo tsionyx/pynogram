@@ -17,6 +17,7 @@ from pynogram.core.color import ColorBlock
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE, SPACE_COLORED,
     BlottedBlock,
+    partial_sums,
 )
 from pynogram.core.line.base import (
     BaseLineSolver,
@@ -91,15 +92,8 @@ class BguSolver(BaseLineSolver):
         calculates the partial sum of the blocks.
         this is used later to determine if we can fit some blocks in the space left on the line
         """
-        res = [0]
-
-        if blocks:
-            res.append(blocks[0] - 1)
-
-        for block in blocks[1:]:
-            res.append(res[-1] + block + 1)
-
-        return res
+        min_indexes = [s - 1 for s in partial_sums(blocks, colored=False)]
+        return [0] + min_indexes
 
     def fill_matrix_top_down(self, position, block):
         """
@@ -248,24 +242,8 @@ class BguColoredSolver(BguSolver):
 
     @classmethod
     def calc_block_sum(cls, blocks):
-        res = [0]
-
-        if blocks:
-            res.append(blocks[0].size - 1)
-
-        for i, block in enumerate(blocks[1:], 1):
-            size, color = block
-            prev = res[-1]
-            if blocks[i - 1].color == color:
-                # at least one space + block size
-                current = prev + 1 + size
-            else:
-                # only block size, can be no delimited space
-                current = prev + size
-
-            res.append(current)
-
-        return res
+        min_indexes = [s - 1 for s in partial_sums(blocks, colored=True)]
+        return [0] + min_indexes
 
     def _precede_with_space(self, j):
         current_color = self.description[j].color
