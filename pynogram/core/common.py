@@ -309,11 +309,11 @@ def partial_sums(blocks, colored=None):
     Calculate the partial sum of the blocks
     """
 
-    if colored is None:
-        colored = is_color_list(blocks)
-
     if not blocks:
         return
+
+    if colored is None:
+        colored = isinstance(blocks[0], ColorBlock)
 
     if colored:
         sum_so_far = blocks[0].size
