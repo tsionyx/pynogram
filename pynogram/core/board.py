@@ -36,6 +36,7 @@ from pynogram.core.common import (
     NonogramError,
     BlottedBlock,
     partial_sums,
+    slack_space,
 )
 from pynogram.core.color import (
     normalize_description_colored,
@@ -1395,6 +1396,19 @@ class BlottedBoardMixin(BaseBoard, ABC):
     def reduce(self):
         """Reducing can work incorrectly on blotted descriptions"""
         return None, None
+
+    def attempts_to_try(self, is_column, index):
+        """How many description combinations to go through for given row or column"""
+        if is_column:
+            description = self.columns_descriptions[index]
+            line_size = self.height
+        else:
+            description = self.rows_descriptions[index]
+            line_size = self.width
+
+        slack = slack_space(line_size, description)
+
+        return slack ** BlottedBlock.how_many(description)
 
 
 class BlottedBlackBoard(BlackBoard, BlottedBoardMixin):

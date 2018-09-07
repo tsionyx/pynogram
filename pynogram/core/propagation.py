@@ -13,7 +13,6 @@ from six.moves import (
 from pynogram.core.common import (
     UNKNOWN, BOX, SPACE,
     is_color_cell,
-    BlottedBlock,
 )
 from pynogram.core.line import solve_line
 # from pynogram.core.line.machine import assert_match
@@ -64,7 +63,8 @@ def solve_row(board, index, is_column, method):
     #         assert_match(row_desc, row)
     #     return 0, ()
 
-    # LOG.debug('Solving %s %s: %s. Partial: %s', index, desc, row_desc, row)
+    # LOG.debug('Solving %s %s: %s. Partial: %s', index,
+    #           'column' if is_column else 'row', row_desc, row)
 
     updated = solve_line(row_desc, row, method=method, normalized=True)
 
@@ -184,14 +184,14 @@ def _solve_with_method(
         # the more 'dense' this line
         # priority = 1 - board.densities[False][row_index]
 
+        new_job = (False, row_index)
+
         priority = 0
-
         if has_blots:
-            description = board.rows_descriptions[row_index]
-            # the more blots the less priority
-            priority = BlottedBlock.how_much(description)
+            # the more attempts the less priority
+            priority = board.attempts_to_try(*new_job)
 
-        _add_job((False, row_index), priority)
+        _add_job(new_job, priority)
 
     if column_indexes is None:
         column_indexes = range(board.width)
@@ -205,14 +205,14 @@ def _solve_with_method(
         # the more 'dense' this line
         # priority = 1 - board.densities[True][column_index]
 
+        new_job = (True, column_index)
+
         priority = 0
-
         if has_blots:
-            description = board.columns_descriptions[column_index]
-            # the more blots the less priority
-            priority = BlottedBlock.how_much(description)
+            # the more attempts the less priority
+            priority = board.attempts_to_try(*new_job)
 
-        _add_job((True, column_index), priority)
+        _add_job(new_job, priority)
 
     total_cells_solved = 0
 
@@ -222,15 +222,13 @@ def _solve_with_method(
 
         total_cells_solved += len(new_jobs)
         for new_job in new_jobs:
-            new_job_priority = priority - 1
+            new_priority = priority - 1
             if board.has_blots:
-                is_column, index = new_job
-                description = (board.columns_descriptions
-                               if is_column else board.rows_descriptions)[index]
-                new_job_priority = BlottedBlock.how_much(description)
+                # the more attempts the less priority
+                new_priority = board.attempts_to_try(*new_job)
 
             # lower priority = more priority
-            _add_job(new_job, new_job_priority)
+            _add_job(new_job, new_priority)
 
         lines_solved += 1
 
