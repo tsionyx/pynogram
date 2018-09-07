@@ -1449,8 +1449,7 @@ class BlottedColorBoard(ColorBoard, BlottedBoardMixin):
         description = BlottedBlock.replace_with_1(description)
         line_colors = two_powers(cls._desc_colors(description))
         sums = partial_sums(description)
-        min_line_size = sums[-1]
-        slack = line_size - min_line_size
+        slack = slack_space(line_size, description)
 
         indexes = dict()
         for color in line_colors:

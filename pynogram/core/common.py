@@ -335,3 +335,14 @@ def partial_sums(blocks, colored=None):
         for block in blocks[1:]:
             sum_so_far += block + 1
             yield sum_so_far
+
+
+def slack_space(line_size, desc):
+    """How much space left when the line fully shifted to one edge"""
+    if not desc:
+        return line_size
+
+    desc = BlottedBlock.replace_with_1(desc)
+    sums = partial_sums(desc)
+    min_line_size = sums[-1]
+    return line_size - min_line_size

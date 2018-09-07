@@ -18,6 +18,7 @@ from pynogram.core.common import (
     UNKNOWN, BOX, SPACE, SPACE_COLORED,
     BlottedBlock,
     partial_sums,
+    slack_space,
 )
 from pynogram.core.line.base import (
     BaseLineSolver,
@@ -403,23 +404,20 @@ class BlottedHelper(object):
             return line
 
         blotted_desc = tuple(self.description)
-        LOG.info('Trying to solve with blotted clues: %r', blotted_desc)
+        LOG.warning('Solving blotted description %r', blotted_desc)
 
         blotted_positions = [index for index, block in enumerate(blotted_desc)
                              if self._is_blotted(block)]
 
-        line_size = len(line)
-        block_sums = self.block_sums
-        LOG.debug('Partial block sums: %r', block_sums)
-        required_space = block_sums[-1] + 1
-        slack_space = line_size - required_space
-
         # prevent from incidental changing
         min_desc = tuple(BlottedBlock.replace_with_1(blotted_desc))
 
+        line_size = len(line)
+        slack = slack_space(line_size, min_desc)
+
         solutions = set()
         for index, combination in enumerate(self._blotted_combinations(
-                len(blotted_positions), slack_space)):
+                len(blotted_positions), slack)):
 
             current_description = list(min_desc)
             for pos, block_size in zip(blotted_positions, combination):
