@@ -3,6 +3,8 @@
 
 from __future__ import unicode_literals, print_function
 
+import logging
+
 from six import (
     iteritems, itervalues,
     add_metaclass,
@@ -11,8 +13,12 @@ from six import (
 from pynogram.core.common import (
     NonogramError,
     SPACE_COLORED,
+    BlottedBlock,
 )
 from pynogram.utils.cache import Cache
+from pynogram.utils.other import two_powers
+
+LOG = logging.getLogger(__name__)
 
 
 class TwoLayerCache(Cache):
@@ -135,48 +141,167 @@ class BaseLineSolver(object):
         return self.line
 
 
-class ColoredSolver(BaseLineSolver):  # pragma: no cover
+class TrimmedSolver(BaseLineSolver):
     """Define some helpers for colored puzzle solvers"""
 
     @classmethod
-    def non_space_indexes(cls, line):
+    def prefix_size(cls, line, item):
         """
-        Skip some heading and trailing spaces in line.
+        How many items appear at the beginning of the line
         """
-        first_non_space, last_non_space = 0, 0
+        for spaces_size, cell in enumerate(line):
+            if cell != item:
+                return spaces_size
 
-        if line:
-            for first_non_space, cell in enumerate(line):
-                if cell != SPACE_COLORED:
+        return len(line)
+
+    @classmethod
+    def _trim_spaces(cls, line):  # pragma: no cover
+        space = SPACE_COLORED
+        head_size = cls.prefix_size(line, space)
+        tail_size = cls.prefix_size(list(reversed(line)), space)
+
+        if tail_size:
+            line = line[head_size: -tail_size]
+        else:
+            line = line[head_size:]
+
+        space_tuple = (space,)
+
+        return space_tuple * head_size, line, space_tuple * tail_size
+
+    @classmethod
+    def starting_solved(cls, description, line):
+        """
+        Trim off the solved cells from the beginning of the line.
+        Also fix the description respectively.
+
+        Return the pair (number of solved cells, number of solved blocks)
+        """
+        space = SPACE_COLORED
+
+        block_index = 0
+        last_block = len(description) - 1
+
+        pos = 0
+        last_pos = len(line) - 1
+
+        while pos <= last_pos:
+            # skip definite spaces
+            if line[pos] == space:
+                pos += 1
+                continue
+
+            cell = line[pos]
+            cell_colors = two_powers(cell)
+            if len(cell_colors) > 1:
+                break
+
+            color = cell_colors[0]
+
+            if block_index > last_block:
+                raise NonogramError(
+                    'Bad block index {} '
+                    'for description {!r}'.format(block_index, description))
+
+            block = description[block_index]
+            if color != block.color:
+                raise NonogramError(
+                    'Color {!r} at the position {!r} of the line {!r}'
+                    'does not match the color of the corresponding block {!r} '
+                    'in description {!r}'.format(
+                        color, pos, line, block, description))
+
+            size = block.size
+            if size == BlottedBlock:
+
+                end_pos = pos + 1
+                while end_pos <= last_pos and line[end_pos] == color:
+                    end_pos += 1
+
+                if end_pos <= last_pos:
+                    cell_colors = two_powers(line[end_pos])
+                    # can't say definitely whether the blotted block ends here
+                    if color in cell_colors:
+                        break
+
+                pos = end_pos
+                block_index += 1
+
+            else:
+                if pos + size > last_pos + 1:
+                    raise NonogramError(
+                        'The {}-th block {!r} cannot be allocated in the line {!r}'.format(
+                            block_index, block, line))
+
+                if line[pos: pos + size] != [color] * size:
                     break
 
-            for last_non_space, cell in enumerate(reversed(line)):
-                if cell != SPACE_COLORED:
-                    break
+                if block_index < last_block:
+                    next_block = description[block_index + 1]
+                    if next_block.color == color:
+                        try:
+                            if line[pos + size] != space:
+                                break
+                        except IndexError:
+                            raise NonogramError(
+                                'The next ({}-th) block {!r} '
+                                'cannot be allocated in the line {!r}'.format(
+                                    block_index + 1, next_block, line))
+                pos += size
+                block_index += 1
 
-        return first_non_space, last_non_space
+        return pos, block_index
+
+    @classmethod
+    def _trim_solved_blocks(cls, description, line):
+        LOG.info('Trying to trim off solved cells: %r, %r', description, line)
+
+        beg_solved, beg_blocks = cls.starting_solved(list(description), list(line))
+        fin_solved, fin_blocks = cls.starting_solved(
+            list(reversed(description)), list(reversed(line)))
+
+        start = tuple(line[:beg_solved])
+
+        if fin_solved:
+            end = tuple(line[-fin_solved:])
+            line = line[beg_solved: -fin_solved]
+        else:
+            end = ()
+            # hack to do foo[a: b] == foo[a:]: just assign b = -len(foo)
+            # fin_solved = -len(line)
+            line = line[beg_solved:]
+
+        if fin_blocks:
+            description = description[beg_blocks: -fin_blocks]
+        else:
+            description = description[beg_blocks:]
+
+        if not line and description:
+            raise NonogramError('Some blocks left after trimming the whole line')
+
+        return description, line, (start, end)
 
     @classmethod
     def solve(cls, description, line):
-        """Optimize line solving by trimming off the spaces"""
+        """Optimize line solving by trimming off the spaces and solved blocks"""
+        # head, line, tail = cls._trim_spaces(line)
+        # if not line:  # if consists only of spaces
+        #     return head
 
-        original = line
-        first_non_space, last_non_space = cls.non_space_indexes(line)
-        if first_non_space:
-            if last_non_space:
-                line = line[first_non_space: -last_non_space]
-            else:
-                line = line[first_non_space:]
-        elif last_non_space:
-            line = line[:-last_non_space]
+        description, line, edges = cls._trim_solved_blocks(description, line)
+        if any(edges):
+            LOG.info('Trimmed edges: %r, %r', *edges)
+            LOG.info('What is left after trimming: description %r and line %r',
+                     description, line)
+        if not line:  # all the cells are solved
+            solved = edges[0]
+        else:
+            solved = super(TrimmedSolver, cls).solve(description, line)
+            solved = edges[0] + solved + edges[1]
 
-        if not line:  # if consists only of spaces
-            return (SPACE_COLORED,) * len(original)
-
-        solved = super(ColoredSolver, cls).solve(description, line)
-
-        if first_non_space or last_non_space:
-            space_t = (SPACE_COLORED,)
-            solved = space_t * first_non_space + solved + space_t * last_non_space
+        # # restore the spaces
+        # if head or tail:
+        #     solved = head + solved + tail
 
         return solved

@@ -22,7 +22,7 @@ from pynogram.core.common import (
 )
 from pynogram.core.line.base import (
     BaseLineSolver,
-    ColoredSolver,
+    TrimmedSolver,
     NonogramError,
 )
 from pynogram.utils.other import (
@@ -500,7 +500,7 @@ class BguBlottedSolver(BguSolver, BlottedHelper):
         return self._solve_blotted(line, super(BguBlottedSolver, self)._solve)
 
 
-class BguColoredBlottedSolver(ColoredSolver, BguColoredSolver, BlottedHelper):
+class BguColoredBlottedSolver(TrimmedSolver, BguColoredSolver, BlottedHelper):
     """
     Slightly modified algorithm to solve colored lines with blotted descriptions
     """
