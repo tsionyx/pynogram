@@ -5,6 +5,8 @@ Defines various renderers for the game of nonogram
 
 from __future__ import unicode_literals, print_function, division
 
+from itertools import combinations
+
 try:
     from abc import ABC
 except ImportError:
@@ -35,7 +37,9 @@ from pynogram.utils.iter import (
     split_seq,
     max_safe,
 )
-from pynogram.utils.other import two_powers
+from pynogram.utils.other import (
+    two_powers, from_two_powers,
+)
 
 _LOG_NAME = __name__
 LOG = logging.getLogger(_LOG_NAME)
@@ -521,8 +525,9 @@ class SvgRenderer(StreamRenderer):
             return color_id
 
         if is_list_like(color):
-            return tuple(self.board.color_id_by_name(single_color)
-                         for single_color in color)
+            return from_two_powers(
+                self.board.color_id_by_name(single_color)
+                for single_color in color)
 
     def _add_symbol(self, id_, color, *parts, **kwargs):
         drawing = self.drawing
@@ -535,12 +540,8 @@ class SvgRenderer(StreamRenderer):
             if color not in (SPACE, SPACE_COLORED):
                 if self.is_colored:
                     color = self._color_id_by_name(color)
-            self.color_symbols[color] = id_
 
-            if is_list_like(color):
-                # allow red-blue and blue-red to refer to the same symbol
-                color = tuple(reversed(color))
-                self.color_symbols[color] = id_
+            self.color_symbols[color] = id_
 
         drawing.defs.add(symbol)
 
@@ -581,6 +582,7 @@ class SvgRenderer(StreamRenderer):
 
         cell_size = self.cell_size
         rect_size = (cell_size, cell_size)
+
         upper_triangle_points = ((0, 0), (0, cell_size), (cell_size, 0))
         lower_triangle_points = ((0, cell_size), (cell_size, 0), (cell_size, cell_size))
 
@@ -604,15 +606,14 @@ class SvgRenderer(StreamRenderer):
                         fill=fill_color,
                     ))
 
-            if not self.is_colored:
-                continue
-
-            # transient colors
-            for color_name2, fill_color2 in colors[color_index + 1:]:
+        if self.is_colored:
+            for (color_name, fill_color), (color_name2, fill_color2) in combinations(colors, 2):
                 LOG.info('Transient symbol: %s, %s + %s, %s',
                          color_name, fill_color, color_name2, fill_color2)
+                color_tuple = (color_name, color_name2)
+
                 self._add_symbol(
-                    'color-%s-%s' % (color_name, color_name2), (color_name, color_name2),
+                    'color-%s' % '-'.join(map(str, color_tuple)), color_tuple,
                     drawing.polygon(
                         points=upper_triangle_points,
                         fill=fill_color,
@@ -807,12 +808,10 @@ class SvgRenderer(StreamRenderer):
     @classmethod
     def _color_code(cls, cell):
         if is_color_cell(cell):
-            cell = tuple(two_powers(cell))
-            if len(cell) == 1:
-                cell = cell[0]
-            elif len(cell) > 2:  # allow two colors
+            single_colors = two_powers(cell)
+            if len(single_colors) > 2:  # allow two colors
                 # multiple colors
-                cell = UNKNOWN
+                return UNKNOWN
 
         return cell
 
@@ -858,7 +857,7 @@ class SvgRenderer(StreamRenderer):
 
         # to get predictable order
         for cell_value, group in sorted(iteritems(cell_groups),
-                                        key=lambda x: str(x[0])):
+                                        key=lambda x: x[0]):
             drawing.add(group)
 
         # write grid on top of the colors

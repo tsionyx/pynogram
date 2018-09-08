@@ -378,6 +378,14 @@ class TestSvg(object):
                     <symbol id="color-b">
                         <rect fill="blue" height="15" width="15" x="0" y="0" />
                     </symbol>
+                    <symbol id="color-black">
+                        <rect fill="#000" height="15" width="15" x="0" y="0" />
+                    </symbol>
+                    <symbol id="color-r">
+                        <rect fill="red" height="15" width="15" x="0" y="0" />
+                    </symbol>
+
+
                     <symbol id="color-b-black">
                         <polygon fill="blue" points="0,0 0,15 15,0" />
                         <polygon fill="#000" points="0,15 15,0 15,15" />
@@ -391,9 +399,6 @@ class TestSvg(object):
                         <polygon fill="#fff" points="0,15 15,0 15,15" />
                     </symbol>
 
-                    <symbol id="color-black">
-                        <rect fill="#000" height="15" width="15" x="0" y="0" />
-                    </symbol>
                     <symbol id="color-black-r">
                         <polygon fill="#000" points="0,0 0,15 15,0" />
                         <polygon fill="red" points="0,15 15,0 15,15" />
@@ -403,14 +408,12 @@ class TestSvg(object):
                         <polygon fill="#fff" points="0,15 15,0 15,15" />
                     </symbol>
 
-                    <symbol id="color-r">
-                        <rect fill="red" height="15" width="15" x="0" y="0" />
-                    </symbol>
                     <symbol id="color-r-white">
                         <polygon fill="red" points="0,0 0,15 15,0" />
                         <polygon fill="#fff" points="0,15 15,0 15,15" />
                     </symbol>
                     <symbol id="space"><circle cx="0" cy="0" r="1.5" /></symbol>
+
 
                     <symbol fill="none" id="check" stroke="green">
                         <circle cx="50" cy="50" r="40" stroke-width="10" />
@@ -458,34 +461,29 @@ class TestSvg(object):
                 <use x="0" xlink:href="#check" y="0" />
 
                 <rect class="nonogram-grid" height="45" width="45" x="15" y="30" />
-                <g class="color-black-white" />
-                <g class="color-r-white" />
-                <g class="color-b-white" />
-                <g class="color-black-white" />
-                <g class="color-black-r" />
-                <g class="color-b-black" />
-                <g class="color-r-white" />
-                <g class="color-black-r" />
-                <g class="color-b-r" />
-                <g class="color-b-white" />
-                <g class="color-b-black" />
-                <g class="color-b-r" />
                 <g class="space">
                     <use x="22.5" xlink:href="#space" y="52.5" />
                     <use x="37.5" xlink:href="#space" y="52.5" />
                     <use x="52.5" xlink:href="#space" y="52.5" />
                 </g>
                 <g class="color-black" />
+                <g class="color-black-white" />
                 <g class="color-r">
                     <use x="15" xlink:href="#color-r" y="30" />
                     <use x="30" xlink:href="#color-r" y="30" />
                     <use x="45" xlink:href="#color-r" y="30" />
                 </g>
+                <g class="color-r-white" />
+                <g class="color-black-r" />
                 <g class="color-b">
                     <use x="15" xlink:href="#color-b" y="60" />
                     <use x="30" xlink:href="#color-b" y="60" />
                     <use x="45" xlink:href="#color-b" y="60" />
                 </g>
+                <g class="color-b-white" />
+                <g class="color-b-black" />
+                <g class="color-b-r" />
+
                 <g class="grid-lines">
                     <line class="bold" x1="0" x2="60" y1="30" y2="30" />
                     <line x1="0" x2="60" y1="45" y2="45" />
