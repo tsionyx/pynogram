@@ -216,8 +216,10 @@ def _solve_with_method(
 
     total_cells_solved = 0
 
-    while line_jobs:
-        (is_column, index), priority = line_jobs.pop_smallest()
+    for (is_column, index), priority in line_jobs.sorted_iter():
+        # LOG.info('Solving %s %s with priority %s', index,
+        #          'column' if is_column else 'row', priority)
+
         new_jobs = solve_row(board, index, is_column, method)
 
         total_cells_solved += len(new_jobs)

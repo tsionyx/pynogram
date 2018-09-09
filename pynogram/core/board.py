@@ -1460,6 +1460,9 @@ class BlottedColorBoard(ColorBoard, BlottedBoardMixin):
 
     @classmethod
     def _line_color_ranges(cls, description, line_size):
+        """
+        For every color in the given description produce a valid position range
+        """
         description = BlottedBlock.replace_with_1(description)
         line_colors = two_powers(cls._desc_colors(description))
         sums = partial_sums(description)
