@@ -150,3 +150,26 @@ def expand_generator(func=None, type_=list):
         return type_(func(*args, **kwargs))
 
     return wrapper
+
+
+def max_continuous_interval(int_list):
+    """
+    The size of the longest continuous
+    number sequence in a list
+    """
+    int_list = sorted(int_list)
+
+    if not int_list:
+        return 0
+
+    max_size = 1
+    first, last = int_list[0], int_list[0]
+    for number in int_list[1:]:
+        if number == last + 1:
+            last = number
+        else:
+            max_size = max(max_size, last - first + 1)  # save previous range
+            first, last = number, number
+
+    max_size = max(max_size, last - first + 1)
+    return max_size

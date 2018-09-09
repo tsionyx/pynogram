@@ -15,6 +15,7 @@ from pynogram.utils.iter import (
     interleave,
     max_safe,
     avg,
+    max_continuous_interval,
 )
 from pynogram.utils.other import (
     get_version,
@@ -353,3 +354,23 @@ class TestPowers(object):
 
             factors = two_powers(n)
             assert from_two_powers(factors) == n
+
+
+class TestMaxInterval(object):
+    def test_empty(self):
+        assert max_continuous_interval([]) == 0
+
+    def test_single(self):
+        assert max_continuous_interval([3]) == 1
+
+    def test_sparse(self):
+        assert max_continuous_interval([3, 12, 14, 20]) == 1
+
+    def test_min(self):
+        assert max_continuous_interval([1, 3, 5, 6, 8, 10]) == 2
+
+    def test_several(self):
+        assert max_continuous_interval([1, 3, 5, 6, 8, 9, 10, 12, 13, 15, 16, 17]) == 3
+
+    def test_four(self):
+        assert max_continuous_interval([1, 3, 5, 6, 8, 9, 10, 12, 13, 15, 16, 17, 18]) == 4
