@@ -412,6 +412,29 @@ class TestSvg(object):
                         <polygon fill="red" points="0,0 0,15 15,0" />
                         <polygon fill="#fff" points="0,15 15,0 15,15" />
                     </symbol>
+
+
+                    <symbol id="x3-b-black-r">
+                        <rect fill="blue" height="15" width="15" x="0" y="0" />
+                        <polygon fill="#000" points="0,0 0,10.61 10.61,0" />
+                        <polygon fill="red" points="15,4.39 4.39,15 15,15" />
+                    </symbol>
+                    <symbol id="x3-b-black-white">
+                        <rect fill="blue" height="15" width="15" x="0" y="0" />
+                        <polygon fill="#000" points="0,0 0,10.61 10.61,0" />
+                        <polygon fill="#fff" points="15,4.39 4.39,15 15,15" />
+                    </symbol>
+                    <symbol id="x3-b-r-white">
+                        <rect fill="blue" height="15" width="15" x="0" y="0" />
+                        <polygon fill="red" points="0,0 0,10.61 10.61,0" />
+                        <polygon fill="#fff" points="15,4.39 4.39,15 15,15" />
+                    </symbol>
+                    <symbol id="x3-black-r-white">
+                        <rect fill="#000" height="15" width="15" x="0" y="0" />
+                        <polygon fill="red" points="0,0 0,10.61 10.61,0" />
+                        <polygon fill="#fff" points="15,4.39 4.39,15 15,15" />
+                    </symbol>
+
                     <symbol id="space"><circle cx="0" cy="0" r="1.5" /></symbol>
 
 
@@ -461,6 +484,7 @@ class TestSvg(object):
                 <use x="0" xlink:href="#check" y="0" />
 
                 <rect class="nonogram-grid" height="45" width="45" x="15" y="30" />
+
                 <g class="space">
                     <use x="22.5" xlink:href="#space" y="52.5" />
                     <use x="37.5" xlink:href="#space" y="52.5" />
@@ -475,6 +499,7 @@ class TestSvg(object):
                 </g>
                 <g class="x2-r-white" />
                 <g class="x2-black-r" />
+                <g class="x3-black-r-white" />
                 <g class="color-b">
                     <use x="15" xlink:href="#color-b" y="60" />
                     <use x="30" xlink:href="#color-b" y="60" />
@@ -482,7 +507,10 @@ class TestSvg(object):
                 </g>
                 <g class="x2-b-white" />
                 <g class="x2-b-black" />
+                <g class="x3-b-black-white" />
                 <g class="x2-b-r" />
+                <g class="x3-b-r-white" />
+                <g class="x3-b-black-r" />
 
                 <g class="grid-lines">
                     <line class="bold" x1="0" x2="60" y1="30" y2="30" />

@@ -586,6 +586,19 @@ class SvgRenderer(StreamRenderer):
         upper_triangle_points = ((0, 0), (0, cell_size), (cell_size, 0))
         lower_triangle_points = ((0, cell_size), (cell_size, 0), (cell_size, cell_size))
 
+        # three_colored_flag_rect_size = (cell_size / 3, cell_size)
+        # three_colored_flag_insert_points = [(0, 0), (cell_size / 3, 0), (2 * cell_size / 3, 0)]
+        three_color_triangle_size = round(cell_size * ((1 / 2) ** 0.5), 2)
+        three_color_triangle_coord = round(cell_size - three_color_triangle_size, 2)
+
+        three_colored_upper_triangle_points = [
+            (0, 0), (0, three_color_triangle_size), (three_color_triangle_size, 0)]
+        three_colored_lower_triangle_points = [
+            (cell_size, three_color_triangle_coord),
+            (three_color_triangle_coord, cell_size),
+            (cell_size, cell_size),
+        ]
+
         # rendering should be predictable
         colors = []
         if self.is_colored:
@@ -621,6 +634,45 @@ class SvgRenderer(StreamRenderer):
                     drawing.polygon(
                         points=lower_triangle_points,
                         fill=fill_color2,
+                    ),
+                )
+
+            for (color_name, fill_color), (color_name2, fill_color2), (
+                    color_name3, fill_color3) in combinations(colors, 3):
+                LOG.info('Transient symbol: %s, %s + %s, %s + %s, %s',
+                         color_name, fill_color,
+                         color_name2, fill_color2,
+                         color_name3, fill_color3)
+                color_tuple = (color_name, color_name2, color_name3)
+
+                self._add_symbol(
+                    'x3-%s' % '-'.join(map(str, color_tuple)), color_tuple,
+                    # drawing.rect(
+                    #     insert=three_colored_flag_insert_points[0],
+                    #     size=three_colored_flag_rect_size,
+                    #     fill=fill_color,
+                    # ),
+                    # drawing.rect(
+                    #     insert=three_colored_flag_insert_points[1],
+                    #     size=three_colored_flag_rect_size,
+                    #     fill=fill_color2,
+                    # ),
+                    # drawing.rect(
+                    #     insert=three_colored_flag_insert_points[2],
+                    #     size=three_colored_flag_rect_size,
+                    #     fill=fill_color3,
+                    # ),
+                    drawing.rect(
+                        size=rect_size,
+                        fill=fill_color,
+                    ),
+                    drawing.polygon(
+                        points=three_colored_upper_triangle_points,
+                        fill=fill_color2,
+                    ),
+                    drawing.polygon(
+                        points=three_colored_lower_triangle_points,
+                        fill=fill_color3,
                     ),
                 )
 
@@ -809,7 +861,7 @@ class SvgRenderer(StreamRenderer):
     def _color_code(cls, cell):
         if is_color_cell(cell):
             single_colors = two_powers(cell)
-            if len(single_colors) > 2:  # allow two colors
+            if len(single_colors) > 3:  # allow two and three colors
                 # multiple colors
                 return UNKNOWN
 
