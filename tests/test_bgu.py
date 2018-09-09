@@ -6,9 +6,16 @@ import pytest
 
 from pynogram.core import propagation
 from pynogram.core.board import BlackBoard
-from pynogram.core.common import NonogramError
+from pynogram.core.color import ColorBlock
+from pynogram.core.common import (
+    NonogramError,
+    BlottedBlock,
+)
 from pynogram.core.line import solve_line
-from pynogram.core.line.bgu import BguColoredSolver
+from pynogram.core.line.bgu import (
+    BguColoredSolver,
+    BguColoredBlottedSolver,
+)
 from pynogram.reader import read_example
 from .cases import CASES, BAD_CASES
 # skip the 'Test' prefix to prevent from running this suite twice
@@ -42,3 +49,36 @@ class TestBguColoredSolver(ColorTest):
     @classmethod
     def method_name(cls):
         return 'bgu_color'
+
+
+class TestBguColoredBlotted(object):
+    def test_19787(self):
+        """13 column from http://webpbn/19787"""
+        desc = (
+            ColorBlock(size=BlottedBlock, color=16),
+            ColorBlock(size=BlottedBlock, color=2),
+            ColorBlock(size=BlottedBlock, color=16),
+            ColorBlock(size=1, color=2),
+            ColorBlock(size=BlottedBlock, color=8),
+            ColorBlock(size=BlottedBlock, color=8),
+            ColorBlock(size=BlottedBlock, color=16),
+        )
+
+        line = (
+            17, 17, 19, 19, 19,
+            19, 17, 17, 27, 19,
+            19, 19, 11, 8, 9,
+            9, 9, 9, 9, 9,
+            8, 8, 9, 9, 25,
+            9, 17, 17, 17, 17,
+        )
+
+        assert BguColoredBlottedSolver.block_ranges(desc, line) == [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+            [2, 3, 4, 5, 8, 9, 10],
+            [3, 4, 5, 6, 7, 8, 9, 10, 11],
+            [4, 5, 8, 9, 10, 11, 12],
+            [8, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23],
+            [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+            [24, 26, 27, 28, 29],
+        ]

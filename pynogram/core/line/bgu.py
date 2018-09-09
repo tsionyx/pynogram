@@ -519,3 +519,90 @@ class BguColoredBlottedSolver(TrimmedSolver, BlottedSolver, BguColoredSolver):
     @classmethod
     def _single_color(cls, values):
         return from_two_powers(values)
+
+    @classmethod
+    @expand_generator
+    def block_ranges_left(cls, description, line):
+        """
+        Shift the blocks to the left and find valid start positions
+        """
+        # line_colors = set(block.color for block in description)
+        allowed_colors_positions = defaultdict(list)
+        for index, cell in enumerate(line):
+            for single_color in two_powers(cell):
+                allowed_colors_positions[single_color].append(index)
+
+        min_start_indexes = cls.calc_block_sum(description)[1:]
+        LOG.debug(min_start_indexes)
+
+        for block_index, block in enumerate(description):
+            size, color = block
+            # do not do `zip(desc, min_indexes)` because min_indexes changes
+            min_index = min_start_indexes[block_index]
+
+            rang = [index for index in allowed_colors_positions[color]
+                    if index >= min_index]
+
+            if not rang:
+                raise NonogramError('The #%i block (%r) cannot be placed', block_index, block)
+
+            min_index_shift = min(rang) - min_index
+            if min_index_shift > 0:
+                LOG.info('Minimum starting index for block #%i (%r) updated: %i --> %i',
+                         block_index, block, min_index, min_index + min_index_shift)
+
+                min_start_indexes[block_index:] = [
+                    i + min_index_shift for i in min_start_indexes[block_index:]]
+
+            yield rang
+
+        LOG.debug(min_start_indexes)
+
+    @classmethod
+    @expand_generator
+    def block_ranges(cls, description, line):
+        """
+        For every block in the description produce a valid cells range
+        it can cover using partially solved line
+        """
+        left_ranges = cls.block_ranges_left(description, line)
+        right_ranges = reversed(cls.block_ranges_left(
+            tuple(reversed(description)), tuple(reversed(line))))
+
+        for left, right in zip(left_ranges, right_ranges):
+            right = [len(line) - 1 - i for i in reversed(right)]
+            yield sorted(set(left) & set(right))
+
+    @classmethod
+    def _blotted_combinations(cls, description, line):
+        """
+        Generate all the possible combinations of blotted blocks sizes.
+        The routine calculates the maximum possible block size
+        by analyzing the line and finding valid positions range for every block.
+        """
+
+        max_sum = slack_space(len(line), description)
+
+        sizes = []
+        ranges = cls.block_ranges(description, line)
+
+        for block, rang in zip(description, ranges):
+            LOG.info('{} --> {}'.format(block, rang))
+
+        for block, rang in zip(description, ranges):
+            if cls._is_blotted(block):
+                max_block_size = max_continuous_interval(rang)
+
+                # the algorithm already count the block as minimum size=1
+                # max_block_size -= 1
+
+                valid_range = tuple(range(max_block_size))
+                sizes.append(valid_range)
+
+        total_variations = tuple(map(len, sizes))
+        LOG.info('Go through %i combinations: %s',
+                 reduce(lambda x, y: x * y, total_variations), total_variations)
+
+        for combination in product(*sizes):
+            if sum(combination) <= max_sum:
+                yield combination
