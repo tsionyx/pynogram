@@ -1408,7 +1408,7 @@ class BlottedBoardMixin(BaseBoard, ABC):
 
         slack = slack_space(line_size, description)
 
-        return slack ** BlottedBlock.how_many(description)
+        return (slack + 1) ** BlottedBlock.how_many(description)
 
 
 class BlottedBlackBoard(BlackBoard, BlottedBoardMixin):
