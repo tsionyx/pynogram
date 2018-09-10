@@ -227,3 +227,9 @@ class TestTrimmingBlotted(object):
              ColorBlock(2, 4), ColorBlock(BB, 2)],
             [2, 2, 4, space, 4, 4, 2, space | 2]
         ) == (6, 3)
+
+    def test_solved_partial_remove_prefix(self):
+        assert f(
+            [ColorBlock(BB, 2), ColorBlock(BB, 4)],
+            [space, 2, 2, 3, space, 4, 4, space | 5]
+        ) == (2, 0)

@@ -223,6 +223,8 @@ class TrimmedSolver(BaseLineSolver):
                     cell_colors = two_powers(line[end_pos])
                     # can't say definitely whether the blotted block ends here
                     if color in cell_colors:
+                        # the partially solved blotted block can be reduced to one cell
+                        pos = end_pos - 1
                         break
 
                 pos = end_pos
