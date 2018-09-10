@@ -93,6 +93,9 @@ def solve(d_board, draw_final=False, draw_probes=False, **solver_args):
 
     if not draw_final:
         d_board.on_solution_round_complete = lambda board: board.draw()
+        if d_board.has_blots:
+            d_board.on_row_update = lambda index, board: board.draw()
+            d_board.on_column_update = lambda index, board: board.draw()
 
     solver = Solver(d_board, **solver_args)
 
