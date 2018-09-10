@@ -613,7 +613,7 @@ class SvgRenderer(StreamRenderer):
                 color_tuple = (color_name, color_name2)
 
                 self._add_symbol(
-                    'color-%s' % '-'.join(map(str, color_tuple)), color_tuple,
+                    'x2-%s' % '-'.join(map(str, color_tuple)), color_tuple,
                     drawing.polygon(
                         points=upper_triangle_points,
                         fill=fill_color,

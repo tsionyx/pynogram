@@ -386,29 +386,29 @@ class TestSvg(object):
                     </symbol>
 
 
-                    <symbol id="color-b-black">
+                    <symbol id="x2-b-black">
                         <polygon fill="blue" points="0,0 0,15 15,0" />
                         <polygon fill="#000" points="0,15 15,0 15,15" />
                     </symbol>
-                    <symbol id="color-b-r">
+                    <symbol id="x2-b-r">
                         <polygon fill="blue" points="0,0 0,15 15,0" />
                         <polygon fill="red" points="0,15 15,0 15,15" />
                     </symbol>
-                    <symbol id="color-b-white">
+                    <symbol id="x2-b-white">
                         <polygon fill="blue" points="0,0 0,15 15,0" />
                         <polygon fill="#fff" points="0,15 15,0 15,15" />
                     </symbol>
 
-                    <symbol id="color-black-r">
+                    <symbol id="x2-black-r">
                         <polygon fill="#000" points="0,0 0,15 15,0" />
                         <polygon fill="red" points="0,15 15,0 15,15" />
                     </symbol>
-                    <symbol id="color-black-white">
+                    <symbol id="x2-black-white">
                         <polygon fill="#000" points="0,0 0,15 15,0" />
                         <polygon fill="#fff" points="0,15 15,0 15,15" />
                     </symbol>
 
-                    <symbol id="color-r-white">
+                    <symbol id="x2-r-white">
                         <polygon fill="red" points="0,0 0,15 15,0" />
                         <polygon fill="#fff" points="0,15 15,0 15,15" />
                     </symbol>
@@ -467,22 +467,22 @@ class TestSvg(object):
                     <use x="52.5" xlink:href="#space" y="52.5" />
                 </g>
                 <g class="color-black" />
-                <g class="color-black-white" />
+                <g class="x2-black-white" />
                 <g class="color-r">
                     <use x="15" xlink:href="#color-r" y="30" />
                     <use x="30" xlink:href="#color-r" y="30" />
                     <use x="45" xlink:href="#color-r" y="30" />
                 </g>
-                <g class="color-r-white" />
-                <g class="color-black-r" />
+                <g class="x2-r-white" />
+                <g class="x2-black-r" />
                 <g class="color-b">
                     <use x="15" xlink:href="#color-b" y="60" />
                     <use x="30" xlink:href="#color-b" y="60" />
                     <use x="45" xlink:href="#color-b" y="60" />
                 </g>
-                <g class="color-b-white" />
-                <g class="color-b-black" />
-                <g class="color-b-r" />
+                <g class="x2-b-white" />
+                <g class="x2-b-black" />
+                <g class="x2-b-r" />
 
                 <g class="grid-lines">
                     <line class="bold" x1="0" x2="60" y1="30" y2="30" />
