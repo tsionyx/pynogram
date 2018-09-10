@@ -14,6 +14,7 @@ except ImportError:
 from six import (
     integer_types, string_types,
     iteritems,
+    with_metaclass,
 )
 from six.moves import range
 
@@ -236,7 +237,14 @@ def clues(solution_matrix, white_color_code=SPACE):
     return columns, rows
 
 
-class BlottedBlock(object):
+class _BlottedMeta(type):
+    """Redefine __repr__ to reduce noise in logs"""
+
+    def __repr__(self):
+        return 'BLOTTED'
+
+
+class BlottedBlock(with_metaclass(_BlottedMeta, object)):
     """
     The size of the block is unknown
     (try to solve by hand https://webpbn.com/19407 to grasp the concept)
