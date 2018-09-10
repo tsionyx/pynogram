@@ -395,6 +395,15 @@ class BlottedSolver(BaseLineSolver):
         raise NotImplementedError()
 
     @classmethod
+    def merge_solutions(cls, one, other=None):
+        if other is None:
+            return one
+
+        LOG.debug('Merging two solutions: %r and %r', one, other)
+        return [cls._single_color(set(cells))
+                for cells in zip(one, other)]
+
+    @classmethod
     def solve(cls, description, line):
         """Solve the line (or use cached value)"""
         if not line:
@@ -408,7 +417,7 @@ class BlottedSolver(BaseLineSolver):
             return line
 
         blotted_desc, line = tuple(description), tuple(line)
-        LOG.warning('Solving blotted description %r', blotted_desc)
+        LOG.warning('Solving line %r with blotted description %r', line, blotted_desc)
 
         blotted_positions = [index for index, block in enumerate(blotted_desc)
                              if cls._is_blotted(block)]
@@ -416,9 +425,7 @@ class BlottedSolver(BaseLineSolver):
         # prevent from incidental changing
         min_desc = tuple(BlottedBlock.replace_with_1(blotted_desc))
 
-        line_size = len(line)
-
-        solutions = set()
+        solution = None
         for index, combination in enumerate(cls._blotted_combinations(
                 blotted_desc, line)):
 
@@ -434,30 +441,20 @@ class BlottedSolver(BaseLineSolver):
             except NonogramError:
                 LOG.debug('Combination %r is invalid for line %r', current_description, line)
             else:
-                LOG.debug('Add solution %r', solved)
-                solutions.add(solved)
+                solution = cls.merge_solutions(solved, solution)
+                LOG.debug('Merged solution: %s', solution)
+                if tuple(solution) == line:
+                    LOG.warning('The combination %r (description=%r) is valid but '
+                                'brings no new information. Stopping the combinations search.',
+                                combination, current_description)
+                    break
 
-        if not solutions:
+        if not solution:
             raise NonogramError('Cannot solve with blotted clues {!r}'.format(blotted_desc))
 
-        LOG.debug('Found solutions: %r', solutions)
-        if len(solutions) == 1:
-            solution = next(iter(solutions))
-            LOG.info('Single solution: %r', solution)
-            assert len(solution) == len(line)
-            return solution
-
-        united = []
-        for index in range(line_size):
-            cell = set(solution[index] for solution in solutions)
-            if len(cell) == 1:
-                united.append(next(iter(cell)))
-            else:
-                united.append(cls._single_color(cell))
-
-        LOG.info('United solution from all combinations: %r', united)
-        assert len(united) == len(line)
-        return tuple(united)
+        LOG.info('United solution from all combinations: %r', solution)
+        assert len(solution) == len(line)
+        return tuple(solution)
 
 
 class BguBlottedSolver(BlottedSolver, BguSolver):
@@ -489,6 +486,8 @@ class BguBlottedSolver(BlottedSolver, BguSolver):
     def _single_color(cls, values):
         if len(values) > 1:
             return UNKNOWN
+
+        return tuple(values)[0]
 
 
 class BguColoredBlottedSolver(TrimmedSolver, BlottedSolver, BguColoredSolver):
@@ -600,8 +599,8 @@ class BguColoredBlottedSolver(TrimmedSolver, BlottedSolver, BguColoredSolver):
                 sizes.append(valid_range)
 
         total_variations = tuple(map(len, sizes))
-        LOG.info('Go through %i combinations: %s',
-                 reduce(lambda x, y: x * y, total_variations), total_variations)
+        LOG.warning('Go through %i combinations: %s',
+                    reduce(lambda x, y: x * y, total_variations), total_variations)
 
         for combination in product(*sizes):
             if sum(combination) <= max_sum:
