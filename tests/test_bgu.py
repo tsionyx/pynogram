@@ -5,7 +5,9 @@ from __future__ import unicode_literals, print_function
 import pytest
 
 from pynogram.core import propagation
-from pynogram.core.board import BlackBoard
+from pynogram.core.board import (
+    BlackBoard,
+)
 from pynogram.core.color import ColorBlock
 from pynogram.core.common import (
     NonogramError,
@@ -16,7 +18,9 @@ from pynogram.core.line.bgu import (
     BguColoredSolver,
     BguColoredBlottedSolver,
 )
-from pynogram.reader import read_example
+from pynogram.reader import (
+    read_example,
+)
 from .cases import CASES, BAD_CASES
 # skip the 'Test' prefix to prevent from running this suite twice
 from .test_efficient import TestEfficientColorSolver as ColorTest

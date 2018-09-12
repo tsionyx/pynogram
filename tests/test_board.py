@@ -614,10 +614,24 @@ class TestBlotted(object):
         propagation.solve(board)
         assert board.is_solved_full
 
+    def test_black(self):
+        board = make_board(*Pbn.read(20029))
+        assert board.rows_descriptions[2] == (BlottedBlock, 1)
+
+        propagation.solve(board)
+        assert board.is_solved_full
+
     def test_color(self):
-        board = make_board(*Pbn.read(19427))
+        board = make_board(*Pbn.read(19647))
         assert board.has_blots
-        assert board.rows_descriptions[1] == (BlottedBlock,)
+        assert board.rows_descriptions[15] == (
+            (1, 2),
+            (BlottedBlock, 8),
+            (BlottedBlock, 8),
+            (2, 2),
+            (2, 2),
+            (2, 8),
+        )
 
         propagation.solve(board)
         assert board.is_solved_full
