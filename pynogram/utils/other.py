@@ -196,3 +196,13 @@ def get_named_logger(name__, file__, auto_config_when_main=True):
             logging.basicConfig()
 
     return logging.getLogger(name__)
+
+
+@contextmanager
+def ignored(*exceptions):
+    """https://www.youtube.com/watch?v=OSGv2VnC0go&t=2696s"""
+
+    try:
+        yield
+    except exceptions:
+        pass

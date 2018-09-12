@@ -48,6 +48,7 @@ from pynogram.utils.iter import avg
 from pynogram.utils.other import (
     two_powers, from_two_powers,
     get_named_logger,
+    ignored,
 )
 
 LOG = get_named_logger(__name__, __file__)
@@ -947,7 +948,8 @@ class ReduceColorToBlackMixin(MultipleSolutionGrid, ABC):
             ]
             cells.append(new_row)
 
-        new_board = make_board(columns_descriptions, rows_descriptions)
+        # TODO: fix incorrect solution rate when using NumpyBoard
+        new_board = make_board(columns_descriptions, rows_descriptions, use_numpy=False)
         new_board.restore(cells)
 
         self._assign_callbacks_to_single_colored_board(new_board, color_mapping)
@@ -1559,20 +1561,23 @@ def make_board(*args, **kwargs):
     if any(map(BlottedBlock.how_many, args[0])) or any(map(BlottedBlock.how_many, args[1])):
         blotted = True
 
+    use_numpy = kwargs.pop('use_numpy', True)
     if len(args) == 2:
         if blotted:
             return BlottedBlackBoard(*args, **kwargs)
 
-        try:
-            return NumpyBlackBoard(*args, **kwargs)
-        except AttributeError:
-            return BlackBoard(*args, **kwargs)
+        if use_numpy:
+            with ignored(AttributeError):
+                return NumpyBlackBoard(*args, **kwargs)
+
+        return BlackBoard(*args, **kwargs)
 
     if len(args) == 3:
         if blotted:
             return BlottedColorBoard(*args, **kwargs)
 
-        try:
-            return NumpyColorBoard(*args, **kwargs)
-        except AttributeError:
-            return ColorBoard(*args, **kwargs)
+        if use_numpy:
+            with ignored(AttributeError):
+                return NumpyColorBoard(*args, **kwargs)
+
+        return ColorBoard(*args, **kwargs)
