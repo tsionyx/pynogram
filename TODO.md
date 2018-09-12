@@ -1,3 +1,11 @@
+- config:
+    - mode (curses, final)
+    - timeout
+    - max solutions
+    - BOX color
+    - use transient colors in SVG
+    - use merge
+
 - rewrite backtracking:
   - https://ieeexplore.ieee.org/document/6476646/
   - extract probing to another module
@@ -12,12 +20,6 @@
     (not stopped because of some limits but really fully explored!), then the P can be considered fully explored too (see 8098).
   - take into account the color to search for (see 3620, 2498, 3883, 5380)
 
-- solve blotted:
-  19407, 19440, 19629, 19686, 19887, 20742, 20758, 20796, 21151, 21339, 22035, 22385, 22591
-
-- refactor board (extract matrix operations)
-
-- find valid range for every color
 
 - bgu: speed up set_line_block, can_place_block
 

@@ -110,7 +110,7 @@ https://ir.nctu.edu.tw/bitstream/11536/22772/1/000324586300005.pdf)
 - multiple imports now made on separate lines
 - replace " with ' whenever possible
 - replace '%s' with %r
-- remove unrelevant benchmarks results
+- remove irrelevant benchmarks results
 - more readable README
 - more references in README
 - [codebeat](https://codebeat.co) badge
