@@ -240,7 +240,7 @@ def clues(solution_matrix, white_color_code=SPACE):
 class _BlottedMeta(type):
     """Redefine __repr__ to reduce noise in logs"""
 
-    def __repr__(self):
+    def __repr__(cls):
         return 'BLOTTED'
 
 
@@ -263,7 +263,7 @@ class BlottedBlock(with_metaclass(_BlottedMeta, object)):
             if block == cls:
                 counter += 1
 
-            if is_list_like(block):  # type: ColorBlock
+            if is_list_like(block):
                 if block[0] == cls:
                     counter += 1
 
@@ -276,8 +276,8 @@ class BlottedBlock(with_metaclass(_BlottedMeta, object)):
         Every blotted block spans a minimum of 1 cell
         """
         for block in description:
-            if is_list_like(block):  # type: ColorBlock
-                if block[0] == cls:
+            if is_list_like(block):
+                if block.size == cls:
                     block = ColorBlock(1, block.color)
 
             elif block == cls:
@@ -287,10 +287,15 @@ class BlottedBlock(with_metaclass(_BlottedMeta, object)):
 
     @classmethod
     def matches(cls, description, line):
+        """
+        Whether the given solved line
+        matches the blotted description
+        """
+
         colored = is_color_list(line)
 
         white_color = SPACE_COLORED if colored else SPACE
-        line_clues, colors = _line_clues(line, white_color_code=white_color)
+        line_clues, __ = _line_clues(line, white_color_code=white_color)
 
         if len(description) != len(line_clues):
             return False

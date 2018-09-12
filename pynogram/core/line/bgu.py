@@ -364,6 +364,10 @@ class BlottedSolver(BaseLineSolver):
 
     @classmethod
     def is_solved(cls, description, line):
+        """
+        Whether the line already solved.
+        Do not solve if so, since the blotted algorithm is computationally heavy.
+        """
         raise NotImplementedError()
 
     @classmethod
@@ -396,6 +400,7 @@ class BlottedSolver(BaseLineSolver):
 
     @classmethod
     def merge_solutions(cls, one, other=None):
+        """Merge solutions from different description suggestions"""
         if other is None:
             return one
 
@@ -535,7 +540,7 @@ class BguColoredBlottedSolver(TrimmedSolver, BlottedSolver, BguColoredSolver):
         LOG.debug(min_start_indexes)
 
         for block_index, block in enumerate(description):
-            size, color = block
+            color = block.color
             # do not do `zip(desc, min_indexes)` because min_indexes changes
             min_index = min_start_indexes[block_index]
 
@@ -543,7 +548,8 @@ class BguColoredBlottedSolver(TrimmedSolver, BlottedSolver, BguColoredSolver):
                     if index >= min_index]
 
             if not rang:
-                raise NonogramError('The #%i block (%r) cannot be placed', block_index, block)
+                raise NonogramError('The #{} block ({}) cannot be placed'.format(
+                    block_index, block))
 
             min_index_shift = min(rang) - min_index
             if min_index_shift > 0:
@@ -586,7 +592,7 @@ class BguColoredBlottedSolver(TrimmedSolver, BlottedSolver, BguColoredSolver):
         ranges = cls.block_ranges(description, line)
 
         for block, rang in zip(description, ranges):
-            LOG.info('{} --> {}'.format(block, rang))
+            LOG.info('%s --> %s', block, rang)
 
         for block, rang in zip(description, ranges):
             if cls._is_blotted(block):

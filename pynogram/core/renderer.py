@@ -97,7 +97,7 @@ class ClueCell(Cell):
         if isinstance(self.value, integer_types):
             return text_type(self.value)
 
-        elif self.value == BlottedBlock:
+        if self.value == BlottedBlock:
             return self.BLOTTED_SYMBOL
 
         return self.DEFAULT_ICON
@@ -529,6 +529,8 @@ class SvgRenderer(StreamRenderer):
                 self.board.color_id_by_name(single_color)
                 for single_color in color)
 
+        return None
+
     def _add_symbol(self, id_, color, *parts, **kwargs):
         drawing = self.drawing
         symbol = drawing.symbol(id_=id_, **kwargs)
@@ -591,9 +593,9 @@ class SvgRenderer(StreamRenderer):
         three_color_triangle_size = round(cell_size * ((1 / 2) ** 0.5), 2)
         three_color_triangle_coord = round(cell_size - three_color_triangle_size, 2)
 
-        three_colored_upper_triangle_points = [
+        three_colors_upper_points = [
             (0, 0), (0, three_color_triangle_size), (three_color_triangle_size, 0)]
-        three_colored_lower_triangle_points = [
+        three_colors_lower_points = [
             (cell_size, three_color_triangle_coord),
             (three_color_triangle_coord, cell_size),
             (cell_size, cell_size),
@@ -610,7 +612,7 @@ class SvgRenderer(StreamRenderer):
             colors.append((BOX, 'black'))
             space_color = SPACE
 
-        for color_index, (color_name, fill_color) in enumerate(colors):
+        for color_name, fill_color in colors:
             if color_name != white_color:
                 self._add_symbol(
                     'color-%s' % color_name, color_name,
@@ -667,11 +669,11 @@ class SvgRenderer(StreamRenderer):
                         fill=fill_color,
                     ),
                     drawing.polygon(
-                        points=three_colored_upper_triangle_points,
+                        points=three_colors_upper_points,
                         fill=fill_color2,
                     ),
                     drawing.polygon(
-                        points=three_colored_lower_triangle_points,
+                        points=three_colors_lower_points,
                         fill=fill_color3,
                     ),
                 )

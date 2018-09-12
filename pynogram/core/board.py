@@ -1572,12 +1572,12 @@ def make_board(*args, **kwargs):
 
         return BlackBoard(*args, **kwargs)
 
-    if len(args) == 3:
-        if blotted:
-            return BlottedColorBoard(*args, **kwargs)
+    assert len(args) == 3
+    if blotted:
+        return BlottedColorBoard(*args, **kwargs)
 
-        if use_numpy:
-            with ignored(AttributeError):
-                return NumpyColorBoard(*args, **kwargs)
+    if use_numpy:
+        with ignored(AttributeError):
+            return NumpyColorBoard(*args, **kwargs)
 
-        return ColorBoard(*args, **kwargs)
+    return ColorBoard(*args, **kwargs)
