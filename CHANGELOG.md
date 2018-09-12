@@ -114,3 +114,24 @@ https://ir.nctu.edu.tw/bitstream/11536/22772/1/000324586300005.pdf)
 - more readable README
 - more references in README
 - [codebeat](https://codebeat.co) badge
+
+
+## [0.3.1] - 2018-09-12
+### Added
+- blotted puzzles solver
+- draw two- and three-colored (partially solved) cells in SVG
+- trim off all solved cells in TrimmedSolver, not only spaces
+- expand_generator decorator
+- useful [ignored](https://www.youtube.com/watch?v=OSGv2VnC0go&t=2696s) context manager
+- benchmarks for previously reduced color puzzles (without reducing)
+
+
+### Fixed
+- dynamically create a black board while reducing colored puzzle (with the `make_board` factory)
+- draw a grid lines above the color cells to improve SVG image
+
+
+### Updated
+- refactored out partial_sums (several solvers use it)
+- refactored 'solution --> clues' translator
+- rename ColoredSolver --> TrimmedSolver
