@@ -1,0 +1,50 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+"e1839a8" = {path = ".", editable = true}               # self
+
+six = ">=1.10.0"                                        # python2/python3 compatibility
+memoized = "*"                                          # remember functions results
+svgwrite = "*"                                          # generate SVG solutions
+
+# ==================== pynogram-web =================== #
+futures = {version = "*", python_version = "< '3.2'"}
+# https://github.com/tornadoweb/tornado/issues/2304
+tornado = "<5.0"                                        # web-server which supports long-polling
+
+# TODO: uncomment and DO NOT install numpy on PyPy
+# =============== optional dependencies =============== #
+# numpy's `__copy__` does not work on PyPy, so simply skip it
+#numpy = {version = "*", platform_python_implementation = "!= 'PyPy'"}  # fast matrix operations
+# or you can install numpy for PyPy like this
+#numpy = {git = "https://bitbucket.org/pypy/numpy.git", editable = true, platform_python_implementation = "== 'PyPy'"}
+
+
+[dev-packages]
+# ======================= tests ======================= #
+# it's possible to run tests with simply `setup.py test`
+# without cluttering your current virtualenv
+# but sometimes it may be convenient to run them another way:
+# a) manual invocation
+tox = "*"                                               # task management
+coverage = "*"
+flake8 = "*"                                            # style checker (PEP8)
+# pylint cannot be installed on PyPy3
+# because of 'typed-ast' dependency (through 'astroid' dependency)
+# https://github.com/PyCQA/astroid/blob/5cc50abb/astroid/__pkginfo__.py#L33
+pylint =  {version = "*", markers="platform_python_implementation != 'PyPy' or python_version < '3'"}
+
+# b) via PyCharm's 'Run Configuration'
+pytest = ">=3.3"                                        # unit test framework
+
+# ===================== deployment ==================== #
+twine = "*"                                             # secure upload to PyPi
+
+
+[requires]
+python_version = "3.5"
+platform_python_implementation = "PyPy"
