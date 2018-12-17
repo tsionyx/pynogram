@@ -28,7 +28,6 @@ from pynogram.reader import (
 from pynogram.utils.other import is_close
 
 
-@pytest.fixture
 def tested_board(renderer=BaseAsciiRenderer, **kwargs):
     """
     Very simple demonstration board with the 'P' letter
@@ -255,7 +254,7 @@ class TestSolution(object):
 
         for contradiction_mode in (False, True):
             stream = StringIO()
-            board = self.board(stream=stream)
+            board = tested_board(AsciiRenderer, stream=stream)
             start = time.time()
 
             propagation.solve(board,
@@ -431,7 +430,7 @@ class TestMakeBoard(object):
         assert color_board.is_colored
 
     def test_bad_make_board(self):
-        with pytest.raises(ValueError, match='Bad number of \*args'):
+        with pytest.raises(ValueError, match='Bad number of \*args'):  # noqa: W605
             make_board(color_board_def()[0])
 
 
