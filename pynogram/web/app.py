@@ -25,6 +25,7 @@ from pynogram.reader import (
     read_example, list_examples, read_example_source,
     Pbn, PbnNotFoundError,
     NonogramsOrg,
+    PzlReader,
 )
 from pynogram.utils.other import get_named_logger
 from .common import (
@@ -128,6 +129,14 @@ class BoardNonogramsOrgHandler(BoardHandler):
         return 'nonograms.org'
 
 
+class BoardPzlHandler(BoardHandler):
+    """Renders puzzles from https://github.com/Izaron/Nonograms"""
+
+    @property
+    def board_mode(self):
+        return 'pzl'
+
+
 class BoardStatusHandler(BaseHandler):
     """
     Returns a status of a board given its ID.
@@ -227,6 +236,7 @@ class Application(tornado.web.Application):
             (r'/solve/local/(.+)/?', BoardLocalHandler),
             (r'/solve/pbn/([0-9]+)/?', BoardPbnHandler),
             (r'/solve/nonograms.org/([0-9]+)/?', BoardNonogramsOrgHandler),
+            (r'/solve/pzl/(.+)', BoardPzlHandler),
 
             (r'/status/(.+)/(.+)/?', BoardStatusHandler),
         ]
@@ -251,6 +261,8 @@ class Application(tornado.web.Application):
             board_def = Pbn.read(_id)
         elif create_mode == 'nonograms.org':
             board_def = NonogramsOrg.read(_id)
+        elif create_mode == 'pzl':
+            board_def = PzlReader.read(_id)
         else:
             raise tornado.web.HTTPError(400, 'Bad mode: %s', create_mode)
 

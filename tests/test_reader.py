@@ -18,6 +18,7 @@ from pynogram.reader import (
     example_file, read_ini, read_example,
     Pbn, PbnNotFoundError,
     NonogramsOrg,
+    PzlReader,
 )
 from .test_board import tested_board
 
@@ -192,3 +193,22 @@ class TestNonogramsOrg(object):
             'color-4', 'color-5',
             'color-6', 'color-7',
         }
+
+
+class TestPuzzles(object):
+    def test_colored(self):
+        """https://github.com/Izaron/Nonograms/blob/master/puzzles/emoji.pzl"""
+        columns, rows, colors = PzlReader.read('emoji.pzl')
+
+        assert len(columns) == len(rows) == 32
+        assert columns[0] == columns[-1] == rows[0] == rows[-1] == []
+
+        assert columns[1] == columns[-2]
+        assert [size for size, color in columns[1]] == [8, 4]
+
+        assert [size for size, color in rows[1]] == [10]
+        assert [size for size, color in rows[-2]] == [8]
+
+        assert set(colors) == {'black', 'white',
+                               'color-1', 'color-2', 'color-3',
+                               'color-4', 'color-5', 'color-6'}

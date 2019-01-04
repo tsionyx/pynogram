@@ -1,3 +1,8 @@
+- refactor web handlers:
+    - return plain SVG
+      (workaround: `curl http://localhost:3145/solve/pzl/rosenrot.pzl | tail -9 | head -1 > rosenrot.svg`)
+    - common base class for readers
+
 - config:
     - mode (curses, final)
     - timeout
@@ -21,6 +26,8 @@
   - take into account the color to search for (see 3620, 2498, 3883, 5380)
 
 
+- optimize blotted: 19787, 21985
+
 - bgu: speed up set_line_block, can_place_block
 
 - refactoring:
@@ -36,6 +43,7 @@
   - show the search in progress (dead ends, successful paths with the rate)
   - add link to the new solution page when another unique solution found
   (show the search path, compare with other solutions)
+  - reduce memory consumption: http://localhost:3145/solve/pzl/rosenrot.pzl
 
 - tests for Web UI
 

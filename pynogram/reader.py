@@ -405,3 +405,91 @@ class NonogramsOrg(object):
             except PbnNotFoundError:
                 if index == len(cls.URLS) - 1:  # raise if no other choices
                     raise
+
+
+class PzlReader(object):
+    @classmethod
+    def _read_lines(cls, reader):
+        raw_line = [int(n) for n in next(reader).split()]
+        line_size = raw_line[0]
+
+        colors = set()
+        line = []
+        for block_number in range(line_size):
+            size, r, g, b = [raw_line[1 + block_number * 4 + i] for i in range(4)]
+            color = (r, g, b)
+            line.append(ColorBlock(size, color))
+            colors.add(color)
+
+        return line, colors
+
+    def __init__(self, file_name):
+        self.file_name = file_name
+
+    @classmethod
+    def read(cls, file_name):
+        return cls(file_name).parse()
+
+    def parse(self):
+        reader = self.non_empty_line()
+
+        colors_number = int(next(reader))
+
+        color_map = ColorMap()
+        for i in range(colors_number):
+            name = 'color-{}'.format(i)
+            color = next(reader)
+            color_map.make_color(name, color)
+
+        height, width = map(int, next(reader).split())
+        colors = set()
+
+        rows = []
+        for i in range(height):
+            row, row_colors = self._read_lines(reader)
+            rows.append(row)
+            colors.update(row_colors)
+
+        columns = []
+        for i in range(width):
+            column, column_colors = self._read_lines(reader)
+            columns.append(column)
+            colors.update(column_colors)
+
+        color_map = ColorMap()
+        # reassign the IDs
+        id_map = {}
+        for _id, color in enumerate(colors, 1):
+            is_black = (color == (0, 0, 0))
+            if is_black:
+                name = Color.black().name
+            else:
+                name = 'color-{}'.format(_id)
+                color_map.make_color(name, color)
+
+            id_map[color] = name
+
+        columns = [[ColorBlock(size, id_map[old_color])
+                    for size, old_color in col] for col in columns]
+        rows = [[ColorBlock(size, id_map[old_color])
+                 for size, old_color in r] for r in rows]
+
+        return columns, rows, color_map
+
+    BASE_URL = 'https://github.com/Izaron/Nonograms/raw/master/puzzles'
+
+    def _file_object(self):
+        url = '{}/{}'.format(self.BASE_URL, self.file_name)
+        return urlopen(url)
+
+    def non_empty_line(self):
+        f = self._file_object()
+        while True:
+            line = next(f).rstrip()
+            if line:
+                yield line
+
+
+# class PzlLocalReader(PzlReader):
+#     def _file_object(self):
+#         return open(self.file_name)
