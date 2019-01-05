@@ -506,17 +506,20 @@ class SvgRenderer(StreamRenderer):
         """The size of the descriptions text"""
         return self.cell_size * 0.6
 
-    def __init__(self, board=None, stream=stdout, size=DEFAULT_CELL_SIZE_IN_PIXELS):
+    def __init__(self, board=None, stream=stdout,
+                 size=DEFAULT_CELL_SIZE_IN_PIXELS,
+                 standalone=False):
         super(SvgRenderer, self).__init__(board, stream)
 
         # decrease startup time when do not need this renderer
         from svgwrite import Drawing
 
-        self.cell_size = size
+        self.cell_size = int(size)
+        self.standalone = standalone
         self.color_symbols = dict()
         self.drawing = Drawing(size=(
-            self.full_width + self.cell_size,
-            self.full_height + self.cell_size))
+            self.full_width,
+            self.full_height), fill='white')
         self._add_definitions()
 
     def _color_id_by_name(self, color):
@@ -552,9 +555,9 @@ class SvgRenderer(StreamRenderer):
 
         # dynamic style rules
         drawing.defs.add(drawing.style(
-            'g.grid-lines line {stroke-width: %i} '
+            'g.grid-lines line {stroke-width: %i; stroke: black} '
             'g.grid-lines line.bold {stroke-width: %i} '
-            'g.header-clues text, g.side-clues text {font-size: %f} ' % (
+            'g.header-clues text, g.side-clues text {font-size: %f; fill: black} ' % (
                 self.GRID_STROKE_WIDTH,
                 self.GRID_BOLD_STROKE_WIDTH,
                 self.clues_font_size,
@@ -683,7 +686,9 @@ class SvgRenderer(StreamRenderer):
             'space', space_color,
             drawing.circle(
                 r=cell_size / 10
-            ))
+            ),
+            fill='black'
+        )
 
     @property
     def pixel_side_width(self):
@@ -718,6 +723,10 @@ class SvgRenderer(StreamRenderer):
     def _color_from_name(self, color_name):
         return self.board.rgb_for_color_name(color_name)
 
+    COLUMN_TEXT_SHIFT = (0.85, -0.3)
+    ROW_TEXT_SHIFT = (-0.15, 0.75)
+    STANDALONE_SVG_AMEND = (-0.75, 0)
+
     def block_svg(self, value, is_column, clue_number, block_number):
         """
         Return the SVG element for the clue number (colored case included)
@@ -725,7 +734,10 @@ class SvgRenderer(StreamRenderer):
         # left to right, bottom to top
         block_number = -block_number
 
-        shift = (0.85, -0.3) if is_column else (-0.3, 0.75)
+        shift = self.COLUMN_TEXT_SHIFT if is_column else self.ROW_TEXT_SHIFT
+        if self.standalone:
+            shift = [sum(x) for x in zip(shift, self.STANDALONE_SVG_AMEND)]
+
         i, j = (clue_number, block_number) if is_column else (block_number, clue_number)
 
         if isinstance(value, (list, tuple)):
@@ -752,7 +764,12 @@ class SvgRenderer(StreamRenderer):
 
         extra = dict()
         if color_id == Color.black().id_:
+            extra['style'] = 'fill: white;'
+            # standalone SVG cannot properly read CSS
             extra['fill'] = 'white'
+        else:
+            # standalone SVG cannot properly read CSS
+            extra['fill'] = 'black'
 
         if value == BlottedBlock:
             text_value = ClueCell.BLOTTED_SYMBOL
@@ -929,9 +946,12 @@ class SvgRenderer(StreamRenderer):
     def _get_grid_lines(self):
         drawing = self.drawing
 
+        # standalone SVG cannot properly read CSS
+        line_props = dict(stroke='black')
+
         # draw horizontal lines
         for i in range(self.board.height + 1):
-            extra = dict()
+            extra = dict(line_props)
 
             if i % self.BOLD_EVERY == 0 or i == self.board.height:
                 extra['class'] = 'bold'
@@ -944,7 +964,7 @@ class SvgRenderer(StreamRenderer):
 
         # draw vertical lines
         for i in range(self.board.width + 1):
-            extra = dict()
+            extra = dict(line_props)
 
             if i % self.BOLD_EVERY == 0 or i == self.board.width:
                 extra['class'] = 'bold'

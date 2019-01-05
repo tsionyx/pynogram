@@ -30,7 +30,6 @@
 - 2-SAT
 
 - SVG:
-  - fill=white
   - class for every color (use in clues)
   - shorter class and id names
   - collapse contiguous block into one long block

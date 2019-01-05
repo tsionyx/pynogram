@@ -297,20 +297,20 @@ class TestSvg(object):
         table = [line.strip() for line in stream.getvalue().split('\n')]
 
         svg_def = '''
-            <svg baseProfile="full" height="45" version="1.1" width="60" xmlns="
+            <svg baseProfile="full" fill="white" height="30" version="1.1" width="45" xmlns="
             http://www.w3.org/2000/svg" xmlns:ev=
             "http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <defs>
                     <style type="text/css">
                         <![CDATA[
                             g.grid-lines line {
-                            stroke-width: 1} g.grid-lines line.bold {
+                            stroke-width: 1; stroke: black} g.grid-lines line.bold {
                             stroke-width: 2} g.header-clues text, g.side-clues text {
-                            font-size: 9.000000} ]]>
+                            font-size: 9.000000; fill: black} ]]>
                     </style>
                     <symbol id="color-True">
                         <rect fill="black" height="15" width="15" x="0" y="0" /></symbol>
-                    <symbol id="space"><circle cx="0" cy="0" r="1.5" /></symbol>
+                    <symbol fill="black" id="space"><circle cx="0" cy="0" r="1.5" /></symbol>
                     <symbol fill="none" id="check" stroke="green">
                         <circle cx="50" cy="50" r="40" stroke-width="10" />
                         <polyline points="35,35 35,55 75,55" stroke-width="
@@ -323,15 +323,15 @@ class TestSvg(object):
                 <rect class="nonogram-header" height="15" width="30" x="15" y="0" />
                 <g class="header-clues">
                     <rect class="solved" height="15" width="15" x="15" y="0" />
-                    <text x="27.75" y="10.5">1</text>
+                    <text fill="black" x="27.75" y="10.5">1</text>
                     <rect class="solved" height="15" width="15" x="30" y="0" />
-                    <text x="42.75" y="10.5">1</text>
+                    <text fill="black" x="42.75" y="10.5">1</text>
                 </g>
 
                 <rect class="nonogram-side" height="15" width="15" x="0" y="15" />
                 <g class="side-clues">
                     <rect class="solved" height="15" width="15" x="0" y="15" />
-                    <text x="10.5" y="26.25">2</text>
+                    <text fill="black" x="12.75" y="26.25">2</text>
                 </g>
 
                 <use x="0" xlink:href="#check" y="0" />
@@ -343,11 +343,11 @@ class TestSvg(object):
                     <use x="30" xlink:href="#color-True" y="15" />
                 </g>
                 <g class="grid-lines">
-                    <line class="bold" x1="0" x2="45" y1="15" y2="15" />
-                    <line class="bold" x1="0" x2="45" y1="30" y2="30" />
-                    <line class="bold" x1="15" x2="15" y1="0" y2="30" />
-                    <line x1="30" x2="30" y1="0" y2="30" />
-                    <line class="bold" x1="45" x2="45" y1="0" y2="30" />
+                    <line class="bold" stroke="black" x1="0" x2="45" y1="15" y2="15" />
+                    <line class="bold" stroke="black" x1="0" x2="45" y1="30" y2="30" />
+                    <line class="bold" stroke="black" x1="15" x2="15" y1="0" y2="30" />
+                    <line stroke="black" x1="30" x2="30" y1="0" y2="30" />
+                    <line class="bold" stroke="black" x1="45" x2="45" y1="0" y2="30" />
                 </g>
             </svg>'''
 
@@ -363,16 +363,16 @@ class TestSvg(object):
         table = [line.strip() for line in stream.getvalue().split('\n')]
 
         svg_def = '''
-            <svg baseProfile="full" height="90" version="1.1" width="75" xmlns="
+            <svg baseProfile="full" fill="white" height="75" version="1.1" width="60" xmlns="
             http://www.w3.org/2000/svg" xmlns:ev=
             "http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink">
                 <defs>
                     <style type="text/css">
                         <![CDATA[
                             g.grid-lines line {
-                            stroke-width: 1} g.grid-lines line.bold {
+                            stroke-width: 1; stroke: black} g.grid-lines line.bold {
                             stroke-width: 2} g.header-clues text, g.side-clues text {
-                            font-size: 9.000000} ]]>
+                            font-size: 9.000000; fill: black} ]]>
                     </style>
 
                     <symbol id="color-b">
@@ -435,7 +435,7 @@ class TestSvg(object):
                         <polygon fill="#fff" points="15,4.39 4.39,15 15,15" />
                     </symbol>
 
-                    <symbol id="space"><circle cx="0" cy="0" r="1.5" /></symbol>
+                    <symbol fill="black" id="space"><circle cx="0" cy="0" r="1.5" /></symbol>
 
 
                     <symbol fill="none" id="check" stroke="green">
@@ -451,34 +451,34 @@ class TestSvg(object):
                 <g class="header-clues">
                     <rect class="solved" height="30" width="15" x="15" y="0" />
                     <use x="15" xlink:href="#color-b" y="15" />
-                    <text x="27.75" y="25.5">1</text>
+                    <text fill="black" x="27.75" y="25.5">1</text>
                     <use x="15" xlink:href="#color-r" y="0" />
-                    <text x="27.75" y="10.5">1</text>
+                    <text fill="black" x="27.75" y="10.5">1</text>
 
                     <rect class="solved" height="30" width="15" x="30" y="0" />
                     <use x="30" xlink:href="#color-b" y="15" />
-                    <text x="42.75" y="25.5">1</text>
+                    <text fill="black" x="42.75" y="25.5">1</text>
                     <use x="30" xlink:href="#color-r" y="0" />
-                    <text x="42.75" y="10.5">1</text>
+                    <text fill="black" x="42.75" y="10.5">1</text>
 
                     <rect class="solved" height="30" width="15" x="45" y="0" />
                     <use x="45" xlink:href="#color-b" y="15" />
-                    <text x="57.75" y="25.5">1</text>
+                    <text fill="black" x="57.75" y="25.5">1</text>
                     <use x="45" xlink:href="#color-r" y="0" />
-                    <text x="57.75" y="10.5">1</text>
+                    <text fill="black" x="57.75" y="10.5">1</text>
                 </g>
 
                 <rect class="nonogram-side" height="45" width="15" x="0" y="30" />
                 <g class="side-clues">
                     <rect class="solved" height="15" width="15" x="0" y="30" />
                     <use x="0" xlink:href="#color-r" y="30" />
-                    <text x="10.5" y="41.25">3</text>
+                    <text fill="black" x="12.75" y="41.25">3</text>
 
                     <rect class="solved" height="15" width="15" x="0" y="45" />
 
                     <rect class="solved" height="15" width="15" x="0" y="60" />
                     <use x="0" xlink:href="#color-b" y="60" />
-                    <text x="10.5" y="71.25">3</text>
+                    <text fill="black" x="12.75" y="71.25">3</text>
                 </g>
 
                 <use x="0" xlink:href="#check" y="0" />
@@ -513,14 +513,14 @@ class TestSvg(object):
                 <g class="x3-b-black-r" />
 
                 <g class="grid-lines">
-                    <line class="bold" x1="0" x2="60" y1="30" y2="30" />
-                    <line x1="0" x2="60" y1="45" y2="45" />
-                    <line x1="0" x2="60" y1="60" y2="60" />
-                    <line class="bold" x1="0" x2="60" y1="75" y2="75" />
-                    <line class="bold" x1="15" x2="15" y1="0" y2="75" />
-                    <line x1="30" x2="30" y1="0" y2="75" />
-                    <line x1="45" x2="45" y1="0" y2="75" />
-                    <line class="bold" x1="60" x2="60" y1="0" y2="75" />
+                    <line class="bold" stroke="black" x1="0" x2="60" y1="30" y2="30" />
+                    <line stroke="black" x1="0" x2="60" y1="45" y2="45" />
+                    <line stroke="black" x1="0" x2="60" y1="60" y2="60" />
+                    <line class="bold" stroke="black" x1="0" x2="60" y1="75" y2="75" />
+                    <line class="bold" stroke="black" x1="15" x2="15" y1="0" y2="75" />
+                    <line stroke="black" x1="30" x2="30" y1="0" y2="75" />
+                    <line stroke="black" x1="45" x2="45" y1="0" y2="75" />
+                    <line class="bold" stroke="black" x1="60" x2="60" y1="0" y2="75" />
                 </g>
             </svg>'''
 
