@@ -48,11 +48,15 @@ class BoardHandler(ThreadedBaseHandler):
         """The sting that identifies board's source (local, pbn, nonograms.org)"""
         raise NotImplementedError()
 
+    SERVICE_PARAMS = [
+        'render',
+    ]
+
     @property
     def renderer(self):
         """Get the renderer class based on user choice (?render=MODE)"""
 
-        rend_mode = self.get_argument('render', 'svg')
+        rend_mode = self.get_argument(self.SERVICE_PARAMS[0], 'svg')
         res = RENDERERS.get(rend_mode)
         if not res:
             raise tornado.web.HTTPError(404, 'Not found renderer: %s', rend_mode)
@@ -60,13 +64,26 @@ class BoardHandler(ThreadedBaseHandler):
         return res
 
     def get(self, _id):
+        render_kwargs = {
+            k: self.get_argument(k)
+            for k in self.request.arguments
+            if k not in self.SERVICE_PARAMS
+        }
+
         board_notifier = self.application.get_board_notifier(
             _id, self.board_mode, create=True, renderer=self.renderer)
+
+        try:
+            # on the first request, setting of the custom params is possible
+            board_image = board_notifier.get_board_image(
+                renderer=self.renderer, **render_kwargs)
+        except TypeError as ex:
+            raise tornado.web.HTTPError(400, str(ex))
 
         self.render('index.html',
                     board_mode=self.board_mode,
                     board_id=_id,
-                    board_image=board_notifier.get_board_image())
+                    board_image=board_image)
 
     @tornado.gen.coroutine
     def post(self, _id):
@@ -209,12 +226,28 @@ class BoardUpdateNotifier(LongPollNotifier):
         LOG.debug(params)
         callback(**params)
 
-    def get_board_image(self):
+    def get_board_image(self, renderer=None, **kwargs):
         """
-        Return current image of a draw using board's renderer
+        Return current image of a draw using board's renderer.
+
+        If another renderer provided, temporarily set it and then restore the old one.
         """
-        self.board.draw()
-        image = self.stream.getvalue()
+
+        old_renderer = self.board.renderer
+
+        if renderer is not None and renderer != old_renderer:
+            custom = True
+            self.update_renderer(renderer=renderer, **kwargs)
+        else:
+            custom = False
+
+        try:
+            self.board.draw()
+            image = self.stream.getvalue()
+        finally:
+            if custom:
+                self.update_renderer(renderer=old_renderer)
+
         self.clear_stream()
 
         return image
