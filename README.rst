@@ -336,9 +336,9 @@ Web-solver
 
   ``pip install pynogram[web]`` and **start the server**: ``pynogram-web``
 
-- you can solve any of local puzzles (with */board/local/* path)
-  or webpbn puzzles (with */board/pbn/* path)
-  or nonograms.org ones (with */board/nonograms.org/* path)
+- you can solve any of local puzzles (with */solve/local/* path)
+  or webpbn puzzles (with */solve/pbn/* path)
+  or nonograms.org ones (with */solve/nonograms.org/* path)
 
 - you can specify render mode (with the *?render=MODE* argument).
   Now the four are supported:
@@ -357,19 +357,19 @@ Web-solver
     splitting the whole board into 5x5 squares (remember puzzles in those magazines?)
 
 
-http://localhost:3145/board/local/einstein?render=svg (zoom=67%)
+http://localhost:3145/solve/local/einstein?render=svg (zoom=67%)
 
 .. image:: docs/images/einstein-local-svg.gif
 
-http://localhost:3145/board/local/MLP?render=text-grid-bold (zoom=25%)
+http://localhost:3145/solve/local/MLP?render=text-grid-bold (zoom=25%)
 
 .. image:: docs/images/MLP-local-text-grid.gif
 
-http://localhost:3145/board/pbn/2040?render=text (zoom=75%)
+http://localhost:3145/solve/pbn/2040?render=text (zoom=75%)
 
 .. image:: docs/images/marilyn-pbn-text.gif
 
-http://localhost:3145/board/pbn/2196 (zoom=75%)
+http://localhost:3145/solve/pbn/2196 (zoom=75%)
 
 .. image:: docs/images/precious-pbn-svg.gif
 

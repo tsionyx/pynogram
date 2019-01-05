@@ -221,12 +221,14 @@ class Application(tornado.web.Application):
         self.board_notifiers = dict()
 
         handlers = [
-            (r'/board/local/', ListLocalHandler),
-            (r'/board/local/source/(.+)/?', BoardLocalSourceHandler),
-            (r'/board/local/(.+)/?', BoardLocalHandler),
-            (r'/board/pbn/([0-9]+)/?', BoardPbnHandler),
-            (r'/board/nonograms.org/([0-9]+)/?', BoardNonogramsOrgHandler),
-            (r'/board/status/(.+)/(.+)/?', BoardStatusHandler),
+            (r'/local/', ListLocalHandler),
+            (r'/local/(.+)', BoardLocalSourceHandler),
+
+            (r'/solve/local/(.+)/?', BoardLocalHandler),
+            (r'/solve/pbn/([0-9]+)/?', BoardPbnHandler),
+            (r'/solve/nonograms.org/([0-9]+)/?', BoardNonogramsOrgHandler),
+
+            (r'/status/(.+)/(.+)/?', BoardStatusHandler),
         ]
         # noinspection PyTypeChecker
         handlers += [('/', HelloHandler, {
