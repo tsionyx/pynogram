@@ -453,3 +453,8 @@ If you have any issues, drop a line to the
     :target: https://pypi.org/project/pynogram/
 .. |PyPI - Implementation| image:: https://img.shields.io/pypi/implementation/pynogram.svg
     :target: https://pypi.org/project/pynogram/
+
+
+.. image:: https://api.codacy.com/project/badge/Grade/fe5e612bbb854a80aa6a2f1b6fb37b17
+   :alt: Codacy Badge
+   :target: https://app.codacy.com/app/tsionyx/pynogram?utm_source=github.com&utm_medium=referral&utm_content=tsionyx/pynogram&utm_campaign=Badge_Grade_Settings
