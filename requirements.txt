@@ -38,8 +38,3 @@ pylint ; platform_python_implementation != 'PyPy' or python_version < '3'
 
 # b) via PyCharm's 'Run Configuration'
 pytest >= 3.3                                           # unit test framework
-
-
-
-# ===================== deployment ==================== #
-twine                                                   # secure upload to PyPi

@@ -1,5 +1,3 @@
-|PyPI| |PyPI - Python Version| |PyPI - Implementation|
-
 |Build Status| |Coverage Status| |codebeat badge|
 
 Nonogram solver
@@ -447,9 +445,3 @@ If you have any issues, drop a line to the
     :target: https://coveralls.io/github/tsionyx/pynogram
 .. |codebeat badge| image:: https://codebeat.co/badges/21e69843-0e13-4046-bc88-b3f108ccff69
     :target: https://codebeat.co/projects/github-com-tsionyx-pynogram-dev
-.. |PyPI| image:: https://img.shields.io/pypi/v/pynogram.svg
-    :target: https://pypi.org/project/pynogram/
-.. |PyPI - Python Version| image:: https://img.shields.io/pypi/pyversions/pynogram.svg
-    :target: https://pypi.org/project/pynogram/
-.. |PyPI - Implementation| image:: https://img.shields.io/pypi/implementation/pynogram.svg
-    :target: https://pypi.org/project/pynogram/
